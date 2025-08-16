@@ -1,0 +1,82 @@
+.form-container{
+     border: dashed 1px #eee;
+     padding: 10px;
+     border-radius: 10px;
+     background-color: #fff;
+}
+
+.form-titulo{
+     text-align: center;
+     padding: 10px 0px 20px 0px;
+}
+.form-titulo h1{
+     color:#5EA853;
+}
+.bnt-padrao {
+     width: 120px;
+}
+.btn-gravar{
+     background-color:#19578a;   
+     color: #fff; 
+}
+.btn-gravar:hover{
+     background-color:#5EA853;   
+     color: #fff; 
+}
+
+
+
+
+/*Consulta da tabela DER-PR*/
+
+.dadosConsultaContainer{
+     background-color: #ffffff;
+     z-index: 1;
+}
+
+.tbl-consulta th{
+     white-space: nowrap;
+     cursor: pointer;
+}
+.tbl-consulta th span{
+     cursor: pointer;
+     
+}
+.tbl-btn{
+     display: flex;
+     justify-content: end;
+}
+.tbl-btn button{
+     border: 1px solid #eee;
+     border-radius: 10px;
+     margin-left: 10px;
+     margin-bottom: 20px;
+}
+
+/*setDmtComponent.vue*/
+.input_ro{
+     border: 0;
+     background-color: #f5f5f5;
+}
+.input_dmt{
+     padding: 0px!important;
+     padding-left: 5px!important;
+}
+.input_dmt_codigo{
+     max-width: 85px;
+}
+.input_dmt_kmlocal{
+     max-width: 80px;
+}
+.frm_dmt{
+     min-width: 990px;
+}
+@media (max-width: 770px) {
+     .input_dmt_codigo, .input_dmt_kmlocal, .input_dmt_kmlocal {
+          max-width: 100%;         
+     }
+     .frm_dmt{
+          min-width: 100%  
+     }
+ }
+

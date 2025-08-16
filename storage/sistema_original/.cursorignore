@@ -1,0 +1,9 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+docker-compose.yml
+Dockerfile
+resources\js\components\antigo\preco\00_basico_Component.vue
+resources\js\components\antigo\preco\ConsultaPrcComponent.vue
+resources\js\components\antigo\preco\ImportarDERPR.vue
+resources\js\components\antigo\preco\ImportaTabelaPrcComponent.vue
+resources\js\components\orcamento\tipos-orcamentos\ListaTiposOrcamentos.vue
+app\Http\Controllers\TesteController.php

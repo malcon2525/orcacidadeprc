@@ -1,0 +1,416 @@
+/* ===== HOME DASHBOARD - SOLUÇÃO DEFINITIVA ===== */
+/* Resolve TODOS os conflitos CSS e segue padrões OrçaCidade */
+
+/* ===== RESET ESPECÍFICO PARA HOME ===== */
+.home-dashboard,
+.home-dashboard *,
+.home-dashboard *::before,
+.home-dashboard *::after {
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.home-dashboard {
+    padding: 1rem !important;
+    margin-top: 80px !important; /* Espaço para header fixo */
+    min-height: calc(100vh - 80px) !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* ===== CARD PRINCIPAL ===== */
+.dashboard-card {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 2.5rem 2rem !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.02) !important;
+    max-width: 700px !important;
+    width: 100% !important;
+    position: relative !important;
+    overflow: hidden !important;
+    z-index: 10 !important;
+}
+
+/* Linha superior do card */
+.dashboard-card::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 4px !important;
+    background: linear-gradient(90deg, #18578A 0%, #5EA853 50%, #6bd9f3 100%) !important;
+    border-radius: 16px 16px 0 0 !important;
+    z-index: 11 !important;
+}
+
+/* ===== SEÇÃO DE BOAS-VINDAS ===== */
+.welcome-header {
+    text-align: center !important;
+    margin-bottom: 2.5rem !important;
+    padding-bottom: 2rem !important;
+    border-bottom: 2px solid #f1f3f4 !important;
+    position: relative !important;
+}
+
+/* Linha decorativa inferior */
+.welcome-header::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -2px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 60px !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, #5EA853, #18578A) !important;
+    border-radius: 1px !important;
+}
+
+/* Ícone grande centralizado */
+.welcome-icon-large {
+    width: 70px !important;
+    height: 70px !important;
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%) !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.5rem auto !important;
+    box-shadow: 0 8px 24px rgba(24, 87, 138, 0.25) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Efeito de brilho */
+.welcome-icon-large::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -50% !important;
+    left: -50% !important;
+    width: 200% !important;
+    height: 200% !important;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent) !important;
+    transform: rotate(45deg) !important;
+    animation: shine 4s ease-in-out infinite !important;
+}
+
+@keyframes shine {
+    0%, 100% { transform: translateX(-100%) rotate(45deg) !important; }
+    50% { transform: translateX(100%) rotate(45deg) !important; }
+}
+
+.welcome-icon-large i {
+    font-size: 1.8rem !important;
+    color: #ffffff !important;
+    z-index: 1 !important;
+}
+
+/* Título principal */
+.welcome-title {
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    color: #1f2937 !important;
+    margin: 0 0 1rem 0 !important;
+    line-height: 1.1 !important;
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* Subtítulo */
+.welcome-subtitle {
+    font-size: 1.1rem !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+}
+
+/* ===== SEÇÃO DE INFORMAÇÕES ===== */
+.info-section {
+    display: flex !important;
+    gap: 2rem !important;
+    margin-bottom: 2.5rem !important;
+    padding: 0 0.5rem !important;
+}
+
+/* Cards laterais */
+.info-card-left,
+.info-card-right {
+    flex: 1 !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%) !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: 120px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Linha superior dos cards */
+.info-card-left::before,
+.info-card-right::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, #18578A, #5EA853) !important;
+    transform: scaleX(0) !important;
+    transition: transform 0.3s ease !important;
+}
+
+/* Hover dos cards */
+.info-card-left:hover::before,
+.info-card-right:hover::before {
+    transform: scaleX(1) !important;
+}
+
+.info-card-left:hover,
+.info-card-right:hover {
+    background: #ffffff !important;
+    border-color: #5EA853 !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 25px rgba(94, 168, 83, 0.15) !important;
+}
+
+/* Cabeçalho dos cards */
+.card-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Ícones dos cards */
+.card-icon {
+    width: 40px !important;
+    height: 40px !important;
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(24, 87, 138, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
+.info-card-left:hover .card-icon,
+.info-card-right:hover .card-icon {
+    transform: scale(1.05) !important;
+    box-shadow: 0 6px 18px rgba(24, 87, 138, 0.3) !important;
+}
+
+.card-icon i {
+    font-size: 1.1rem !important;
+    color: #ffffff !important;
+}
+
+/* Labels dos cards */
+.card-label {
+    font-size: 0.8rem !important;
+    color: #6b7280 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+}
+
+/* Conteúdo dos cards */
+.card-content {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.card-value {
+    font-size: 1.1rem !important;
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+}
+
+/* ===== SEÇÃO DE STATUS ===== */
+.status-section {
+    text-align: center !important;
+    padding-top: 2rem !important;
+    border-top: 2px solid #f1f3f4 !important;
+    position: relative !important;
+}
+
+/* Linha decorativa superior */
+.status-section::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, #5EA853, #18578A) !important;
+    border-radius: 1px !important;
+}
+
+/* Badge de status */
+.status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1.5rem !important;
+    background: linear-gradient(135deg, rgba(94, 168, 83, 0.1) 0%, rgba(24, 87, 138, 0.05) 100%) !important;
+    border: 1px solid rgba(94, 168, 83, 0.2) !important;
+    border-radius: 20px !important;
+    color: #5EA853 !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.status-badge:hover {
+    background: linear-gradient(135deg, rgba(94, 168, 83, 0.15) 0%, rgba(24, 87, 138, 0.1) 100%) !important;
+    border-color: rgba(94, 168, 83, 0.3) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(94, 168, 83, 0.2) !important;
+}
+
+/* Indicador de status */
+.status-indicator {
+    width: 10px !important;
+    height: 10px !important;
+    background: #5EA853 !important;
+    border-radius: 50% !important;
+    animation: pulse 2s ease-in-out infinite !important;
+    box-shadow: 0 0 10px rgba(94, 168, 83, 0.5) !important;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1 !important; 
+        transform: scale(1) !important;
+        box-shadow: 0 0 10px rgba(94, 168, 83, 0.5) !important;
+    }
+    50% { 
+        opacity: 0.8 !important; 
+        transform: scale(1.2) !important;
+        box-shadow: 0 0 15px rgba(94, 168, 83, 0.7) !important;
+    }
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .home-dashboard {
+        padding: 0.75rem !important;
+        margin-top: 70px !important;
+    }
+    
+    .dashboard-card {
+        padding: 2rem 1.5rem !important;
+        border-radius: 14px !important;
+        margin: 0 0.25rem !important;
+    }
+    
+    .welcome-header {
+        margin-bottom: 2rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+    
+    .welcome-icon-large {
+        width: 60px !important;
+        height: 60px !important;
+        margin-bottom: 1.25rem !important;
+    }
+    
+    .welcome-icon-large i {
+        font-size: 1.5rem !important;
+    }
+    
+    .welcome-title {
+        font-size: 2.25rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .info-section {
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+        margin-bottom: 2rem !important;
+        padding: 0 !important;
+    }
+    
+    .info-card-left,
+    .info-card-right {
+        padding: 1.25rem !important;
+        min-height: 100px !important;
+    }
+    
+    .card-value {
+        font-size: 1rem !important;
+    }
+    
+    .status-section {
+        padding-top: 1.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-card {
+        padding: 1.75rem 1.25rem !important;
+        margin: 0 0.125rem !important;
+        border-radius: 12px !important;
+    }
+    
+    .welcome-icon-large {
+        width: 55px !important;
+        height: 55px !important;
+    }
+    
+    .welcome-icon-large i {
+        font-size: 1.4rem !important;
+    }
+    
+    .welcome-title {
+        font-size: 2rem !important;
+    }
+    
+    .welcome-subtitle {
+        font-size: 0.95rem !important;
+    }
+    
+    .info-card-left,
+    .info-card-right {
+        padding: 1.125rem !important;
+    }
+    
+    .card-icon {
+        width: 35px !important;
+        height: 35px !important;
+    }
+    
+    .card-icon i {
+        font-size: 1rem !important;
+    }
+    
+    .card-value {
+        font-size: 0.95rem !important;
+    }
+    
+    .status-badge {
+        padding: 0.625rem 1.25rem !important;
+        font-size: 0.9rem !important;
+    }
+}

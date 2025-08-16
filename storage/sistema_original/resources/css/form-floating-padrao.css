@@ -1,0 +1,66 @@
+/* ===== PADRÃO OFICIAL - FORM-FLOATING - ORÇACIDADE ===== */
+/* ⚠️ ARQUIVO OBRIGATÓRIO - NUNCA ALTERAR OU REMOVER ===== */
+/* 🎯 GARANTE FUNCIONAMENTO PERFEITO EM TODOS OS CAMPOS ===== */
+
+/* ===== REGRAS ABSOLUTAS - FORM-FLOATING ===== */
+.form-floating .form-control {
+    padding-top: 1.625rem !important;
+    padding-bottom: 0.625rem !important; 
+    line-height: 1.5 !important;
+    min-height: 58px !important;
+}
+
+/* ===== ALINHAMENTO DE CAMPOS EM LINHA ===== */
+.row.g-3 {
+    align-items: end !important;
+}
+
+/* ===== GARANTIA DE PRIORIDADE ===== */
+/* Estas regras têm prioridade máxima para evitar conflitos */
+.form-floating .form-control:focus {
+    padding-top: 1.625rem !important;
+    padding-bottom: 0.625rem !important;
+    line-height: 1.5 !important;
+    min-height: 58px !important;
+}
+
+.form-floating .form-control:not(:placeholder-shown) {
+    padding-top: 1.625rem !important;
+    padding-bottom: 0.625rem !important;
+    line-height: 1.5 !important;
+    min-height: 58px !important;
+}
+
+/* ===== RESPONSIVIDADE AUTOMÁTICA ===== */
+@media (max-width: 768px) {
+    .form-floating .form-control {
+        padding-top: 1.625rem !important;
+        padding-bottom: 0.625rem !important;
+        line-height: 1.5 !important;
+        min-height: 58px !important;
+    }
+}
+
+/* ===== COMPATIBILIDADE COM TODOS OS TIPOS ===== */
+.form-floating .form-control[type="text"],
+.form-floating .form-control[type="email"],
+.form-floating .form-control[type="password"],
+.form-floating .form-control[type="number"],
+.form-floating .form-control[type="tel"],
+.form-floating .form-control[type="url"],
+.form-floating .form-control[type="search"] {
+    padding-top: 1.625rem !important;
+    padding-bottom: 0.625rem !important;
+    line-height: 1.5 !important;
+    min-height: 58px !important;
+}
+
+/* ===== GARANTIA DE FUNCIONAMENTO ===== */
+/* Estas regras sobrescrevem qualquer CSS conflitante */
+.form-floating .form-control,
+.form-floating .form-control * {
+    box-sizing: border-box !important;
+}
+
+/* ===== FIM DO PADRÃO OFICIAL ===== */
+/* ✅ CAMPOS PERFEITOS GARANTIDOS! ✅ */

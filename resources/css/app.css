@@ -1,0 +1,52 @@
+/* ===== ORCACIDADE 2.0 - CSS PRINCIPAL ===== */
+
+/* Bootstrap 5.3.3 via CDN (não precisa de import local) */
+/* @import "bootstrap/dist/css/bootstrap.css"; */
+
+/* Modern Interface - Importação removida temporariamente */
+/* @import url("/assets/css/modern-interface.css"); */
+
+/* ===== CSS ESPECÍFICO DA APLICAÇÃO ===== */
+
+/* Customizações globais mínimas */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Ajustes finos do Bootstrap para nossos padrões */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.card {
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* Override para manter compatibilidade */
+.text-primary {
+    color: #18578A !important;
+}
+
+.btn-primary {
+    background-color: #18578A;
+    border-color: #18578A;
+}
+
+.btn-success {
+    background-color: #5EA853;
+    border-color: #5EA853;
+}
+/* Smooth transitions globais */
+* {
+    transition: all 0.2s ease;
+}
+
+/* Remove transitions em elementos que não precisam */
+*:focus,
+input,
+textarea,
+select {
+    transition: none;
+}

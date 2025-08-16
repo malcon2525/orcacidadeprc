@@ -1,0 +1,1355 @@
+/* ===== MODERN INTERFACE - PADRÃO PARA TODAS AS TELAS ===== */
+/* Estilos modernos e consistentes para interface do OrçaCidade */
+/* Baseado na implementação do AdminCenter - Janeiro 2025 */
+
+/* ===== 1. ESTILOS GERAIS ===== */
+.text-custom {
+    color: #18578A !important;
+}
+
+/* ===== 2. FORMULÁRIOS PADRÃO ===== */
+/* Labels de formulário */
+.form-label {
+    font-weight: 600 !important;
+    color: #18578A !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Input groups */
+.input-group-text {
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+    color: #6c757d !important;
+}
+
+/* Campos de formulário */
+.form-control {
+    border: 1px solid #e9ecef !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.form-control:focus {
+    border-color: #5EA853 !important;
+    box-shadow: 0 0 0 0.2rem rgba(94, 168, 83, 0.25) !important;
+}
+
+/* Validação de erro */
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* ===== 3. SISTEMA DE ABAS ===== */
+.admin-tabs-container {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    overflow: visible;
+}
+
+.admin-tabs {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0 1rem;
+    margin: 0;
+}
+
+.admin-tab {
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.admin-tab:hover {
+    color: #5EA853;
+    background-color: rgba(94, 168, 83, 0.1);
+}
+
+.admin-tab.active {
+    color: #000000;
+    background-color: #ffffff;
+    border-bottom: 3px solid #5EA853;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.admin-tab-content {
+    padding: 2rem;
+    min-height: auto;
+}
+
+/* ===== CORREÇÃO CRÍTICA: REMOVER BORDAS EXTRAS DOS CARDS ADMINISTRATIVOS ===== */
+/* Sobrescrever regras do andamento-projeto.css que estão causando bordas extras */
+.admin-tabs-container .card,
+.admin-tab-content .card,
+.card.shadow-sm.border-0.rounded-3 {
+    border: none !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Remover bordas extras das tabelas dentro do sistema de abas */
+.admin-tab-content .table-responsive {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Garantir que não haja bordas extras nos containers de filtros */
+.admin-tab-content .filtros-aba-container {
+    border: 1px solid #e9ecef !important;
+    border-radius: 0.5rem !important;
+}
+
+/* ===== CORREÇÃO CRÍTICA: SOBRESCREVER ESTILOS DE TABELA DO ANDAMENTO-PROJETO.CSS ===== */
+/* Garantir que as tabelas administrativas não tenham fundo colorido */
+.admin-tab-content .table thead,
+.admin-tabs-container .table thead {
+    background: #f9fafb !important;
+    color: #18578A !important;
+}
+
+/* Garantir que as tabelas administrativas tenham o estilo correto */
+.admin-tab-content .table th,
+.admin-tabs-container .table th {
+    background: #f9fafb !important;
+    color: #18578A !important;
+    border-bottom: 2px solid #e5e7eb !important;
+}
+
+/* ===== CORREÇÃO CRÍTICA: SOBRESCREVER ESTILOS DE TABELA DO CRUD-STYLES.CSS ===== */
+/* Garantir que as tabelas administrativas não tenham bordas extras */
+.admin-tab-content .table th,
+.admin-tabs-container .table th {
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    color: #18578A !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+/* Garantir que as tabelas administrativas tenham o estilo correto */
+.admin-tab-content .table td,
+.admin-tabs-container .table td {
+    padding: 0.5rem !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f3f4 !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+}
+
+/* ===== CORREÇÃO CRÍTICA: SOBRESCREVER ESTILOS DE TABELA DO ANDAMENTO-PROJETO.CSS ===== */
+/* Garantir que as tabelas administrativas não tenham texto maiúsculo */
+.admin-tab-content .table th,
+.admin-tabs-container .table th {
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+/* ===== 4. FILTROS DINÂMICOS ===== */
+.filtros-aba-container {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.filtros-aba-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+    opacity: 0;
+    margin-bottom: 0;
+}
+
+.filtros-aba-content.show {
+    max-height: 200px;
+    opacity: 1;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== 5. BOTÃO DE FILTROS ===== */
+.btn-filtros {
+    background-color: transparent;
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-filtros:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-filtros.active {
+    background-color: #5EA853;
+    border-color: #5EA853;
+    color: white;
+}
+
+.btn-filtros.active:hover {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(94, 168, 83, 0.2);
+}
+
+/* ===== 6. TABELAS MODERNAS ===== */
+.usuarios-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.consultar-derpr-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.consultar-derpr-table th {
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #18578A;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    background-color: #f9fafb;
+    vertical-align: middle;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.consultar-derpr-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.consultar-derpr-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.consultar-derpr-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.consultar-derpr-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.consultar-derpr-row:empty {
+    display: none;
+}
+
+.consultar-sinapi-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.consultar-sinapi-table th {
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #18578A;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    background-color: #f9fafb;
+    vertical-align: middle;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.consultar-sinapi-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.consultar-sinapi-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.consultar-sinapi-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.consultar-sinapi-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.consultar-sinapi-row:empty {
+    display: none;
+}
+
+/* CORREÇÃO CRÍTICA: Sobrescrever regras do crud-styles.css */
+.usuarios-table th,
+table.usuarios-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.usuarios-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.usuarios-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.usuario-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.usuario-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.usuario-row:empty {
+    display: none;
+}
+
+/* ===== 5. TABELAS ESPECÍFICAS - IMPORTAR DER-PR ===== */
+.servicos-gerais-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.servicos-gerais-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.servicos-gerais-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.servicos-gerais-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.servico-geral-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.servico-geral-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.servico-geral-row:empty {
+    display: none;
+}
+
+.insumos-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.insumos-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.insumos-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.insumos-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.insumo-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.insumo-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.insumo-row:empty {
+    display: none;
+}
+
+.lote-derpr-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.lote-derpr-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.lote-derpr-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.lote-derpr-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.lote-derpr-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.lote-derpr-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.lote-derpr-row:empty {
+    display: none;
+}
+
+/* ===== 6. TABELAS EXISTENTES ===== */
+.papeis-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.papeis-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.papeis-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.papeis-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.papel-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.papel-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== GARANTIR QUE LINHAS COM BOTÕES DESABILITADOS NÃO SEJAM AFETADAS ===== */
+/* REMOVIDO: pointer-events: none - estava impedindo o clique */
+.papel-row .btn-excluir-desabilitado {
+    /* Botão visualmente desabilitado mas ainda clicável */
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.papel-row .btn-excluir-desabilitado + *,
+.papel-row .btn-excluir-desabilitado ~ * {
+    /* Garantir que outros elementos não sejam afetados */
+    opacity: 1 !important;
+    color: inherit !important;
+}
+
+/* ===== CORREÇÃO SIMPLES PARA ÍCONES DOS BOTÕES ===== */
+/* Garantir que os ícones dos botões de ação sejam sempre brancos */
+.btn-info i,
+.btn-warning i,
+.btn-danger i {
+    color: white !important;
+}
+
+/* Garantir que o botão desabilitado mantenha o ícone branco */
+.btn-excluir-desabilitado i {
+    color: white !important;
+}
+
+
+
+.papel-row:empty {
+    display: none;
+}
+
+.permissao-sera-removida {
+    background-color: #fef2f2;
+    border-left: 3px solid #ef4444;
+    opacity: 0.7;
+}
+
+.permissao-sera-removida .text-muted {
+    color: #dc2626 !important;
+}
+
+.permissoes-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.permissoes-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.permissoes-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.permissoes-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.permissao-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.permissao-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.permissao-row:empty {
+    display: none;
+}
+
+/* ===== 7. AVATARS E ÍCONES ===== */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.papel-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.permissao-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* ===== 8. BADGES DISCRETOS ===== */
+.badge-papel {
+    background-color: rgba(24, 87, 138, 0.1);
+    color: #18578A;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    border: 1px solid rgba(24, 87, 138, 0.2);
+}
+
+.badge-status {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badge-ativo {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+.badge-inativo {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.badge-tipo {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-local {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.badge-ad {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+/* ===== 9. BOTÕES DE AÇÃO ===== */
+.btn-action {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: white;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-action:hover {
+    background-color: #0aa2c0;
+    border-color: #0aa2c0;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+}
+
+.btn-info {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #0aa2c0;
+    border-color: #0aa2c0;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #e0a800;
+    color: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-primary {
+    background-color: #18578A;
+    border-color: #18578A;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #134a73;
+    border-color: #134a73;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(24, 87, 138, 0.3);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #c82333;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Botões sólidos padrão */
+.btn-secondary {
+    background-color: #5F6368;
+    border-color: #5F6368;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4A4D51;
+    border-color: #4A4D51;
+    color: white;
+}
+
+.btn-success {
+    background-color: #5EA853;
+    border-color: #5EA853;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+}
+
+.btn-action.disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-action.disabled:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===== BOTÃO DE EXCLUSÃO DESABILITADO - ISOLADO ===== */
+.btn-excluir-desabilitado {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-excluir-desabilitado:hover {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-excluir-desabilitado:focus {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    box-shadow: none !important;
+}
+
+/* ===== 10. MODAL PERSONALIZADO ===== */
+/* ===== CORREÇÃO Z-INDEX PARA MODAIS ===== */
+/* Forçar todos os modais Bootstrap a ficarem acima do header fixo */
+.modal {
+    z-index: 10001 !important; /* Acima do header (10000) */
+}
+
+.modal-backdrop {
+    z-index: 10000 !important; /* Mesmo nível do header */
+}
+
+/* ===== HEADER PERSONALIZADO DOS MODAIS ===== */
+.custom-modal-header {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 1.5rem;
+}
+
+.header-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
+
+.custom-modal-header .modal-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.custom-modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* ===== GARANTIAS ADICIONAIS PARA MODAIS ===== */
+/* Modal dialogs também precisam de z-index alto */
+.modal-dialog {
+    z-index: 10002 !important; /* Acima do modal */
+}
+
+/* Modal content para garantir */
+.modal-content {
+    z-index: 10003 !important; /* Máximo z-index */
+}
+
+/* Garantir que modais específicos funcionem */
+#modalUsuario,
+#modalPapel,
+#modalPermissao,
+#modalGerenciarPermissoes,
+#modalGerenciarUsuarios,
+#modalExclusaoInteligente {
+    z-index: 10001 !important;
+}
+
+/* Modais de confirmação também */
+[id*="modalConfirmacao"],
+[id*="confirmacaoModal"] {
+    z-index: 10001 !important;
+}
+
+/* ===== 11. SELEÇÃO DE PAPÉIS ===== */
+.papeis-selecao {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    padding: 0.5rem;
+}
+
+.papel-nao-excluivel {
+    /* Removido opacity e cursor para não afetar a linha inteira */
+}
+
+.papel-nao-excluivel:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* ===== 12. LISTA DE PERMISSÕES ===== */
+.permissoes-lista {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    padding: 0.5rem;
+}
+
+.permissao-checkbox {
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.permissao-checkbox:hover {
+    background-color: #f8f9fa;
+    border-color: #e5e7eb;
+}
+
+.permissao-checkbox.permissao-selecionada {
+    background-color: rgba(24, 87, 138, 0.1);
+    border-color: #18578A;
+}
+
+.permissao-checkbox .form-check-input:checked {
+    background-color: #18578A;
+    border-color: #18578A;
+}
+
+.permissao-info {
+    flex: 1;
+}
+
+.permissao-nome {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.permissao-descricao {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+.permissao-interno {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* ===== 13. CHECKBOX DE PAPÉIS ===== */
+.papel-checkbox {
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.papel-checkbox:hover {
+    background-color: #f8f9fa;
+    border-color: #e5e7eb;
+}
+
+.papel-checkbox .form-check-input:checked {
+    background-color: #18578A;
+    border-color: #18578A;
+}
+
+.papel-info {
+    flex: 1;
+}
+
+.papel-nome {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.papel-descricao {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+
+/* ===== 14. RESPONSIVIDADE ===== */
+@media (max-width: 1366px) {
+    .admin-tab-content {
+        padding: 1.5rem;
+    }
+
+    .admin-tabs {
+        padding: 0 0.75rem;
+    }
+
+    .admin-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .usuarios-table th,
+    .papeis-table th,
+    .permissoes-table th {
+        font-size: 13px;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 768px) {
+    .usuarios-table {
+        font-size: 12px;
+    }
+
+    .usuarios-table th,
+    .papeis-table th,
+    .permissoes-table th {
+        font-size: 12px;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .papeis-selecao {
+        max-height: 200px;
+    }
+
+    .papel-checkbox {
+        padding: 0.5rem;
+    }
+
+    .papel-nome {
+        font-size: 0.9rem;
+    }
+
+    .papel-descricao {
+        font-size: 0.8rem;
+    }
+}
+
+/* ===== 15. TABELAS ESPECÍFICAS - USUÁRIOS GERENCIAR ===== */
+.usuarios-gerenciar-table {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.usuarios-gerenciar-table th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: #18578A !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.usuarios-gerenciar-table th:hover {
+    background-color: #f3f4f6;
+    color: #18578A;
+}
+
+.usuarios-gerenciar-table td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.usuarios-gerenciar-row {
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.usuarios-gerenciar-row:hover {
+    background-color: #f8f9fa;
+    border-left: 3px solid #5EA853;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.usuarios-gerenciar-row:empty {
+    display: none;
+}
+
+/* ===== 16. PAGINAÇÃO ===== */
+.admin-pagination {
+    margin-top: 1rem;
+}
+
+.admin-pagination .page-link {
+    color: #18578A;
+    border-color: #e5e7eb;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.admin-pagination .page-link:hover {
+    color: #134a73;
+    background-color: #f8f9fa;
+    border-color: #18578A;
+}
+
+.admin-pagination .page-item.active .page-link {
+    background-color: #18578A;
+    border-color: #18578A;
+    color: white;
+}
+
+.admin-pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #ffffff;
+    border-color: #e5e7eb;
+}
+
+/* ===== 17. MODAL DER-PR - FORM-FLOATING E TABELA ===== */
+/* Correção para campos de filtro - evitar texto cortado */
+.modal .form-floating {
+    margin-bottom: 1rem;
+}
+
+.modal .form-floating .form-control {
+    height: 50px !important; /* ALTURA MÍNIMA PARA O TEXTO NÃO SER CORTADO */
+    padding: 0.75rem 0.75rem !important; /* PADDING ADEQUADO */
+    font-size: 0.9rem !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 8px !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+.modal .form-floating .form-control:focus {
+    border-color: #5EA853 !important;
+    box-shadow: 0 0 0 0.2rem rgba(94, 168, 83, 0.25) !important;
+}
+
+.modal .form-floating .form-label {
+    padding: 0.75rem 0.75rem !important; /* PADDING IGUAL AO INPUT */
+    font-size: 0.9rem !important;
+    color: #6c757d !important;
+    pointer-events: none !important;
+    transform-origin: 0 0 !important;
+    transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out !important;
+}
+
+.modal .form-floating .form-control:focus ~ .form-label,
+.modal .form-floating .form-control:not(:placeholder-shown) ~ .form-label {
+    opacity: 0.65 !important;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem) !important;
+}
+
+/* Garantir que o texto não seja cortado quando digitado */
+.modal .form-floating .form-control:not(:placeholder-shown) {
+    padding-top: 1.25rem !important;
+    padding-bottom: 0.25rem !important;
+}
+
+/* CABEÇALHO FIXO DA TABELA */
+.modal .table-responsive {
+    max-height: 60vh; /* ALTURA MÁXIMA PARA PERMITIR ROLAGEM */
+    overflow-y: auto; /* ROLAGEM VERTICAL */
+    position: relative;
+}
+
+.modal .consultar-derpr-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modal .consultar-derpr-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modal .consultar-derpr-table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    padding: 12px 8px;
+    text-align: left;
+    position: relative;
+}
+
+.modal .consultar-derpr-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.modal .consultar-derpr-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+/* EFEITO HOVER NO CABEÇALHO */
+.modal .consultar-derpr-table thead th:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transition: background 0.2s ease;
+}
+
+/* CORPO DA TABELA */
+.modal .consultar-derpr-table tbody {
+    background: white;
+}
+
+.modal .consultar-derpr-table tbody tr {
+    border-bottom: 1px solid #f1f3f4;
+    transition: background-color 0.2s ease;
+}
+
+.modal .consultar-derpr-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.modal .consultar-derpr-table tbody td {
+    padding: 12px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+/* RESPONSIVIDADE DO MODAL */
+@media (max-width: 768px) {
+    .modal .table-responsive {
+        max-height: 50vh;
+    }
+    
+    .modal .consultar-derpr-table thead th,
+    .modal .consultar-derpr-table tbody td {
+        padding: 8px 4px;
+        font-size: 0.85rem;
+    }
+}

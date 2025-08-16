@@ -1,0 +1,118 @@
+/* fontes: Poppins e lato - Google */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bakbak+One&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Passion+One&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+body {
+    position: relative;
+    background-image: url(/public/assets/images/fundo_app.png);
+    background-size: 100% 30%; /* Largura 30% da tela, altura automática */
+    background-repeat: no-repeat;
+    background-position: bottom; /* Alinhado com o canto inferior da tela */
+    background-attachment: fixed; /* Fixa a imagem de fundo na posição */
+}
+
+
+
+/* ajustes menu topo */
+.logo_topo {
+    color: #19578a;
+    color: #b3b3b3;
+    font-weight: 500;
+    
+}
+.logo_topo_menu{
+    border: 1px solid #eee;
+    padding: 1px;
+}
+.logo_topo span{
+    color:#5EA853;
+}
+.btn_abre_menu_lateral{
+    background-color: #fff;
+    border: 0px;
+}
+
+/* menu lateral esquerdo (principal) */
+.mnu_grupo{
+    text-transform: uppercase;
+    color: #414141;
+    font-weight: 700;
+    margin-top: 30px;
+}
+.mnu_principal{
+    list-style: none;
+}
+.mnu_principal li{
+    border-bottom: dashed 1px #eee;
+}
+.mnu_principal li a{
+    display: block;
+    padding: 10px 0px ;
+    color: #19578a;
+    text-decoration: none;
+    
+}
+
+.mnu_principal li a:hover{
+    color: #5EA853;
+    font-size: 1.0em;
+}
+
+.mnu_principal li a svg{
+    color:#5EA853;
+    font-size: 2em;
+}
+.mnu_principal li a span{
+    display: inline-block;
+    margin-left: 10px;
+    font-weight: 500;
+    
+}
+
+.mnu_data_base{
+    display: flex;
+}
+.mnu_select_data_base{
+    font-size: .8em;
+    color: #19578a;
+    height: 80%;
+    margin-top: 12px;
+    margin-left: 10px;
+    border: solid 1px #82bae756;
+    border-radius: 3px;
+}
+
+/* mensagem de boas vindas  */
+.txt_boas_vindas{
+    font-size: 1.2em;
+    margin-top: 150px;  
+    border: 1px dashed #d6d6d6; 
+    border-radius: 10px;
+    padding: 40px 0px;
+    background-color: #f1f1f125;
+}
+.txt_boas_vindas_nome{
+    color: #e7270d;   
+    text-decoration: underline;
+}
+.txt_boas_vindas_borda{
+    border: dashed 1px #c4c4c4;
+    border-radius: 5px;
+    padding: 2px 10px;
+}
+.cor_verde{
+    color:#5EA853;
+}
+.cor_azul{
+    color:#19578a;
+}
+.predio{
+    position: fixed;
+    bottom: 10px; /* Margem inferior de 100px */
+    right: 10px; /* Margem direita de 100px */
+    z-index: -9999;
+}
+.predio_txt{
+    position: relative;
+    top: -20px;
+    left: 50px;
+}

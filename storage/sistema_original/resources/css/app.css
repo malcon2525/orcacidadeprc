@@ -1,0 +1,9 @@
+
+/* css para layouts/app.blade.php */
+@import "applayout.css"; 
+
+@import "form.css"; 
+
+@import "modern-interface.css";
+
+@import "sidebar.css";

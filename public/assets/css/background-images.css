@@ -1,0 +1,53 @@
+/* ===== IMAGENS DE FUNDO - ALTA PRIORIDADE ===== */
+
+/* Fundo da aplicação - FORÇAR APLICAÇÃO */
+body {
+    position: relative !important;
+    background-image: url('/assets/images/fundo_app.png') !important;
+    background-size: 100% 30% !important;
+    background-repeat: no-repeat !important;
+    background-position: bottom !important;
+    background-attachment: fixed !important;
+    background-color: #f8f9fa !important;
+}
+
+/* Imagem de boas-vindas (cidade) - CANTO DIREITO */
+.predio {
+    position: fixed !important;
+    bottom: 10px !important;
+    right: 10px !important;
+    z-index: -11 !important;
+    width: 200px !important;
+    pointer-events: none !important;
+}
+
+.predio img {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.predio_txt {
+    position: relative !important;
+    top: -20px !important;
+    left: 50px !important;
+    text-align: center !important;
+    z-index: -11 !important;
+}
+
+.txt_boas_vindas_borda {
+    border: dashed 1px #c4c4c4 !important;
+    border-radius: 5px !important;
+    padding: 2px 10px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+.cor_verde {
+    color: #5EA853 !important;
+    font-weight: bold !important;
+}
+
+.cor_azul {
+    color: #19578a !important;
+    font-weight: bold !important;
+}
