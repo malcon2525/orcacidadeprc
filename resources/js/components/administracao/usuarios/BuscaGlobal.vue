@@ -58,7 +58,28 @@
 
             <!-- Resultados -->
             <div v-else-if="resultadosAgrupados.length > 0" class="table-responsive">
-                <table class="table table-hover align-middle usuarios-table">
+                <!-- Informações da busca -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {{ resultadosAgrupados.length }} usuário{{ resultadosAgrupados.length !== 1 ? 's' : '' }} encontrado{{ resultadosAgrupados.length !== 1 ? 's' : '' }}
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Filtros ativos -->
+                        <div v-if="filtros.usuario || filtros.papel || filtros.permissao" class="text-muted small">
+                            <i class="fas fa-filter me-1"></i>
+                            <span v-if="filtros.usuario">Usuário: "{{ filtros.usuario }}"</span>
+                            <span v-else-if="filtros.papel">Papel: "{{ filtros.papel }}"</span>
+                            <span v-else-if="filtros.permissao">Permissão: "{{ filtros.permissao }}"</span>
+                        </div>
+                        <!-- Tempo de busca -->
+                        <div class="text-muted small" v-if="tempoBusca">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ tempoBusca }}ms
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-hover align-middle table-admin">
                     <thead>
                         <tr>
                             <th class="fw-semibold text-custom" style="width: 30%;">Usuário</th>
@@ -66,10 +87,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(grupo, usuarioIndex) in resultadosAgrupados" :key="usuarioIndex" class="usuario-row">
+                        <tr v-for="(grupo, usuarioIndex) in resultadosAgrupados" :key="usuarioIndex" class="table-admin-row">
                             <td class="align-middle">
                                 <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-3">
+                                    <div class="avatar-admin me-3">
                                         <i class="fas fa-user"></i>
                                     </div>
                                     <div>
@@ -81,8 +102,8 @@
                             <td class="align-middle">
                                 <div v-for="(permissoes, papel) in grupo.papeis" :key="papel" class="mb-3">
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge-papel me-2">
-                                            <i class="fas fa-shield-alt me-1"></i>
+                                        <span class="badge me-2" :class="papel === 'Nenhum papel' ? 'badge-secondary' : 'badge-info'">
+                                            <i class="fas me-1" :class="papel === 'Nenhum papel' ? 'fa-user-slash' : 'fa-shield-alt'"></i>
                                             {{ papel }}
                                         </span>
                                         <small class="text-muted">{{ permissoes.length }} permissão{{ permissoes.length !== 1 ? 'ões' : 'ão' }}</small>
@@ -91,9 +112,10 @@
                                         <span 
                                             v-for="permissao in permissoes" 
                                             :key="permissao" 
-                                            class="badge-status badge-ativo me-1 mb-1 d-inline-block"
+                                            class="badge me-1 mb-1 d-inline-block"
+                                            :class="permissao === 'Nenhuma permissão' ? 'badge-warning' : 'badge-success'"
                                         >
-                                            <i class="fas fa-key me-1"></i>
+                                            <i class="fas me-1" :class="permissao === 'Nenhuma permissão' ? 'fa-exclamation-triangle' : 'fa-key'"></i>
                                             {{ permissao }}
                                         </span>
                                     </div>
@@ -108,7 +130,21 @@
             <div v-else class="text-center py-4">
                 <i class="fas fa-search text-muted mb-3" style="font-size: 3rem;"></i>
                 <h6 class="text-muted">Nenhum relacionamento encontrado</h6>
-                <p class="text-muted small mb-0">Tente ajustar os filtros ou verificar se há dados cadastrados.</p>
+                <p class="text-muted small mb-0">
+                    {{ getMensagemSemResultados() }}
+                </p>
+                <div v-if="resultados.length === 0 && !temFiltrosAtivos" class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Para ver dados aqui, você precisa ter usuários, papéis e permissões cadastrados e relacionados.
+                    </small>
+                </div>
+                <div v-else-if="temFiltrosAtivos" class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Tente ajustar os filtros ou usar termos mais amplos na busca.
+                    </small>
+                </div>
             </div>
         </div>
 
@@ -152,6 +188,7 @@ export default {
                 papel: '',
                 permissao: ''
             },
+            tempoBusca: null,
             toast: null,
             toastIcon: '',
             toastTitle: '',
@@ -174,7 +211,7 @@ export default {
             });
         },
         
-        // Agrupar resultados por usuário (igual antes)
+        // Agrupar resultados por usuário
         resultadosAgrupados() {
             const agrupados = {};
             
@@ -196,6 +233,11 @@ export default {
             });
             
             return Object.values(agrupados);
+        },
+        
+        // Verificar se há filtros ativos
+        temFiltrosAtivos() {
+            return this.filtros.usuario || this.filtros.papel || this.filtros.permissao;
         }
     },
 
@@ -227,43 +269,81 @@ export default {
             this.filtrosVisiveis = !this.filtrosVisiveis;
         },
 
-        // Carregar todos os dados uma vez (igual à aba Usuários)
+        // Carregar todos os dados uma vez
         async carregarDados() {
             try {
                 this.loading = true;
+                
                 // Verificar se axios está disponível
                 if (typeof axios === 'undefined') {
                     console.error('Axios não está disponível');
                     this.resultados = [];
                     return;
                 }
-                const response = await axios.get('/api/administracao/busca-global');
-                this.resultados = response.data.resultados || [];
+                
+                // Construir parâmetros de filtro
+                const params = {};
+                if (this.filtros.usuario) params.usuario = this.filtros.usuario;
+                if (this.filtros.papel) params.papel = this.filtros.papel;
+                if (this.filtros.permissao) params.permissao = this.filtros.permissao;
+                
+                const response = await axios.get('/api/administracao/busca-global', { params });
+                
+                // Validar estrutura da resposta
+                if (response.data && response.data.success && response.data.resultados) {
+                    this.resultados = response.data.resultados;
+                    this.tempoBusca = response.data.tempo_busca || null;
+                    console.log('Dados carregados com sucesso:', this.resultados.length, 'registros');
+                    console.log('Filtros aplicados:', response.data.filtros_aplicados);
+                    console.log('Dados brutos:', this.resultados);
+                } else {
+                    console.error('Estrutura de resposta inválida:', response.data);
+                    this.resultados = [];
+                    this.tempoBusca = null;
+                    if (this.toast) {
+                        this.mostrarToast('Aviso', 'Estrutura de dados inválida', 'fa-exclamation-triangle text-warning');
+                    }
+                }
+                
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
                 this.resultados = [];
-                // Só mostrar toast se o toast estiver disponível
+                this.tempoBusca = null;
+                
+                // Mostrar mensagem de erro mais específica
+                let errorMessage = 'Erro ao carregar dados';
+                if (error.response?.status === 403) {
+                    errorMessage = 'Acesso negado. Permissão insuficiente.';
+                } else if (error.response?.status === 500) {
+                    errorMessage = 'Erro interno do servidor.';
+                } else if (error.response?.data?.mensagem) {
+                    errorMessage = error.response.data.mensagem;
+                }
+                
                 if (this.toast) {
-                    this.mostrarToast('Erro', 'Erro ao carregar dados', 'fa-exclamation-circle text-danger');
+                    this.mostrarToast('Erro', errorMessage, 'fa-exclamation-circle text-danger');
                 }
             } finally {
                 this.loading = false;
             }
         },
 
-        // Filtrar no frontend (igual à aba Usuários)
+        // Realizar busca com filtros
         realizarBusca() {
             // Debounce para evitar muitas operações
             clearTimeout(this.timeoutBusca);
             this.timeoutBusca = setTimeout(() => {
-                // Filtro acontece automaticamente no computed
-            }, 300);
+                // Recarregar dados com os filtros aplicados
+                this.carregarDados();
+            }, 500);
         },
 
         limparFiltros() {
             this.filtros.usuario = '';
             this.filtros.papel = '';
             this.filtros.permissao = '';
+            // Recarregar dados sem filtros
+            this.carregarDados();
         },
 
         mostrarToast(titulo, mensagem, icone) {
@@ -275,6 +355,19 @@ export default {
                 this.toast.show();
             }
         },
+        
+        // Obter mensagem apropriada quando não há resultados
+        getMensagemSemResultados() {
+            if (this.resultados.length === 0) {
+                return 'Não há dados cadastrados no sistema.';
+            }
+            
+            if (this.temFiltrosAtivos) {
+                return 'Nenhum resultado encontrado para os filtros aplicados.';
+            }
+            
+            return 'Tente ajustar os filtros de busca.';
+        }
 
 
 
@@ -283,7 +376,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 /* Estilos específicos para a aba Busca Global */
 .permissoes-container {
     max-height: 200px;
@@ -309,19 +402,10 @@ export default {
     background: #a8a8a8;
 }
 
-/* Corrigir badges quebrados */
-.badge-status {
+/* Melhorar espaçamento dos badges */
+.badge {
     white-space: nowrap;
     overflow: visible;
     word-break: keep-all;
-}
-
-/* Remover bordas residuais */
-.usuario-row td:last-child {
-    border-right: none !important;
-}
-
-.usuario-row:hover td:last-child {
-    border-right: none !important;
 }
 </style>

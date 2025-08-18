@@ -84,18 +84,48 @@ class ConfigController extends Controller
             $enabled = Cache::get('ad_sync_enabled');
             $updatedAt = Cache::get('ad_sync_updated_at');
 
+            // Validar se as configurações existem
+            $frequencyExists = $frequency !== null;
+            $timeExists = $time !== null;
+            $enabledExists = $enabled !== null;
+            $updatedAtExists = $updatedAt !== null;
+
+            // Validar se as configurações são válidas
+            $frequencyValid = in_array($frequency, ['daily', 'weekly', 'monthly']);
+            $timeValid = $time && preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $time);
+            $enabledValid = is_bool($enabled);
+
+            // Calcular próxima execução
+            $nextExecution = $this->calculateNextExecution($frequency, $time, $enabled);
+
+            // Determinar se tudo está válido
+            $allValid = $frequencyValid && $timeValid && $enabledValid;
+
             $tests = [
-                'frequency_exists' => $frequency !== null,
-                'time_exists' => $time !== null,
-                'enabled_exists' => $enabled !== null,
-                'updated_at_exists' => $updatedAt !== null,
-                'frequency_valid' => in_array($frequency, ['daily', 'weekly', 'monthly']),
-                'time_valid' => preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $time),
-                'next_execution' => $this->calculateNextExecution($frequency, $time, $enabled)
+                'frequency_exists' => $frequencyExists,
+                'time_exists' => $timeExists,
+                'enabled_exists' => $enabledExists,
+                'updated_at_exists' => $updatedAtExists,
+                'frequency_valid' => $frequencyValid,
+                'time_valid' => $timeValid,
+                'enabled_valid' => $enabledValid,
+                'next_execution' => $nextExecution,
+                'overall_valid' => $allValid
             ];
+
+            // Determinar status e mensagem
+            if ($allValid) {
+                $status = 'success';
+                $message = 'Configurações válidas!';
+            } else {
+                $status = 'warning';
+                $message = 'Configurações com problemas';
+            }
 
             return response()->json([
                 'success' => true,
+                'status' => $status,
+                'message' => $message,
                 'data' => [
                     'tests' => $tests,
                     'config' => [
@@ -135,20 +165,22 @@ class ConfigController extends Controller
                 'sync_frequency.required' => 'A frequência é obrigatória',
                 'sync_frequency.in' => 'Frequência inválida',
                 'sync_time.required' => 'O horário é obrigatório',
-                'sync_time.date_format' => 'Formato de horário inválido'
+                'sync_time.date_format' => 'Formato de horário inválido (HH:MM)'
             ]);
 
-            // Salvar configurações no cache
-            Cache::put('ad_sync_frequency', $request->sync_frequency);
-            Cache::put('ad_sync_time', $request->sync_time);
-            Cache::put('ad_sync_enabled', $request->get('sync_enabled', true));
-            Cache::put('ad_sync_updated_at', now());
+            // Salvar configurações no cache com expiração longa
+            $now = now();
+            Cache::put('ad_sync_frequency', $request->sync_frequency, now()->addYears(10));
+            Cache::put('ad_sync_time', $request->sync_time, now()->addYears(10));
+            Cache::put('ad_sync_enabled', $request->get('sync_enabled', true), now()->addYears(10));
+            Cache::put('ad_sync_updated_at', $now->toISOString(), now()->addYears(10));
 
             Log::info('Configurações AD atualizadas', [
-                'frequency' => $request->sync_frequency,
-                'time' => $request->sync_time,
-                'enabled' => $request->get('sync_enabled', true),
-                'updated_by' => auth()->id()
+                'frequencia' => $request->sync_frequency,
+                'horario' => $request->sync_time,
+                'habilitado' => $request->get('sync_enabled', true),
+                'atualizado_em' => $now->toISOString(),
+                'atualizado_por' => auth()->id()
             ]);
 
             return response()->json([
@@ -158,7 +190,7 @@ class ConfigController extends Controller
                     'sync_frequency' => $request->sync_frequency,
                     'sync_time' => $request->sync_time,
                     'sync_enabled' => $request->get('sync_enabled', true),
-                    'updated_at' => now()
+                    'updated_at' => $now->toISOString()
                 ]
             ]);
 
@@ -176,35 +208,70 @@ class ConfigController extends Controller
     }
 
     /**
-     * Calcular próxima execução
+     * Calcular próxima execução baseada nas configurações
      */
     private function calculateNextExecution($frequency, $time, $enabled)
     {
-        if (!$enabled) {
-            return null;
-        }
-
-        $now = now();
-        $timeParts = explode(':', $time);
-        $hour = (int) $timeParts[0];
-        $minute = (int) $timeParts[1];
-
-        $nextExecution = $now->copy()->setTime($hour, $minute, 0);
-
-        if ($nextExecution <= $now) {
-            switch ($frequency) {
-                case 'daily':
-                    $nextExecution->addDay();
-                    break;
-                case 'weekly':
-                    $nextExecution->addWeek();
-                    break;
-                case 'monthly':
-                    $nextExecution->addMonth();
-                    break;
+        try {
+            // Se não estiver habilitado, retornar mensagem
+            if (!$enabled) {
+                return 'Sincronização desabilitada';
             }
-        }
 
-        return $nextExecution->format('Y-m-d H:i:s');
+            // Se não tiver frequência ou horário válidos, retornar mensagem
+            if (!$frequency || !$time) {
+                return 'Configuração incompleta';
+            }
+
+            $now = now();
+            $timeParts = explode(':', $time);
+            
+            // Validar formato do horário
+            if (count($timeParts) !== 2) {
+                return 'Formato de horário inválido';
+            }
+            
+            $hour = (int) $timeParts[0];
+            $minute = (int) $timeParts[1];
+            
+            // Validar valores do horário
+            if ($hour < 0 || $hour > 23 || $minute < 0 || $minute > 59) {
+                return 'Horário inválido';
+            }
+
+            $nextExecution = $now->copy()->setTime($hour, $minute, 0);
+
+            // Se já passou do horário hoje, calcular para o próximo período
+            if ($nextExecution <= $now) {
+                switch ($frequency) {
+                    case 'daily':
+                        $nextExecution->addDay();
+                        break;
+                    case 'weekly':
+                        // Próximo domingo
+                        $daysToSunday = (7 - $nextExecution->dayOfWeek) % 7;
+                        $nextExecution->addDays($daysToSunday);
+                        break;
+                    case 'monthly':
+                        $nextExecution->addMonth();
+                        break;
+                    default:
+                        $nextExecution->addDay(); // Padrão diário
+                        break;
+                }
+            }
+
+            return $nextExecution->format('d/m/Y \à\s H:i');
+            
+        } catch (\Exception $e) {
+            Log::error('Erro ao calcular próxima execução', [
+                'frequency' => $frequency,
+                'time' => $time,
+                'enabled' => $enabled,
+                'error' => $e->getMessage()
+            ]);
+            
+            return 'Erro no cálculo';
+        }
     }
 }

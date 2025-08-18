@@ -3,7 +3,7 @@
         <div class="card shadow-sm border-0 rounded-3 mb-4">
             <!-- Cabeçalho Compacto -->
             <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-semibold" style="color: #5EA853;">
+                <h6 class="mb-0 fw-semibold titulo-principal">
                     <i class="fas fa-users-cog me-2"></i>Gerenciamento de Usuários e Permissões de Acesso
                 </h6>
             </div>
@@ -136,22 +136,22 @@
 
                             <!-- Tabela de Usuários -->
                             <div class="table-responsive" v-if="dadosFiltrados.length > 0">
-                                <table class="table table-hover align-middle usuarios-table">
+                                <table class="table table-hover align-middle table-admin">
                                     <thead>
                                         <tr>
                                             <th class="fw-semibold text-custom">Usuário</th>
                                             <th class="fw-semibold text-custom">Email</th>
                                             <th class="fw-semibold text-custom">Papéis</th>
-                                            <th class="fw-semibold text-custom text-center">Status</th>
-                                            <th class="fw-semibold text-custom text-center">Tipo</th>
-                                            <th class="fw-semibold text-end text-custom">Ações</th>
+                                            <th class="fw-semibold text-custom text-center" style="width: 100px;">Status</th>
+                                            <th class="fw-semibold text-custom text-center" style="width: 100px;">Tipo</th>
+                                            <th class="fw-semibold text-end text-custom" style="width: 100px;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="usuario in dadosPaginados" :key="usuario.id" class="usuario-row">
+                                        <tr v-for="usuario in dadosPaginados" :key="usuario.id" class="table-admin-row">
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <div class="user-avatar me-2">
+                                                    <div class="avatar-admin me-2">
                                                         <i class="fas fa-user-circle text-muted"></i>
                                                     </div>
                                                     <div class="fw-medium">{{ usuario.name }}</div>
@@ -166,7 +166,7 @@
                                                 <div class="papeis-badges">
                                                     <span v-for="papel in (usuario.roles || [])" 
                                                           :key="papel.id" 
-                                                          class="badge badge-papel">
+                                                          class="badge badge-info">
                                                         {{ papel.display_name }}
                                                     </span>
                                                     <span v-if="!usuario.roles || usuario.roles.length === 0" class="text-muted small">
@@ -175,13 +175,13 @@
                                                 </div>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge badge-status" :class="usuario.is_active ? 'badge-ativo' : 'badge-inativo'">
+                                                <span class="badge" :class="usuario.is_active ? 'badge-success' : 'badge-danger'">
                                                     <i class="fas" :class="usuario.is_active ? 'fa-check-circle' : 'fa-times-circle'"></i>
                                                     {{ usuario.is_active ? 'ATIVO' : 'INATIVO' }}
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge badge-tipo" :class="usuario.login_type === 'ad' ? 'badge-ad' : 'badge-local'">
+                                                <span class="badge" :class="usuario.login_type === 'ad' ? 'badge-warning' : 'badge-info'">
                                                     {{ usuario.login_type === 'ad' ? 'AD' : 'LOCAL' }}
                                                 </span>
                                             </td>
@@ -210,7 +210,7 @@
 
                             <!-- Estado Vazio -->
                             <div v-if="!loading && dadosFiltrados.length === 0" class="text-center py-5">
-                                <i class="fas fa-users text-muted mb-3" style="font-size: 3rem;"></i>
+                                <i class="fas fa-users text-muted mb-3 icon-large"></i>
                                 <h6 class="text-muted mb-2">Nenhum usuário encontrado</h6>
                                 <p class="text-muted small mb-0">Tente ajustar os filtros ou criar um novo usuário.</p>
                             </div>
@@ -270,19 +270,19 @@
 
                             <!-- Tabela de Papéis -->
                             <div v-if="!loadingPapeis && papeisFiltrados.length > 0" class="table-responsive">
-                                <table class="table table-hover align-middle papeis-table">
+                                <table class="table table-hover align-middle table-admin">
                                     <thead>
                                         <tr>
                                             <th>Papel</th>
                                             <th>Nome Interno</th>
-                                            <th>Permissões</th>
-                                            <th>Usuários</th>
-                                            <th>Status</th>
-                                            <th class="text-end">Ações</th>
+                                            <th style="width: 100px;">Permissões</th>
+                                            <th style="width: 100px;">Usuários</th>
+                                            <th style="width: 100px;">Status</th>
+                                            <th class="text-end" style="width: 180px;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="papel in papeisPaginados" :key="papel.id" class="papel-row">
+                                        <tr v-for="papel in papeisPaginados" :key="papel.id" class="table-admin-row">
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <!-- <div class="papel-avatar me-2">
@@ -298,17 +298,17 @@
                                                 <code class="text-muted">{{ papel.name }}</code>
                                             </td>
                                             <td>
-                                                <span class="badge badge-papel">
+                                                <span class="badge badge-light">
                                                     {{ papel.permissions_count || 0 }} permissões
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge badge-papel">
+                                                <span class="badge badge-light">
                                                     {{ papel.users_count || 0 }} usuários
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge badge-status" :class="papel.is_active ? 'badge-ativo' : 'badge-inativo'">
+                                                <span class="badge" :class="papel.is_active ? 'badge-success' : 'badge-danger'">
                                                     <i class="fas" :class="papel.is_active ? 'fa-check-circle' : 'fa-times-circle'"></i>
                                                     {{ papel.is_active ? 'ATIVO' : 'INATIVO' }}
                                                 </span>
@@ -349,7 +349,7 @@
 
                             <!-- Estado Vazio -->
                             <div v-if="!loadingPapeis && papeisFiltrados.length === 0" class="text-center py-5">
-                                <i class="fas fa-user-tag text-muted mb-3" style="font-size: 3rem;"></i>
+                                <i class="fas fa-user-tag text-muted mb-3 icon-large"></i>
                                 <h6 class="text-muted mb-2">Nenhum papel encontrado</h6>
                                 <p class="text-muted small mb-0">Tente ajustar os filtros ou criar um novo papel.</p>
                             </div>
@@ -409,22 +409,22 @@
 
                             <!-- Tabela de Permissões -->
                             <div v-if="!loadingPermissoes && permissoesFiltradas.length > 0" class="table-responsive">
-                                <table class="table table-hover align-middle permissoes-table">
+                                <table class="table table-hover align-middle table-admin">
                                     <thead>
                                         <tr>
-                                            <th>Permissão</th>
-                                            <th>Nome Interno</th>
-                                            <th>Papéis</th>
-                                            <th>Usuários Afetados</th>
-                                            <th>Status</th>
-                                            <th class="text-end">Ações</th>
+                                            <th >Permissão</th>
+                                            <th >Nome Interno</th>
+                                            <th style="width: 100px;">Papéis</th>
+                                            <th style="width: 100px;">Usuários Afetados</th>
+                                            <th style="width: 100px;">Status</th>
+                                            <th class="text-end" style="width: 180px;">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="permissao in permissoesPaginadas" :key="permissao.id" class="permissao-row">
+                                        <tr v-for="permissao in permissoesPaginadas" :key="permissao.id" class="table-admin-row">
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <div class="permissao-avatar me-2">
+                                                    <div class="avatar-admin me-2">
                                                         <i class="fas fa-key text-muted"></i>
                                                     </div>
                                                     <div>
@@ -437,17 +437,17 @@
                                                 <code class="text-muted">{{ permissao.name }}</code>
                                             </td>
                                             <td>
-                                                <span class="badge badge-papel">
+                                                <span class="badge badge-light">
                                                     {{ permissao.roles_count || 0 }} papéis
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge badge-papel">
+                                                <span class="badge badge-light">
                                                     {{ permissao.users_count || 0 }} usuários
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge badge-status" :class="permissao.is_active ? 'badge-ativo' : 'badge-inativo'">
+                                                <span class="badge" :class="permissao.is_active ? 'badge-success' : 'badge-danger'">
                                                     <i class="fas" :class="permissao.is_active ? 'fa-check-circle' : 'fa-times-circle'"></i>
                                                     {{ permissao.is_active ? 'ATIVO' : 'INATIVO' }}
                                                 </span>
@@ -483,7 +483,7 @@
 
                             <!-- Estado Vazio -->
                             <div v-if="!loadingPermissoes && permissoesFiltradas.length === 0" class="text-center py-5">
-                                <i class="fas fa-key text-muted mb-3" style="font-size: 3rem;"></i>
+                                <i class="fas fa-key text-muted mb-3 icon-large"></i>
                                 <h6 class="text-muted mb-2">Nenhuma permissão encontrada</h6>
                                 <p class="text-muted small mb-0">Tente ajustar os filtros ou verificar se há permissões cadastradas.</p>
                             </div>
@@ -524,7 +524,7 @@
                         <ul class="pagination admin-pagination mb-0">
                             <!-- Botão Anterior -->
                             <li class="page-item" :class="{ disabled: paginaAtual === 1 }">
-                                <button class="page-link border-0 bg-transparent" @click="mudarPagina(paginaAtual - 1)" aria-label="Anterior" :disabled="paginaAtual === 1">
+                                <button class="page-link page-link-transparent" @click="mudarPagina(paginaAtual - 1)" aria-label="Anterior" :disabled="paginaAtual === 1">
                                     <i class="fas fa-chevron-left"></i>
                                 </button>
                             </li>
@@ -535,7 +535,7 @@
                                 class="page-item" 
                                 :class="{ active: pagina === paginaAtual, disabled: pagina === '...' }">
                                 <button v-if="pagina !== '...'" 
-                                        class="page-link border-0 bg-transparent" 
+                                        class="page-link page-link-transparent" 
                                         @click="mudarPagina(pagina)"
                                         style="cursor: pointer; width: 100%; text-decoration: none;">
                                     {{ pagina }}
@@ -545,7 +545,7 @@
                             
                             <!-- Botão Próximo -->
                             <li class="page-item" :class="{ disabled: paginaAtual === totalPaginas }">
-                                <button class="page-link border-0 bg-transparent" @click="mudarPagina(paginaAtual + 1)" aria-label="Próximo" :disabled="paginaAtual === totalPaginas">
+                                <button class="page-link page-link-transparent" @click="mudarPagina(paginaAtual + 1)" aria-label="Próximo" :disabled="paginaAtual === totalPaginas">
                                     <i class="fas fa-chevron-right"></i>
                                 </button>
                             </li>
@@ -617,11 +617,10 @@
                                     <div class="form-floating">
                                         <input 
                                             type="text" 
-                                            class="form-control" 
+                                            class="form-control bg-light" 
                                             id="tipoLogin" 
                                             value="Local"
                                             readonly
-                                            style="background-color: #f8f9fa;"
                                         >
                                         <label for="tipoLogin">Tipo de Login *</label>
                                         <small class="text-muted">Usuários criados manualmente são sempre do tipo Local</small>
@@ -972,10 +971,10 @@
                         
                         <div v-else>
                             <!-- LAYOUT SIMPLES EM DUAS COLUNAS -->
-                            <div class="d-flex flex-wrap">
+                            <div class="layout-two-columns">
                                 <!-- COLUNA 1: Permissões Atuais -->
-                                <div class="coluna-permissoes">
-                                    <div class="card border-primary">
+                                <div class="column-flexible">
+                                    <div class="card card-border-primary">
                                         <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0">
                                                 <i class="fas fa-key me-2"></i>
@@ -999,7 +998,7 @@
                                             </div>
                                             
                                             <div v-if="permissoesAtuaisFiltradas.length === 0" class="text-center py-3">
-                                                <i class="fas fa-key text-muted mb-2" style="font-size: 2rem;"></i>
+                                                <i class="fas fa-key text-muted mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhuma permissão encontrada</p>
                                             </div>
                                             <div v-else>
@@ -1018,8 +1017,8 @@
                                 </div>
 
                                 <!-- COLUNA 2: Adicionar Permissões -->
-                                <div class="coluna-permissoes">
-                                    <div class="card border-success">
+                                <div class="column-flexible">
+                                    <div class="card card-border-success">
                                         <div class="card-header bg-success text-white">
                                             <h6 class="mb-0">
                                                 <i class="fas fa-plus me-2"></i>
@@ -1043,7 +1042,7 @@
                                             </div>
                                             
                                             <div v-if="permissoesDisponiveisFiltradas.length === 0" class="text-center py-3">
-                                                <i class="fas fa-check-circle text-success mb-2" style="font-size: 2rem;"></i>
+                                                <i class="fas fa-check-circle text-success mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhuma permissão disponível</p>
                                             </div>
                                             <div v-else>
@@ -1114,7 +1113,7 @@
                                 Usuários Afetados ({{ detalhesExclusao.usuarios.length }})
                             </h6>
                             <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-admin table-admin-sm">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Nome</th>
@@ -1127,9 +1126,9 @@
                                             <td>{{ usuario.name }}</td>
                                             <td>{{ usuario.email }}</td>
                                             <td>
-                                                <span class="badge" :class="usuario.is_active ? 'badge-ativo' : 'badge-inativo'">
-                                                    {{ usuario.is_active ? 'ATIVO' : 'INATIVO' }}
-                                                </span>
+                                                                                            <span class="badge" :class="usuario.is_active ? 'badge-success' : 'badge-danger'">
+                                                {{ usuario.is_active ? 'ATIVO' : 'INATIVO' }}
+                                            </span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -1144,7 +1143,7 @@
                                 Permissões Afetadas ({{ detalhesExclusao.permissoes.length }})
                             </h6>
                             <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-admin table-admin-sm">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Permissão</th>
@@ -1157,9 +1156,9 @@
                                             <td>{{ permissao.display_name }}</td>
                                             <td><code>{{ permissao.name }}</code></td>
                                             <td>
-                                                <span class="badge" :class="permissao.is_active ? 'badge-ativo' : 'badge-inativo'">
-                                                    {{ permissao.is_active ? 'ATIVO' : 'INATIVO' }}
-                                                </span>
+                                                                                            <span class="badge" :class="permissao.is_active ? 'badge-success' : 'badge-danger'">
+                                                {{ permissao.is_active ? 'ATIVO' : 'INATIVO' }}
+                                            </span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -1238,10 +1237,10 @@
                         
                         <div v-else>
                             <!-- LAYOUT SIMPLES EM DUAS COLUNAS -->
-                            <div class="d-flex flex-wrap">
+                            <div class="layout-two-columns">
                                 <!-- COLUNA 1: Usuários Atuais -->
-                                <div class="coluna-usuarios">
-                                    <div class="card border-primary">
+                                <div class="column-flexible">
+                                    <div class="card card-border-primary">
                                         <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0">
                                                 <i class="fas fa-user-check me-2"></i>
@@ -1265,13 +1264,13 @@
                                             </div>
                                             
                                             <div v-if="usuariosAtuaisFiltrados.length === 0" class="text-center py-3">
-                                                <i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i>
+                                                <i class="fas fa-users text-muted mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum usuário encontrado</p>
                                             </div>
                                             <div v-else>
                                                 <div v-for="usuario in usuariosAtuaisFiltrados" :key="usuario.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div class="d-flex align-items-center">
-                                                        <div class="user-avatar me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
+                                                        <div class="avatar-admin me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
                                                         <div>
                                                             <div class="fw-medium">{{ usuario.name }}</div>
                                                             <small class="text-muted">{{ usuario.email }}</small>
@@ -1287,9 +1286,9 @@
                                 </div>
 
                                 <!-- COLUNA 2: Adicionar Usuários -->
-                                <div class="coluna-usuarios">
-                                    <div class="card border-success">
-                                        <div class="card-header bg-success text-white">
+                                <div class="column-flexible">
+                                    <div class="card card-border-success">
+                                        <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0">
                                                 <i class="fas fa-user-plus me-2"></i>
                                                 Adicionar Usuários ({{ usuariosDisponiveisFiltrados.length }})
@@ -1312,13 +1311,13 @@
                                             </div>
                                             
                                             <div v-if="usuariosDisponiveisFiltrados.length === 0" class="text-center py-3">
-                                                <i class="fas fa-check-circle text-success mb-2" style="font-size: 2rem;"></i>
+                                                <i class="fas fa-check-circle text-success mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum usuário disponível</p>
                                             </div>
                                             <div v-else>
                                                 <div v-for="usuario in usuariosDisponiveisFiltrados" :key="usuario.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div class="d-flex align-items-center">
-                                                        <div class="user-avatar me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
+                                                        <div class="avatar-admin me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
                                                         <div>
                                                             <div class="fw-medium">{{ usuario.name }}</div>
                                                             <small class="text-muted">{{ usuario.email }}</small>
@@ -1405,9 +1404,9 @@
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Status:</strong> 
-                                                <span class="badge" :class="permissaoSelecionada.is_active ? 'badge-ativo' : 'badge-inativo'">
-                                                    {{ permissaoSelecionada.is_active ? 'ATIVO' : 'INATIVO' }}
-                                                </span>
+                                                                                            <span class="badge" :class="permissaoSelecionada.is_active ? 'badge-success' : 'badge-danger'">
+                                                {{ permissaoSelecionada.is_active ? 'ATIVO' : 'INATIVO' }}
+                                            </span>
                                             </p>
                                             <p><strong>Descrição:</strong> {{ permissaoSelecionada.description }}</p>
                                         </div>
@@ -1422,7 +1421,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div v-if="papeisPermissao.length === 0" class="text-center py-3">
-                                        <i class="fas fa-user-tag text-muted mb-2" style="font-size: 2rem;"></i>
+                                        <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
                                         <p class="text-muted mb-0">Nenhum papel possui esta permissão</p>
                                     </div>
                                     <div v-else>
@@ -1431,7 +1430,7 @@
                                                 <div class="fw-medium">{{ papel.display_name }}</div>
                                                 <small class="text-muted">{{ papel.description }}</small>
                                             </div>
-                                            <span class="badge" :class="papel.is_active ? 'badge-ativo' : 'badge-inativo'">
+                                            <span class="badge" :class="papel.is_active ? 'badge-success' : 'badge-danger'">
                                                 {{ papel.is_active ? 'ATIVO' : 'INATIVO' }}
                                             </span>
                                         </div>
@@ -1446,19 +1445,19 @@
                                 </div>
                                 <div class="card-body">
                                     <div v-if="usuariosPermissao.length === 0" class="text-center py-3">
-                                        <i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i>
+                                        <i class="fas fa-users text-muted mb-2 icon-medium"></i>
                                         <p class="text-muted mb-0">Nenhum usuário possui esta permissão</p>
                                     </div>
                                     <div v-else>
                                         <div v-for="usuario in usuariosPermissao" :key="usuario.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                             <div class="d-flex align-items-center">
-                                                <div class="user-avatar me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
+                                                <div class="avatar-admin me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
                                                 <div>
                                                     <div class="fw-medium">{{ usuario.name }}</div>
                                                     <small class="text-muted">{{ usuario.email }}</small>
                                                 </div>
                                             </div>
-                                            <span class="badge" :class="usuario.is_active ? 'badge-ativo' : 'badge-inativo'">
+                                            <span class="badge" :class="usuario.is_active ? 'badge-success' : 'badge-danger'">
                                                 {{ usuario.is_active ? 'ATIVO' : 'INATIVO' }}
                                             </span>
                                         </div>
@@ -1504,10 +1503,10 @@
                         
                         <div v-else>
                             <!-- LAYOUT SIMPLES EM DUAS COLUNAS -->
-                            <div class="d-flex flex-wrap">
+                            <div class="layout-two-columns">
                                 <!-- COLUNA 1: Papéis Atuais -->
-                                <div class="coluna-papeis">
-                                    <div class="card border-primary">
+                                <div class="column-flexible">
+                                    <div class="card card-border-primary">
                                         <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0">
                                                 <i class="fas fa-user-tag me-2"></i>
@@ -1516,7 +1515,7 @@
                                         </div>
                                         <div class="card-body">
                                             <div v-if="papeisAtuaisPermissao.length === 0" class="text-center py-3">
-                                                <i class="fas fa-user-tag text-muted mb-2" style="font-size: 2rem;"></i>
+                                                <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum papel encontrado</p>
                                             </div>
                                             <div v-else>
@@ -1535,8 +1534,8 @@
                                 </div>
 
                                 <!-- COLUNA 2: Adicionar Papéis -->
-                                <div class="coluna-papeis">
-                                    <div class="card border-success">
+                                <div class="column-flexible">
+                                    <div class="card card-border-success">
                                         <div class="card-header bg-success text-white">
                                             <h6 class="mb-0">
                                                 <i class="fas fa-plus me-2"></i>
@@ -1545,7 +1544,7 @@
                                         </div>
                                         <div class="card-body">
                                             <div v-if="papeisDisponiveisPermissao.length === 0" class="text-center py-3">
-                                                <i class="fas fa-check-circle text-success mb-2" style="font-size: 2rem;"></i>
+                                                <i class="fas fa-check-circle text-success mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum papel disponível</p>
                                             </div>
                                             <div v-else>
@@ -1574,7 +1573,7 @@
     <div class="modal fade" id="modalConfirmacaoExclusao" tabindex="-1" ref="modalConfirmacaoRef">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header border-0">
+                <div class="modal-header modal-header-borderless">
                     <h5 class="modal-title fw-semibold">
                         <i class="fas fa-exclamation-triangle text-warning me-2"></i>
                         Confirmar Exclusão
@@ -1584,7 +1583,7 @@
                 <div class="modal-body">
                     <p class="mb-0" v-html="mensagemConfirmacao"></p>
                 </div>
-                <div class="modal-footer border-0">
+                <div class="modal-footer modal-footer-borderless">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" @click="confirmarExclusao" :disabled="excluindo">
                         <span v-if="excluindo" class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -2367,23 +2366,39 @@ export default {
         
         // Excluir papel
         async excluirPapel(papel) {
-            this.itemParaExcluir = papel;
-            this.tipoExclusao = 'papel';
-            this.mensagemConfirmacao = `Tem certeza que deseja excluir o papel <strong>"${papel.display_name}"</strong>?`;
+            if (!confirm(`Tem certeza que deseja excluir o papel "${papel.display_name}"?`)) {
+                return;
+            }
             
-            const modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacaoExclusao'));
-            modalConfirmacao.show();
+            try {
+                const response = await axios.delete(`/api/administracao/papeis/${papel.id}`);
+                console.log('Resposta da exclusão:', response.data);
+                
+                this.mostrarToast('Sucesso', `Papel '${papel.display_name}' excluído com sucesso!`, 'fa-check-circle text-success');
+                await this.carregarPapeis();
+            } catch (error) {
+                console.error('Erro ao excluir papel:', error);
+                const mensagem = error.response?.data?.message || 'Erro ao excluir papel';
+                this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
+            }
         },
         
         // Handler para exclusão de papel
-        handleExcluirPapel(papel) {
-            // console.log('Click detectado no botão de exclusão do papel:', papel.display_name);
-            // console.log('Papel tem vínculos?', papel.users_count > 0 || papel.permissions_count > 0);
+        async handleExcluirPapel(papel) {
+            console.log('Tentando excluir papel:', papel.display_name);
+            console.log('Contadores - Usuários:', papel.users_count, 'Permissões:', papel.permissions_count);
             
+            // Verificar se é o papel "Super Administrador"
+            if (papel.name === 'super') {
+                this.mostrarToast('Aviso', 'O papel "Super Administrador" não pode ser excluído', 'fa-exclamation-triangle text-warning');
+                return;
+            }
+            
+            // Verificar se tem vínculos
             if (papel.users_count > 0 || papel.permissions_count > 0) {
                 this.abrirModalExclusaoInteligente(papel);
             } else {
-                this.excluirPapel(papel);
+                await this.excluirPapel(papel);
             }
         },
         
@@ -2540,35 +2555,20 @@ export default {
             try {
                 const response = await axios.get('/api/administracao/papeis');
                 
+                console.log('Resposta da API de papéis:', response.data);
+                
                 // Garantir que sempre seja um array
                 this.papeis = Array.isArray(response.data) ? response.data : [];
-                //console.log('Papéis carregados:', this.papeis.length);
+                
+                // Debug: mostrar contadores de cada papel
+                this.papeis.forEach(papel => {
+                    console.log(`Papel: ${papel.display_name} - Usuários: ${papel.users_count}, Permissões: ${papel.permissions_count}`);
+                });
+                
             } catch (error) {
                 console.error('Erro ao carregar papéis:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar papéis: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
-                // Em caso de erro, usar dados mockados para teste
-                this.papeis = [
-                    {
-                        id: 1,
-                        name: 'admin',
-                        display_name: 'Administrador',
-                        description: 'Acesso total ao sistema',
-                        is_active: true,
-                        permissions: [{ id: 1, name: 'gerenciar_usuarios', display_name: 'Gerenciar Usuários' }],
-                        permissions_count: 1,
-                        users_count: 1
-                    },
-                    {
-                        id: 2,
-                        name: 'user',
-                        display_name: 'Usuário',
-                        description: 'Acesso básico ao sistema',
-                        is_active: true,
-                        permissions: [{ id: 2, name: 'visualizar_relatorios', display_name: 'Visualizar Relatórios' }],
-                        permissions_count: 1,
-                        users_count: 1
-                    }
-                ];
+                this.papeis = [];
             } finally {
                 this.loadingPapeis = false;
             }
@@ -3025,167 +3025,4 @@ export default {
 
 <!-- CSS centralizado em modern-interface.css -->
 
-<style scoped>
-/* ===== MODAL GERENCIAR USUÁRIOS - VERSÃO SIMPLIFICADA ===== */
-.modal-xl {
-    max-width: 90% !important;
-    width: 90% !important;
-}
-
-/* Layout simples em duas colunas */
-.d-flex.flex-wrap {
-    gap: 1rem;
-}
-
-.coluna-usuarios {
-    flex: 1;
-    min-width: 300px;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-    .coluna-usuarios {
-        flex: 100%;
-        min-width: auto;
-    }
-}
-
-/* Avatar simples */
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    background: #f8f9fa;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6c757d;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-/* ===== MODAIS DE PERMISSÕES ===== */
-
-/* Layout para modais de permissões */
-.coluna-papeis {
-    flex: 1;
-    min-width: 300px;
-}
-
-/* Layout para modais de gerenciar permissões do papel */
-.coluna-permissoes {
-    flex: 1;
-    min-width: 300px;
-}
-
-/* Responsividade para modais de permissões */
-@media (max-width: 768px) {
-    .coluna-papeis {
-        flex: 100%;
-        min-width: auto;
-    }
-    
-    .coluna-permissoes {
-        flex: 100%;
-        min-width: auto;
-    }
-}
-
-/* Estilos para cards de permissões */
-.card-header h6 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-
-/* Estilos específicos para modais de permissões - não afetar outros card-body */
-#modalDetalhesPermissao .modal-body .card-body,
-#modalGerenciarPapeisPermissao .modal-body .card-body {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-/* Estilos para badges de status */
-.badge-ativo {
-    background-color: #28a745;
-    color: white;
-}
-
-.badge-inativo {
-    background-color: #dc3545;
-    color: white;
-}
-
-/* Estilos para código inline */
-code {
-    background-color: #f8f9fa;
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    color: #e83e8c;
-}
-
-/* ===== FILTROS DO MODAL GERENCIAR USUÁRIOS ===== */
-.input-group-sm .form-control {
-    font-size: 0.875rem;
-    padding: 0.375rem 0.75rem;
-}
-
-.input-group-sm .input-group-text {
-    font-size: 0.875rem;
-    padding: 0.375rem 0.75rem;
-}
-
-.input-group-text {
-    background-color: #f8f9fa;
-    border-color: #dee2e6;
-    color: #6c757d;
-}
-
-/* ===== CAMPOS TEXTAREA - ALTURA HARMÔNICA COM OUTROS CAMPOS ===== */
-.form-floating textarea {
-    min-height: 58px !important;
-    height: 58px !important;
-    resize: vertical;
-    line-height: 1.5 !important;
-    padding: 1.625rem 0.75rem 0.625rem 0.75rem !important;
-    font-size: 14px !important;
-    overflow-y: auto !important;
-}
-
-.form-floating textarea:focus {
-    min-height: 58px !important;
-    height: 58px !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* Garantir que o label não sobreponha o conteúdo */
-.form-floating textarea:not(:placeholder-shown) ~ label,
-.form-floating textarea:focus ~ label {
-    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-    color: #6c757d;
-    pointer-events: none;
-}
-
-/* Ajuste específico para campos de descrição - ALTURA HARMÔNICA */
-#descricaoPapel,
-#descricaoPermissao {
-    min-height: 58px !important;
-    height: 100px !important;
-    max-height: 200px !important;
-    overflow-y: auto !important;
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
-}
-
-/* Forçar altura mínima em todos os estados */
-#descricaoPapel:focus,
-#descricaoPermissao:focus,
-#descricaoPapel:not(:placeholder-shown),
-#descricaoPermissao:not(:placeholder-shown) {
-    min-height: 58px !important;
-    height: 100px !important;
-}
-</style>
+<!-- CSS centralizado em modern-interface.css -->

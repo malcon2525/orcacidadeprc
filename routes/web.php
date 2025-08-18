@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
         Route::apiResource('papeis', \App\Http\Controllers\Api\Administracao\Roles\RolesController::class);
         Route::post('papeis/{id}/permissions', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'updatePermissions'])->name('papeis.permissions.update');
         Route::get('papeis/{id}/permissions', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'getPermissions'])->name('papeis.permissions.get');
+        Route::get('papeis/{id}/permissions/available', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'getAvailablePermissions'])->name('papeis.permissions.available');
         
         // Permissões
         Route::apiResource('permissoes', \App\Http\Controllers\Api\Administracao\PermissionsController::class);
@@ -104,27 +105,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('permissoes/role/{roleId}/sync', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'syncRolePermissions'])->name('permissoes.roles.sync');
         
         // Busca Global
-        Route::get('busca-global', function() {
-            // Mock temporário - retorna dados de exemplo
-            return response()->json([
-                'resultados' => [
-                    [
-                        'id' => 1,
-                        'tipo' => 'usuario',
-                        'nome' => 'João Silva',
-                        'email' => 'joao.silva@example.com',
-                        'descricao' => 'Usuário do sistema'
-                    ],
-                    [
-                        'id' => 1,
-                        'tipo' => 'papel',
-                        'nome' => 'Administrador',
-                        'email' => null,
-                        'descricao' => 'Papel com acesso total'
-                    ]
-                ]
-            ]);
-        })->name('busca-global');
+        Route::get('busca-global', [\App\Http\Controllers\Api\Administracao\BuscaGlobalController::class, 'buscar'])->name('busca-global');
         
         // Active Directory
         Route::prefix('active-directory')->name('active-directory.')->group(function () {

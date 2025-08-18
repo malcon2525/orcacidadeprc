@@ -64,35 +64,47 @@ class RolesController extends Controller
     {
         $this->checkPermissions();
         
-        $query = Role::with('permissions');
+        try {
+            $query = Role::query();
 
-        // Carregar contadores de usuários e permissões
-        $query->withCount([
-            'users as users_count',
-            'permissions as permissions_count',
-            'permissions as active_permissions_count' => function($q) {
-                $q->where('is_active', true);
+            // Filtro por nome
+            if ($request->has('nome') && !empty($request->nome)) {
+                $query->where(function($q) use ($request) {
+                    $q->where('name', 'like', "%{$request->nome}%")
+                      ->orWhere('display_name', 'like', "%{$request->nome}%");
+                });
             }
-        ]);
 
-        // Filtro por nome
-        if ($request->has('nome') && !empty($request->nome)) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', "%{$request->nome}%")
-                  ->orWhere('display_name', 'like', "%{$request->nome}%");
-            });
+            // Filtro por status
+            if ($request->has('is_active') && $request->is_active !== '' && $request->is_active !== null) {
+                $query->where('is_active', $request->is_active);
+            }
+
+            // Ordenação padrão
+            $query->orderBy('display_name', 'asc');
+
+            $papeis = $query->get();
+            
+            // Calcular contadores manualmente para garantir precisão
+            foreach ($papeis as $papel) {
+                $papel->users_count = $papel->users()->count();
+                $papel->permissions_count = $papel->permissions()->count();
+                $papel->active_permissions_count = $papel->permissions()->where('is_active', true)->count();
+            }
+
+            return response()->json($papeis);
+            
+        } catch (\Exception $e) {
+            Log::error('Erro ao listar papéis', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Erro ao carregar papéis',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Filtro por status
-        if ($request->has('is_active') && $request->is_active !== '' && $request->is_active !== null) {
-            $query->where('is_active', $request->is_active);
-        }
-
-        // Ordenação padrão
-        $query->orderBy('display_name', 'asc');
-
-        $papeis = $query->get();
-        return response()->json($papeis);
     }
 
     /**
@@ -209,17 +221,38 @@ class RolesController extends Controller
         try {
             $papel = Role::findOrFail($id);
             
-            // Verificar se há usuários associados
-            if ($papel->users()->count() > 0) {
+            // Verificar se é o papel "super" (não pode ser excluído)
+            if ($papel->name === 'super') {
                 return response()->json([
-                    'message' => 'Não é possível excluir um papel que possui usuários associados'
+                    'message' => 'O papel "Super Administrador" não pode ser excluído'
                 ], 422);
+            }
+            
+            // Verificar se há usuários associados
+            $usersCount = $papel->users()->count();
+            if ($usersCount > 0) {
+                return response()->json([
+                    'message' => "Não é possível excluir um papel que possui {$usersCount} usuário(s) associado(s)",
+                    'users_count' => $usersCount
+                ], 422);
+            }
+
+            // Verificar se há permissões associadas
+            $permissionsCount = $papel->permissions()->count();
+            if ($permissionsCount > 0) {
+                // Remover todas as permissões antes de excluir
+                $papel->permissions()->detach();
+                Log::info('Permissões removidas do papel antes da exclusão', [
+                    'role_id' => $id,
+                    'permissions_removed' => $permissionsCount
+                ]);
             }
 
             $papel->delete();
 
             Log::info('Papel excluído com sucesso', [
                 'role_id' => $id,
+                'role_name' => $papel->display_name,
                 'deleted_by' => auth()->id()
             ]);
 
@@ -241,14 +274,25 @@ class RolesController extends Controller
     }
 
     /**
-     * Lista todas as permissões disponíveis
+     * Lista permissões de um papel específico
      */
-    public function getPermissions()
+    public function getPermissions($id)
     {
         $this->checkPermissions();
         
-        $permissions = Permission::active()->get();
-        return response()->json($permissions);
+        try {
+            $papel = Role::findOrFail($id);
+            
+            // Retornar apenas as permissões ATRIBUÍDAS ao papel
+            $permissions = $papel->permissions()->where('is_active', true)->get();
+            
+            return response()->json($permissions);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Papel não encontrado'
+            ], 404);
+        }
     }
 
     /**
@@ -292,6 +336,32 @@ class RolesController extends Controller
                 'message' => 'Erro ao atualizar permissões',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Lista permissões disponíveis para atribuir ao papel
+     */
+    public function getAvailablePermissions($id)
+    {
+        $this->checkPermissions();
+        
+        try {
+            $papel = Role::findOrFail($id);
+            
+            // Buscar permissões que NÃO estão atribuídas ao papel
+            $permissionsAttribuidas = $papel->permissions()->pluck('permissions.id');
+            
+            $permissionsDisponiveis = Permission::where('is_active', true)
+                ->whereNotIn('id', $permissionsAttribuidas)
+                ->get();
+            
+            return response()->json($permissionsDisponiveis);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Papel não encontrado'
+            ], 404);
         }
     }
 }

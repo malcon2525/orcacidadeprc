@@ -263,7 +263,7 @@ onMounted(() => {
 // Methods
 const carregarStatus = async () => {
     try {
-        const response = await axios.get('/api/active-directory/sync/status')
+        const response = await axios.get('/api/administracao/active-directory/sync/status')
         const data = response.data
         
         // Verificar se a resposta tem a estrutura esperada
@@ -307,7 +307,7 @@ const executarSincronizacao = async () => {
             }
         }, 500)
         
-        const response = await axios.post('/api/active-directory/sync')
+        const response = await axios.post('/api/administracao/active-directory/sync')
         
         // Armazenar resultados
         console.log('Resposta da API:', response.data)
@@ -370,7 +370,7 @@ const testarConexao = async () => {
     try {
         testando.value = true
         
-        const response = await axios.get('/api/active-directory/sync/test-connection')
+        const response = await axios.get('/api/administracao/active-directory/sync/test-connection')
         const data = response.data
         
         // Verificar se a resposta tem a estrutura esperada
@@ -414,7 +414,7 @@ const limparResultados = () => {
 
 const carregarConfiguracao = async () => {
     try {
-        const response = await axios.get('/api/active-directory/config')
+        const response = await axios.get('/api/administracao/active-directory/config')
         let data = response.data
         
         // Verificar se a resposta tem a estrutura esperada
@@ -443,10 +443,10 @@ const carregarConfiguracao = async () => {
     }
 }
 
-const salvarConfiguracao = async () => {
+const salvarConfiguracao = async (showToast = true) => {
     salvando.value = true
     try {
-        const response = await axios.post('/api/active-directory/config', configuracao.value)
+        const response = await axios.post('/api/administracao/active-directory/config', configuracao.value)
         
         // Atualizar data de última modificação
         let responseData = response.data
@@ -460,14 +460,17 @@ const salvarConfiguracao = async () => {
             ultimaAtualizacao.value = new Date().toLocaleString('pt-BR')
         }
         
-        if (window.showToast) {
+        if (showToast && window.showToast) {
             window.showToast('Configurações salvas com sucesso!', 'success')
         }
+        
+        return true
     } catch (error) {
         console.error('Erro ao salvar configuração:', error)
-        if (window.showToast) {
+        if (showToast && window.showToast) {
             window.showToast('Erro ao salvar configuração: ' + (error.response?.data?.message || error.message), 'error')
         }
+        return false
     } finally {
         salvando.value = false
     }
@@ -476,7 +479,15 @@ const salvarConfiguracao = async () => {
 const testarConfiguracao = async () => {
     testandoConfig.value = true
     try {
-        const response = await axios.get('/api/active-directory/config/test')
+        // Primeiro, salvar as configurações atuais (sem toast)
+        const saved = await salvarConfiguracao(false)
+        if (!saved) {
+            alert('❌ Erro ao salvar configurações antes do teste')
+            return
+        }
+        
+        // Depois testar
+        const response = await axios.get('/api/administracao/active-directory/config/test')
         let data = response.data
         
         // Verificar se a resposta tem a estrutura esperada
@@ -486,26 +497,54 @@ const testarConfiguracao = async () => {
         
         if (data.tests) {
             const tests = data.tests
-            let message = '✅ Configurações válidas!\n'
-            message += `📅 Próxima execução: ${tests.next_execution}\n\n`
-            message += '🔍 Detalhes dos testes:\n'
+            const status = data.status || 'info'
+            const message = data.message || 'Teste concluído'
             
-            if (tests.frequency_exists) message += '✅ Frequência salva\n'
-            else message += '❌ Frequência não encontrada\n'
+            let alertMessage = ''
             
-            if (tests.time_exists) message += '✅ Horário salvo\n'
-            else message += '❌ Horário não encontrado\n'
+            // Cabeçalho baseado no status
+            if (status === 'success') {
+                alertMessage += '✅ ' + message + '\n\n'
+            } else if (status === 'warning') {
+                alertMessage += '⚠️ ' + message + '\n\n'
+            } else {
+                alertMessage += 'ℹ️ ' + message + '\n\n'
+            }
             
-            if (tests.enabled_exists) message += '✅ Status salvo\n'
-            else message += '❌ Status não encontrado\n'
+            // Próxima execução
+            if (tests.next_execution) {
+                alertMessage += `📅 Próxima execução: ${tests.next_execution}\n\n`
+            }
             
-            if (tests.frequency_valid) message += '✅ Frequência válida\n'
-            else message += '❌ Frequência inválida\n'
+            // Detalhes dos testes
+            alertMessage += '🔍 Detalhes dos testes:\n'
             
-            if (tests.time_valid) message += '✅ Formato de horário válido\n'
-            else message += '❌ Formato de horário inválido\n'
+            if (tests.frequency_exists) alertMessage += '✅ Frequência salva\n'
+            else alertMessage += '❌ Frequência não encontrada\n'
             
-            alert(message)
+            if (tests.time_exists) alertMessage += '✅ Horário salvo\n'
+            else alertMessage += '❌ Horário não encontrado\n'
+            
+            if (tests.enabled_exists) alertMessage += '✅ Status salvo\n'
+            else alertMessage += '❌ Status não encontrado\n'
+            
+            if (tests.frequency_valid) alertMessage += '✅ Frequência válida\n'
+            else alertMessage += '❌ Frequência inválida\n'
+            
+            if (tests.time_valid) alertMessage += '✅ Formato de horário válido\n'
+            else alertMessage += '❌ Formato de horário inválido\n'
+            
+            if (tests.enabled_valid) alertMessage += '✅ Status válido\n'
+            else alertMessage += '❌ Status inválido\n'
+            
+            // Status geral
+            if (tests.overall_valid) {
+                alertMessage += '\n🎉 Todas as configurações estão válidas!'
+            } else {
+                alertMessage += '\n⚠️ Algumas configurações precisam ser ajustadas.'
+            }
+            
+            alert(alertMessage)
         }
         
     } catch (error) {

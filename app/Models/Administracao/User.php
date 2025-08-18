@@ -155,7 +155,7 @@ class User extends Authenticatable
      */
     public function isADUser(): bool
     {
-        return in_array($this->login_type, ['ad', 'hybrid']);
+        return $this->login_type === 'ad';
     }
 
     /**
@@ -163,6 +163,6 @@ class User extends Authenticatable
      */
     public function isLocalUser(): bool
     {
-        return in_array($this->login_type, ['local', 'hybrid']);
+        return $this->login_type === 'local';
     }
 }

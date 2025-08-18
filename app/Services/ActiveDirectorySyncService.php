@@ -111,7 +111,7 @@ class ActiveDirectorySyncService
                     'name' => $adUser['name'],
                     'ad_user_id' => $adUser['id'],
                     'ad_sync_at' => now(),
-                    'login_type' => 'hybrid'
+                    'login_type' => 'ad'
                 ]);
 
                 $this->result['usuarios_atualizados']++;
@@ -196,7 +196,6 @@ class ActiveDirectorySyncService
             'usuarios_ativos' => User::where('is_active', true)->count(),
             'usuarios_inativos' => User::where('is_active', false)->count(),
             'usuarios_ad' => User::where('login_type', 'ad')->count(),
-            'usuarios_hybrid' => User::where('login_type', 'hybrid')->count(),
             'usuarios_local' => User::where('login_type', 'local')->count(),
             'status' => 'funcionando',
             'ad_habilitado' => config('adldap.connections.default.enabled', false)

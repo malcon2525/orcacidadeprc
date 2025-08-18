@@ -21,7 +21,6 @@
 
     {{-- CSS Files --}}
     <link rel="stylesheet" href="{{ asset('assets/css/andamento-projeto.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/padroes.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('assets/css/sidebar.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('assets/css/modern-interface.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('assets/css/background-images.css') }}?v={{ time() }}">

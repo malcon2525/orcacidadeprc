@@ -457,6 +457,366 @@ body {
     outline-offset: 2px;
 }
 
+/* ===== SISTEMA DE ABAS ADMINISTRATIVAS ===== */
+.admin-tabs-container {
+    background-color: var(--color-branco);
+    border-radius: 0.5rem;
+    overflow: visible;
+    margin-bottom: 1rem;
+}
+
+.admin-tabs {
+    background-color: var(--color-cinza-claro);
+    border-bottom: 1px solid #e9ecef;
+    padding: 0 1rem;
+    margin: 0;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.admin-tab {
+    border: none;
+    background: transparent;
+    color: var(--color-cinza-medio);
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    transition: all var(--transition-normal) ease;
+    position: relative;
+    font-size: 0.9rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.admin-tab:hover {
+    color: var(--color-verde-principal);
+    background-color: rgba(94, 168, 83, 0.1);
+}
+
+.admin-tab.active {
+    color: var(--color-azul-secundario) !important;
+    background-color: var(--color-branco) !important;
+    border-bottom: 3px solid var(--color-verde-principal) !important;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1) !important;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-tab-content {
+    padding: 2rem;
+    min-height: auto;
+    background-color: var(--color-branco);
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* ===== CORREÇÃO CRÍTICA: REMOVER BORDAS EXTRAS DOS CARDS ADMINISTRATIVOS ===== */
+.admin-tabs-container .card,
+.admin-tab-content .card,
+.card.shadow-sm.border-0.rounded-3 {
+    border: none !important;
+    border-radius: 0.5rem !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* Remover bordas extras das tabelas dentro do sistema de abas */
+.admin-tab-content .table-responsive {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Garantir que não haja bordas extras nos containers de filtros */
+.admin-tab-content .filtros-aba-container {
+    border: 1px solid #e9ecef !important;
+    border-radius: 0.5rem !important;
+}
+
+/* ===== SISTEMA DE FILTROS DINÂMICOS ===== */
+.filtros-aba-container {
+    background-color: var(--color-branco);
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filtros-aba-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+    opacity: 0;
+    margin-bottom: 0;
+}
+
+.filtros-aba-content.show {
+    max-height: 200px;
+    opacity: 1;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== BOTÕES DE FILTROS ===== */
+.btn-filtros {
+    background-color: transparent;
+    border: 2px solid var(--color-cinza-medio);
+    color: var(--color-cinza-medio);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-filtros:hover {
+    background-color: var(--color-cinza-medio);
+    border-color: var(--color-cinza-medio);
+    color: var(--color-branco);
+    transform: translateY(-1px);
+}
+
+.btn-filtros.active {
+    background-color: var(--color-verde-principal);
+    border-color: var(--color-verde-principal);
+    color: var(--color-branco);
+}
+
+.btn-filtros.active:hover {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(94, 168, 83, 0.2);
+}
+
+/* ===== ESTILOS DE TABELA ADMINISTRATIVA ===== */
+.admin-tab-content .table thead,
+.admin-tabs-container .table thead {
+    background: #f9fafb !important;
+    color: var(--color-azul-secundario) !important;
+}
+
+.admin-tab-content .table th,
+.admin-tabs-container .table th {
+    background: #f9fafb !important;
+    color: var(--color-azul-secundario) !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+.admin-tab-content .table td,
+.admin-tabs-container .table td {
+    padding: 0.75rem 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 0.875rem;
+    color: var(--color-cinza-escuro);
+}
+
+/* ===== RESPONSIVIDADE DAS ABAS ===== */
+@media (max-width: 1366px) {
+    .admin-tab-content {
+        padding: 1.5rem;
+    }
+
+    .admin-tabs {
+        padding: 0 0.75rem;
+    }
+
+    .admin-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== TABELAS ADMINISTRATIVAS GENÉRICAS ===== */
+.table-admin {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    table-layout: fixed;
+}
+
+.table-admin th {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    color: var(--color-azul-secundario) !important;
+    padding: 0.75rem 0.5rem !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    vertical-align: middle !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.table-admin th:hover {
+    background-color: #f3f4f6;
+    color: var(--color-azul-secundario);
+}
+
+.table-admin td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+/* ===== LINHAS DAS TABELAS ADMINISTRATIVAS ===== */
+.table-admin-row {
+    background-color: var(--color-branco);
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    cursor: default;
+}
+
+.table-admin-row:hover {
+    background-color: var(--color-cinza-claro);
+    border-left: 3px solid var(--color-verde-principal);
+    box-shadow: var(--shadow-sm);
+}
+
+.table-admin-row:empty {
+    display: none;
+}
+
+/* ===== AVATARS ADMINISTRATIVOS ===== */
+.avatar-admin {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-azul-secundario) 0%, var(--color-verde-principal) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* ===== SISTEMA DE BADGES DISCRETOS GLOBAIS ===== */
+/* Base para todos os badges */
+.badge {
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Badge claro (como o da coluna "Nome Interno" que ficou bom) */
+.badge-light {
+    background-color: #f8f9fa;
+    color: var(--color-cinza-escuro);
+    border-color: #e9ecef;
+}
+
+/* Badge de sucesso (ativo, positivo) */
+.badge-success {
+    background-color: rgba(94, 168, 83, 0.1);
+    color: var(--color-verde-principal);
+    border-color: rgba(94, 168, 83, 0.2);
+}
+
+/* Badge de aviso/atenção */
+.badge-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #b45309;
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+/* Badge de erro/perigo (inativo, negativo) */
+.badge-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border-color: rgba(220, 53, 69, 0.2);
+}
+
+/* Badge de informação (azul) */
+.badge-info {
+    background-color: rgba(24, 87, 138, 0.1);
+    color: var(--color-azul-secundario);
+    border-color: rgba(24, 87, 138, 0.2);
+}
+
+/* Badge secundário (cinza) */
+.badge-secondary {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: var(--color-cinza-medio);
+    border-color: rgba(108, 117, 125, 0.2);
+}
+
+/* ===== BOTÕES DE AÇÃO ADMINISTRATIVA ===== */
+.btn-action {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    transition: all var(--transition-fast) ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== SISTEMA DE BOTÕES DESABILITADOS ===== */
+.btn-excluir-desabilitado {
+    background-color: var(--color-cinza-medio) !important;
+    border-color: var(--color-cinza-medio) !important;
+    color: var(--color-branco) !important;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+.btn-excluir-desabilitado:hover {
+    background-color: var(--color-cinza-medio) !important;
+    border-color: var(--color-cinza-medio) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ===== SISTEMA DE BOTÕES DESABILITADOS GENÉRICOS ===== */
+.btn-disabled {
+    background-color: var(--color-cinza-medio) !important;
+    border-color: var(--color-cinza-medio) !important;
+    color: var(--color-branco) !important;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+.btn-disabled:hover {
+    background-color: var(--color-cinza-medio) !important;
+    border-color: var(--color-cinza-medio) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+    .admin-tabs {
+        flex-direction: column;
+        padding: 0;
+    }
+    
+    .admin-tab {
+        border-radius: 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .admin-tab.active {
+        border-bottom: 3px solid var(--color-verde-principal);
+    }
+    
+    .admin-tab-content {
+        padding: 1rem;
+    }
+}
+
 /* ===== IMPRESSÃO ===== */
 @media print {
     .no-print {
@@ -466,5 +826,166 @@ body {
     .card-moderno {
         box-shadow: none;
         border: 1px solid #ccc;
+    }
+}
+
+/* ===== SISTEMA DE LOADING PADRÃO ===== */
+.spinner-loading {
+    width: 3rem;
+    height: 3rem;
+    border: 0.3rem solid var(--color-cinza-claro);
+    border-top: 0.3rem solid var(--color-verde-principal);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-loading-sm {
+    width: 1rem;
+    height: 1rem;
+    border: 0.2rem solid var(--color-cinza-claro);
+    border-top: 0.2rem solid var(--color-verde-principal);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ===== SISTEMA DE CARDS COM BORDAS COLORIDAS ===== */
+.card-border-primary {
+    border: 2px solid var(--color-azul-secundario) !important;
+    border-radius: 0.5rem !important;
+}
+
+.card-border-success {
+    border: 2px solid var(--color-verde-principal) !important;
+    border-radius: 0.5rem !important;
+}
+
+.card-border-warning {
+    border: 2px solid var(--color-aviso) !important;
+    border-radius: 0.5rem !important;
+}
+
+.card-border-danger {
+    border: 2px solid var(--color-erro) !important;
+    border-radius: 0.5rem !important;
+}
+
+/* ===== SISTEMA DE TABELAS PEQUENAS PADRÃO ===== */
+.table-admin-sm {
+    font-size: 0.875rem;
+}
+
+.table-admin-sm th,
+.table-admin-sm td {
+    padding: 0.5rem 0.375rem;
+    font-size: 0.875rem;
+}
+
+/* ===== SISTEMA DE ÍCONES PADRÃO ===== */
+.icon-large {
+    font-size: 3rem !important;
+}
+
+.icon-medium {
+    font-size: 2rem !important;
+}
+
+.icon-small {
+    font-size: 1rem !important;
+}
+
+/* ===== SISTEMA DE FORM-FLOATING PADRÃO ===== */
+.form-floating textarea {
+    min-height: 58px !important;
+    height: 58px !important;
+    resize: vertical;
+    line-height: 1.5 !important;
+    padding: 1.625rem 0.75rem 0.625rem 0.75rem !important;
+    font-size: 14px !important;
+    overflow-y: auto !important;
+}
+
+.form-floating textarea:focus {
+    min-height: 58px !important;
+    height: 58px !important;
+    box-shadow: 0 0 0 0.2rem rgba(94, 168, 83, 0.25) !important;
+}
+
+.form-floating textarea:not(:placeholder-shown) ~ label,
+.form-floating textarea:focus ~ label {
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    color: var(--color-cinza-medio) !important;
+    pointer-events: none;
+}
+
+/* ===== SISTEMA DE INPUT GROUPS PADRÃO ===== */
+.input-group-sm .form-control {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.input-group-sm .input-group-text {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.input-group-text {
+    background-color: var(--color-cinza-claro) !important;
+    border-color: #dee2e6 !important;
+    color: var(--color-azul-secundario) !important;
+}
+
+/* ===== SISTEMA DE CÓDIGO INLINE PADRÃO ===== */
+code {
+    background-color: var(--color-cinza-claro);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #e83e8c;
+}
+
+/* ===== SISTEMA DE CARDS HEADERS PADRÃO ===== */
+.card-header h6 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* ===== SISTEMA DE MODAIS PADRÃO ===== */
+.modal-xl {
+    max-width: 90% !important;
+    width: 90% !important;
+}
+
+.modal-header-borderless {
+    border: none !important;
+}
+
+.modal-footer-borderless {
+    border: none !important;
+}
+
+/* ===== SISTEMA DE PAGINAÇÃO PADRÃO ===== */
+.page-link-transparent {
+    border: none !important;
+    background-color: transparent !important;
+}
+
+/* ===== SISTEMA DE LAYOUT RESPONSIVO PADRÃO ===== */
+.layout-two-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.column-flexible {
+    flex: 1;
+    min-width: 300px;
+}
+
+@media (max-width: 768px) {
+    .column-flexible {
+        flex: 100%;
+        min-width: auto;
     }
 }

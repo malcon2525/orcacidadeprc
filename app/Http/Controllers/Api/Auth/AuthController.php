@@ -54,7 +54,7 @@ class AuthController extends Controller
         // Verificar senha baseado no tipo de login
         $passwordValid = false;
         
-        if ($user->login_type === 'ad' || $user->login_type === 'hybrid') {
+        if ($user->login_type === 'ad') {
             Log::info('=== AUTENTICAÇÃO AD INICIADA ===', [
                 'user_id' => $user->id,
                 'email' => $request->email,
