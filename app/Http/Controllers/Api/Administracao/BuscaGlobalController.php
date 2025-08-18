@@ -137,27 +137,33 @@ class BuscaGlobalController extends Controller
                                 'user_name' => $usuario->name,
                                 'user_email' => $usuario->email,
                                 'role_name' => $papel->display_name,
-                                'permission_name' => $permissao->display_name
+                                'permission_name' => $permissao->display_name,
+                                'has_relationships' => true
                             ];
                         }
                     } else {
-                        // Papel sem permissões
+                        // Papel sem permissões - mostrar apenas o papel
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
                             'role_name' => $papel->display_name,
-                            'permission_name' => 'Nenhuma permissão'
+                            'permission_name' => null,
+                            'has_relationships' => false
                         ];
                     }
                 }
             } else {
-                // Usuário sem papéis
-                $resultados[] = [
-                    'user_name' => $usuario->name,
-                    'user_email' => $usuario->email,
-                    'role_name' => 'Nenhum papel',
-                    'permission_name' => 'Nenhuma permissão'
-                ];
+                // Usuário sem papéis - não criar registro artificial
+                // Só mostrar se for uma busca específica por usuário
+                if (!empty($nomeUsuario)) {
+                    $resultados[] = [
+                        'user_name' => $usuario->name,
+                        'user_email' => $usuario->email,
+                        'role_name' => null,
+                        'permission_name' => null,
+                        'has_relationships' => false
+                    ];
+                }
             }
         }
         
@@ -191,18 +197,32 @@ class BuscaGlobalController extends Controller
                                 'user_name' => $usuario->name,
                                 'user_email' => $usuario->email,
                                 'role_name' => $papel->display_name,
-                                'permission_name' => $permissao->display_name
+                                'permission_name' => $permissao->display_name,
+                                'has_relationships' => true
                             ];
                         }
                     } else {
-                        // Papel sem permissões
+                        // Papel sem permissões - mostrar apenas o papel
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
                             'role_name' => $papel->display_name,
-                            'permission_name' => 'Nenhuma permissão'
+                            'permission_name' => null,
+                            'has_relationships' => false
                         ];
                     }
+                }
+            } else {
+                // Papel sem usuários - não criar registro artificial
+                // Só mostrar se for uma busca específica por papel
+                if (!empty($nomePapel)) {
+                    $resultados[] = [
+                        'user_name' => null,
+                        'user_email' => null,
+                        'role_name' => $papel->display_name,
+                        'permission_name' => null,
+                        'has_relationships' => false
+                    ];
                 }
             }
         }
@@ -245,13 +265,13 @@ class BuscaGlobalController extends Controller
     }
 
     /**
-     * Busca todos os relacionamentos (sem filtros) - VERSÃO ROBUSTA
+     * Busca todos os relacionamentos existentes
      */
     private function buscarTodosRelacionamentos()
     {
         $resultados = [];
         
-        // Buscar todos os usuários ativos
+        // Buscar usuários ativos
         $usuarios = User::where('is_active', true)->get();
         
         foreach ($usuarios as $usuario) {
@@ -269,28 +289,23 @@ class BuscaGlobalController extends Controller
                                 'user_name' => $usuario->name,
                                 'user_email' => $usuario->email,
                                 'role_name' => $papel->display_name,
-                                'permission_name' => $permissao->display_name
+                                'permission_name' => $permissao->display_name,
+                                'has_relationships' => true
                             ];
                         }
                     } else {
-                        // Papel sem permissões
+                        // Papel sem permissões - mostrar apenas o papel
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
                             'role_name' => $papel->display_name,
-                            'permission_name' => 'Nenhuma permissão'
+                            'permission_name' => null,
+                            'has_relationships' => false
                         ];
                     }
                 }
-            } else {
-                // Usuário sem papéis
-                $resultados[] = [
-                    'user_name' => $usuario->name,
-                    'user_email' => $usuario->email,
-                    'role_name' => 'Nenhum papel',
-                    'permission_name' => 'Nenhuma permissão'
-                ];
             }
+            // Usuários sem papéis não aparecem na busca geral
         }
         
         return $resultados;

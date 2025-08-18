@@ -106,16 +106,20 @@
                                             <i class="fas me-1" :class="papel === 'Nenhum papel' ? 'fa-user-slash' : 'fa-shield-alt'"></i>
                                             {{ papel }}
                                         </span>
-                                        <small class="text-muted">{{ permissoes.length }} permissão{{ permissoes.length !== 1 ? 'ões' : 'ão' }}</small>
                                     </div>
+                                    
+                                    <!-- Permissões -->
                                     <div class="permissoes-container">
-                                        <span 
-                                            v-for="permissao in permissoes" 
-                                            :key="permissao" 
-                                            class="badge me-1 mb-1 d-inline-block"
-                                            :class="permissao === 'Nenhuma permissão' ? 'badge-warning' : 'badge-success'"
-                                        >
-                                            <i class="fas me-1" :class="permissao === 'Nenhuma permissão' ? 'fa-exclamation-triangle' : 'fa-key'"></i>
+                                        <span v-if="permissoes.length === 0 || (permissoes.length === 1 && permissoes[0] === null)" 
+                                              class="badge badge-warning me-1 mb-1 d-inline-block">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Sem permissões
+                                        </span>
+                                        <span v-else
+                                              v-for="permissao in permissoes.filter(p => p !== null)" 
+                                              :key="permissao" 
+                                              class="badge badge-success me-1 mb-1 d-inline-block">
+                                            <i class="fas fa-key me-1"></i>
                                             {{ permissao }}
                                         </span>
                                     </div>
@@ -229,7 +233,13 @@ export default {
                     agrupados[chave].papeis[item.role_name] = [];
                 }
                 
-                agrupados[chave].papeis[item.role_name].push(item.permission_name);
+                // Adicionar permissão apenas se existir
+                if (item.permission_name) {
+                    agrupados[chave].papeis[item.role_name].push(item.permission_name);
+                } else {
+                    // Papel sem permissões
+                    agrupados[chave].papeis[item.role_name].push(null);
+                }
             });
             
             return Object.values(agrupados);
