@@ -571,7 +571,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     
-                    <form @submit.prevent="salvarUsuario">
+                    <form @submit.prevent="salvarUsuario" novalidate>
                         <div class="modal-body">
                             <div class="row g-3">
                                 <!-- Nome -->
@@ -582,13 +582,12 @@
                                             class="form-control" 
                                             id="nomeUsuario" 
                                             v-model="formUsuario.nome"
-                                            :class="{ 'is-invalid': errors.nome }"
+                                            :class="{ 'is-invalid': errors.name }"
                                             placeholder="Nome completo"
-                                            required
                                         >
                                         <label for="nomeUsuario">Nome Completo *</label>
-                                        <div class="invalid-feedback" v-if="errors.nome">
-                                            {{ errors.nome[0] }}
+                                        <div class="invalid-feedback" v-if="errors.name">
+                                            {{ Array.isArray(errors.name) ? errors.name[0] : errors.name }}
                                         </div>
                                     </div>
                                 </div>
@@ -603,11 +602,10 @@
                                             v-model="formUsuario.email"
                                             :class="{ 'is-invalid': errors.email }"
                                             placeholder="email@exemplo.com"
-                                            required
                                         >
                                         <label for="emailUsuario">Email *</label>
                                         <div class="invalid-feedback" v-if="errors.email">
-                                            {{ errors.email[0] }}
+                                            {{ Array.isArray(errors.email) ? errors.email[0] : errors.email }}
                                         </div>
                                     </div>
                                 </div>
@@ -635,14 +633,13 @@
                                             id="statusUsuario" 
                                             v-model="formUsuario.is_active"
                                             :class="{ 'is-invalid': errors.is_active }"
-                                            required
                                         >
                                             <option :value="true">Ativo</option>
                                             <option :value="false">Inativo</option>
                                         </select>
                                         <label for="statusUsuario">Status *</label>
                                         <div class="invalid-feedback" v-if="errors.is_active">
-                                            {{ errors.is_active[0] }}
+                                            {{ Array.isArray(errors.is_active) ? errors.is_active[0] : errors.is_active }}
                                         </div>
                                     </div>
                                 </div>
@@ -657,13 +654,12 @@
                                             v-model="formUsuario.password"
                                             :class="{ 'is-invalid': errors.password }"
                                             :placeholder="modoEdicao ? 'Deixe em branco para manter' : 'Senha'"
-                                            :required="!modoEdicao"
                                         >
                                         <label for="senhaUsuario">
                                             {{ modoEdicao ? 'Nova Senha (opcional)' : 'Senha *' }}
                                         </label>
                                         <div class="invalid-feedback" v-if="errors.password">
-                                            {{ errors.password[0] }}
+                                            {{ Array.isArray(errors.password) ? errors.password[0] : errors.password }}
                                         </div>
                                     </div>
                                 </div>
@@ -678,13 +674,12 @@
                                             v-model="formUsuario.password_confirmation"
                                             :class="{ 'is-invalid': errors.password_confirmation }"
                                             :placeholder="modoEdicao ? 'Confirme a nova senha' : 'Confirme a senha'"
-                                            :required="!modoEdicao"
                                         >
                                         <label for="confirmarSenha">
                                             {{ modoEdicao ? 'Confirmar Nova Senha' : 'Confirmar Senha *' }}
                                         </label>
                                         <div class="invalid-feedback" v-if="errors.password_confirmation">
-                                            {{ errors.password_confirmation[0] }}
+                                            {{ Array.isArray(errors.password_confirmation) ? errors.password_confirmation[0] : errors.password_confirmation }}
                                         </div>
                                     </div>
                                 </div>
@@ -1609,7 +1604,6 @@
 </template>
 
 <script>
-import { Modal, Toast } from 'bootstrap';
 import BuscaGlobal from './BuscaGlobal.vue';
 
 export default {
@@ -1788,15 +1782,15 @@ export default {
 
     
     mounted() {
-        this.modalUsuario = new Modal(this.$refs.modalUsuario);
-        this.modalPapel = new Modal(this.$refs.modalPapel);
-        this.modalPermissao = new Modal(this.$refs.modalPermissao);
-        this.modalGerenciarPermissoes = new Modal(this.$refs.modalGerenciarPermissoes);
-        this.modalGerenciarUsuarios = new Modal(this.$refs.modalGerenciarUsuarios);
-        this.modalExclusaoInteligente = new Modal(this.$refs.modalExclusaoInteligente);
-        this.modalDetalhesPermissao = new Modal(this.$refs.modalDetalhesPermissao);
-        this.modalGerenciarPapeisPermissao = new Modal(this.$refs.modalGerenciarPapeisPermissao);
-        this.toast = new Toast(document.getElementById('toast'));
+        this.modalUsuario = new bootstrap.Modal(this.$refs.modalUsuario);
+        this.modalPapel = new bootstrap.Modal(this.$refs.modalPapel);
+        this.modalPermissao = new bootstrap.Modal(this.$refs.modalPermissao);
+        this.modalGerenciarPermissoes = new bootstrap.Modal(this.$refs.modalGerenciarPermissoes);
+        this.modalGerenciarUsuarios = new bootstrap.Modal(this.$refs.modalGerenciarUsuarios);
+        this.modalExclusaoInteligente = new bootstrap.Modal(this.$refs.modalExclusaoInteligente);
+        this.modalDetalhesPermissao = new bootstrap.Modal(this.$refs.modalDetalhesPermissao);
+        this.modalGerenciarPapeisPermissao = new bootstrap.Modal(this.$refs.modalGerenciarPapeisPermissao);
+        this.toast = new bootstrap.Toast(document.getElementById('toast'));
         this.carregarUsuarios();
         this.carregarPapeis();
         this.carregarPermissoes();
@@ -1975,6 +1969,7 @@ export default {
         abrirModalCriarUsuario() {
             this.modoEdicao = false;
             this.limparFormularioUsuario();
+            this.errors = {};
             this.modalUsuario.show();
         },
         
@@ -1982,6 +1977,7 @@ export default {
             this.modoEdicao = true;
             this.itemSelecionado = usuario;
             this.carregarUsuarioParaEdicao(usuario);
+            this.errors = {};
             this.modalUsuario.show();
         },
         
@@ -2019,34 +2015,54 @@ export default {
                 
                 const method = this.modoEdicao ? 'PUT' : 'POST';
                 
+                // Preparar dados para envio
+                const dados = {
+                    name: this.formUsuario.nome,
+                    email: this.formUsuario.email,
+                    login_type: 'local', // Sempre local para usuários criados manualmente
+                    is_active: this.formUsuario.is_active
+                };
+                
+                // Adicionar senha apenas se fornecida (edição) ou obrigatória (criação)
+                if (!this.modoEdicao || this.formUsuario.password) {
+                    dados.password = this.formUsuario.password;
+                    dados.password_confirmation = this.formUsuario.password_confirmation;
+                }
+                
                 const response = await axios({
                     method: method,
                     url: url,
-                    data: {
-                        name: this.formUsuario.nome,
-                        email: this.formUsuario.email,
-                        login_type: 'local', // Sempre local para usuários criados manualmente
-                        is_active: this.formUsuario.is_active,
-                        password: this.formUsuario.password,
-                        password_confirmation: this.formUsuario.password_confirmation
-                    }
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    data: dados
                 });
                 
                 this.modalUsuario.hide();
                 this.mostrarToast('Sucesso', 'Usuário salvo com sucesso!', 'fa-check-circle text-success');
                 this.carregarUsuarios();
-                
-                // Recarregar papéis para sincronizar dados entre abas
                 this.carregarPapeis();
                 
-                // Atualizar busca global se estiver ativa
-                this.atualizarBuscaGlobalSeAtiva();
-                
             } catch (error) {
-                if (error.response && error.response.data.errors) {
+                if (error.response && error.response.status === 422 && error.response.data.errors) {
                     this.errors = error.response.data.errors;
+                    // focar no primeiro campo inválido
+                    this.$nextTick(() => {
+                        if (this.errors.name) {
+                            document.getElementById('nomeUsuario')?.focus();
+                        } else if (this.errors.email) {
+                            document.getElementById('emailUsuario')?.focus();
+                        } else if (this.errors.password) {
+                            document.getElementById('senhaUsuario')?.focus();
+                        } else if (this.errors.password_confirmation) {
+                            document.getElementById('confirmarSenha')?.focus();
+                        }
+                    });
                 } else {
-                    this.mostrarToast('Erro', 'Erro ao salvar usuário', 'fa-exclamation-circle text-danger');
+                    const mensagem = error.response?.data?.message || error.message || 'Erro ao salvar usuário';
+                    this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
                 }
             } finally {
                 this.salvando = false;
@@ -2056,7 +2072,6 @@ export default {
         async excluirUsuario(usuario) {
             this.itemParaExcluir = usuario;
             this.tipoExclusao = 'usuario';
-            this.mensagemConfirmacao = `Tem certeza que deseja excluir o usuário <strong>"${usuario.name}"</strong>?`;
             
             const modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacaoExclusao'));
             modalConfirmacao.show();
@@ -2946,10 +2961,22 @@ export default {
         // ===== MÉTODOS DE EXCLUSÃO CONFIRMADA =====
         
         async excluirUsuarioConfirmado() {
-            const response = await axios.delete(`/api/administracao/usuarios/${this.itemParaExcluir.id}`);
-            this.mostrarToast('Sucesso', 'Usuário excluído com sucesso!', 'fa-check-circle text-success');
-            this.carregarUsuarios();
-            this.carregarPapeis();
+            try {
+                const response = await axios.delete(`/api/administracao/usuarios/${this.itemParaExcluir.id}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                this.mostrarToast('Sucesso', 'Usuário excluído com sucesso!', 'fa-check-circle text-success');
+                this.carregarUsuarios();
+                this.carregarPapeis();
+            } catch (error) {
+                console.error('Erro ao excluir usuário:', error);
+                const mensagem = error.response?.data?.message || error.message || 'Erro ao excluir usuário';
+                this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
+                throw error; // Re-throw para ser capturado pelo método principal
+            }
         },
         
         async excluirPapelConfirmado() {

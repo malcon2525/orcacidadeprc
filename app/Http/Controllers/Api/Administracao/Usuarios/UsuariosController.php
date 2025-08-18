@@ -88,7 +88,7 @@ class UsuariosController extends Controller
         }
 
         // Retornar todos os usuários sem paginação
-        $usuarios = $query->get();
+        $usuarios = $query->orderBy('name', 'asc')->get();
         return response()->json($usuarios);
     }
 
@@ -195,8 +195,21 @@ class UsuariosController extends Controller
             'email' => 'required|email|max:255|unique:users,email,' . $id,
             'is_active' => 'boolean',
             'login_type' => 'required|in:local,ad',
+            'password' => 'nullable|string|min:6', // Senha opcional na edição
+            'password_confirmation' => 'nullable|same:password', // Confirmação opcional
             'roles' => 'array',
             'roles.*' => 'exists:roles,id'
+        ], [
+            'name.required' => 'O nome é obrigatório',
+            'email.required' => 'O email é obrigatório',
+            'email.email' => 'O email informado é inválido',
+            'email.unique' => 'Este email já está cadastrado',
+            'password.min' => 'A senha deve ter pelo menos 6 caracteres',
+            'password_confirmation.same' => 'A confirmação de senha não confere',
+            'login_type.required' => 'O tipo de login é obrigatório',
+            'login_type.in' => 'O tipo de login deve ser local ou ad',
+            'roles.array' => 'Os papéis devem ser uma lista',
+            'roles.*.exists' => 'Papel inválido selecionado'
         ]);
 
         if ($validator->fails()) {
@@ -206,12 +219,19 @@ class UsuariosController extends Controller
         try {
             $usuario = User::findOrFail($id);
             
-            $usuario->update([
+            $dadosUpdate = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'is_active' => $request->get('is_active', true),
                 'login_type' => $request->login_type,
-            ]);
+            ];
+            
+            // Atualizar senha apenas se fornecida
+            if ($request->filled('password')) {
+                $dadosUpdate['password'] = Hash::make($request->password);
+            }
+            
+            $usuario->update($dadosUpdate);
 
             // Atualizar papéis
             if ($request->has('roles')) {
