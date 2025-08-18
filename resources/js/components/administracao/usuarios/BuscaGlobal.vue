@@ -109,7 +109,7 @@
                                     </div>
                                     
                                     <!-- Permissões -->
-                                    <div class="permissoes-container">
+                                    <div class="scrollable-badges">
                                         <span v-if="permissoes.length === 0 || (permissoes.length === 1 && permissoes[0] === null)" 
                                               class="badge badge-warning me-1 mb-1 d-inline-block">
                                             <i class="fas fa-exclamation-triangle me-1"></i>
@@ -387,35 +387,5 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos específicos para a aba Busca Global */
-.permissoes-container {
-    max-height: 200px;
-    overflow-y: auto;
-    padding-right: 10px; /* Espaço para evitar corte dos badges */
-}
-
-.permissoes-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.permissoes-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.permissoes-container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-.permissoes-container::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Melhorar espaçamento dos badges */
-.badge {
-    white-space: nowrap;
-    overflow: visible;
-    word-break: keep-all;
-}
+/* Apenas regras verdadeiramente específicas deste componente devem ficar aqui. */
 </style>

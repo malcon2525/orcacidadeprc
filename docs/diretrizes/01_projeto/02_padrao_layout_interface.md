@@ -19,6 +19,7 @@ Estabelecer padrões visuais UNIVERSAIS para interface do sistema, garantindo UX
 - **Responsividade** - Adaptação a diferentes dispositivos
 - **Acessibilidade** - Interface acessível para todos os usuários
 - **Eficiência** - Layout otimizado para notebooks 14"
+- **CSS Global** - Todos os estilos devem estar em `modern-interface.css`
 
 ### ⚠️ **IMPORTANTE - ARQUIVOS ESPECIALIZADOS**
 - **Para interfaces SEM abas**: Consulte `05_padrao_interface_simples.md`
@@ -94,6 +95,48 @@ Estabelecer padrões visuais UNIVERSAIS para interface do sistema, garantindo UX
 .text-custom {
     color: #18578A !important;
     font-weight: 600;
+}
+```
+
+#### **Classes Utilitárias Globais (OBRIGATÓRIO usar)**
+> **IMPORTANTE**: Estas classes substituem estilos inline. Use sempre estas classes em vez de `style="..."`.
+
+```css
+/* Z-Index */
+.z-1000 { z-index: 1000 !important; }
+
+/* Larguras */
+.max-w-200px { max-width: 200px !important; }
+.w-100px { width: 100px !important; }
+.w-180px { width: 180px !important; }
+
+/* Alturas e Dimensionamento */
+.min-h-58 { min-height: 58px !important; }
+.h-58 { height: 58px !important; }
+.resize-vertical { resize: vertical !important; }
+.overflow-auto { overflow: auto !important; }
+
+/* Interação */
+.cursor-pointer { cursor: pointer !important; }
+```
+
+#### **Container de Badges com Rolagem**
+```css
+.scrollable-badges {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px; /* evitar corte dos badges */
+}
+
+.scrollable-badges::-webkit-scrollbar { width: 6px; }
+.scrollable-badges::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+.scrollable-badges::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+.scrollable-badges::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+.scrollable-badges .badge {
+    white-space: nowrap;
+    overflow: visible;
+    word-break: keep-all;
 }
 ```
 
@@ -323,7 +366,58 @@ Estabelecer padrões visuais UNIVERSAIS para interface do sistema, garantindo UX
 
 ---
 
-## 12. Conclusão
+## 12. Modais e Overlays
+
+### 🪟 **Padrão de Modais (Referência)**
+> **IMPORTANTE**: Para padrões específicos de modais, consulte `07_padrao_modais.md`
+
+#### **Características Universais dos Modais:**
+- **Z-index**: Configurado automaticamente para ficar acima de todos os elementos
+- **Posicionamento**: Centralizado na tela com `modal-dialog-centered`
+- **Header**: Sempre com gradiente azul-verde (`#18578A` → `#5EA853`)
+- **Botão fechar**: Sempre visível com filtro CSS para cor branca
+- **Responsividade**: Adaptação automática para todas as telas
+
+#### **Tipos de Modal Padronizados:**
+1. **Modal de Confirmação**: Para exclusões e ações críticas
+2. **Modal de Formulário**: Para criação e edição de dados
+3. **Modal de Visualização**: Para exibição de detalhes
+4. **Modal de Seleção**: Para múltipla escolha
+
+#### **Classes CSS Universais para Modais:**
+```css
+/* Header padrão de modal */
+.custom-modal-header {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+/* Ícone do header */
+.header-icon {
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    color: white;
+}
+
+/* Botão fechar padrão */
+.custom-modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+```
+
+---
+
+## 13. Conclusão
 
 ### 📋 **Resumo dos Padrões Universais**
 1. **Cores**: Paleta fixa e obrigatória

@@ -183,7 +183,7 @@ body {
     color: var(--color-azul-secundario) !important;
 }
 
-/* ===== SISTEMA DE MODAIS PADRONIZADO ===== */
+/* ===== SISTEMA DE MODAIS PADRÃO ===== */
 .custom-modal-header {
     background: linear-gradient(135deg, var(--color-azul-secundario) 0%, var(--color-verde-principal) 100%);
     color: var(--color-branco);
@@ -244,7 +244,7 @@ body {
     gap: 0.25rem;
 }
 
-/* ===== SISTEMA DE BOTÕES PADRONIZADO ===== */
+/* ===== SISTEMA DE BOTÕES PADRÃO ===== */
 .btn-moderno {
     border-radius: 8px;
     font-weight: 600;
@@ -300,7 +300,7 @@ body {
     font-size: 0.875rem !important;
 }
 
-/* ===== SISTEMA DE TABELAS PADRONIZADO ===== */
+/* ===== SISTEMA DE TABELAS PADRÃO ===== */
 .table-moderno {
     border-radius: 12px;
     overflow: hidden;
@@ -988,4 +988,298 @@ code {
         flex: 100%;
         min-width: auto;
     }
+}
+
+/* ===== CORREÇÃO Z-INDEX PARA MODAIS ===== */
+/* Forçar todos os modais Bootstrap a ficarem acima de tudo */
+.modal {
+    z-index: 10001 !important; /* Acima de qualquer elemento fixo */
+}
+
+.modal-backdrop {
+    z-index: 10000 !important; /* Mesmo nível do modal */
+}
+
+/* Modal dialogs também precisam de z-index alto */
+.modal-dialog {
+    z-index: 10002 !important; /* Acima do modal */
+}
+
+/* Modal content para garantir */
+.modal-content {
+    z-index: 10003 !important; /* Máximo z-index */
+}
+
+/* Garantir que modais específicos funcionem */
+#modalUsuario,
+#modalPapel,
+#modalPermissao,
+#modalGerenciarPermissoes,
+#modalGerenciarUsuarios,
+#modalExclusaoInteligente {
+    z-index: 10001 !important;
+}
+
+/* Modais de confirmação também */
+[id*="modalConfirmacao"],
+[id*="confirmacaoModal"] {
+    z-index: 10001 !important;
+}
+
+/* ===== CORREÇÃO DE TRUNCAMENTO DOS MODAIS ===== */
+/* Garantir que modais não sejam cortados */
+.modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+}
+
+.modal-dialog {
+    position: relative !important;
+    margin: 1.75rem auto !important; /* Espaçamento do topo */
+    max-height: calc(100vh - 3.5rem) !important; /* Altura máxima */
+    overflow: visible !important;
+}
+
+.modal-content {
+    position: relative !important;
+    overflow: visible !important;
+    max-height: calc(100vh - 3.5rem) !important;
+}
+
+/* Garantir que o body não tenha overflow hidden quando modal estiver aberto */
+body.modal-open {
+    overflow: visible !important;
+    padding-right: 0 !important; /* Remover padding do Bootstrap */
+}
+
+/* ===== HEADER PERSONALIZADO DOS MODAIS ===== */
+.custom-modal-header {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 1.5rem;
+}
+
+.header-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
+
+.custom-modal-header .modal-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.custom-modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* ===== SISTEMA DE MODAIS DE CONFIRMAÇÃO - CLASSES GENÉRICAS ===== */
+/* Classes reutilizáveis para qualquer modal de confirmação */
+
+/* Modal de confirmação - CLASSE GENÉRICA */
+.modal-confirmacao {
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ===== UTILITÁRIOS GERAIS (REUTILIZÁVEIS) ===== */
+.z-1000 { z-index: 1000 !important; }
+.max-w-200px { max-width: 200px !important; }
+.w-100px { width: 100px !important; }
+.w-180px { width: 180px !important; }
+.min-h-58 { min-height: 58px !important; }
+.h-58 { height: 58px !important; }
+.resize-vertical { resize: vertical !important; }
+.overflow-auto { overflow: auto !important; }
+.cursor-pointer { cursor: pointer !important; }
+
+/* Contêiner genérico para listas de badges com rolagem (ex-"permissoes-container") */
+.scrollable-badges {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px; /* evitar corte dos badges */
+}
+
+.scrollable-badges::-webkit-scrollbar { width: 6px; }
+.scrollable-badges::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+.scrollable-badges::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+.scrollable-badges::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+/* Ajustes de badges dentro do contêiner scrollable */
+.scrollable-badges .badge {
+    white-space: nowrap;
+    overflow: visible;
+    word-break: keep-all;
+}
+
+.modal-confirmacao .modal-content {
+    border: none !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+}
+
+/* Header com gradiente - CLASSE GENÉRICA */
+.modal-confirmacao .modal-header {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%) !important;
+    color: white !important;
+    border-bottom: none !important;
+    padding: 1.5rem !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.modal-confirmacao .modal-title {
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 1.25rem !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+.modal-confirmacao .modal-title i {
+    font-size: 1.5rem !important;
+    color: #ffc107 !important;
+}
+
+/* Header icon - CLASSE GENÉRICA */
+.modal-confirmacao .header-icon {
+    width: 40px !important;
+    height: 40px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 1rem !important;
+    font-size: 1.2rem !important;
+    color: white !important;
+}
+
+/* Botão fechar - CLASSE GENÉRICA */
+.modal-confirmacao .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* Corpo do modal - CLASSE GENÉRICA */
+.modal-confirmacao .modal-body {
+    background: white !important;
+    padding: 1.25rem 1.25rem 0 1.25rem !important;
+    text-align: center !important;
+}
+
+/* Tipografia - CLASSES GENÉRICAS */
+.modal-confirmacao .confirm-text {
+    color: #3E4653 !important;
+    font-size: 1.1rem !important;
+    margin: 0 0 1rem 0 !important;
+    line-height: 1.6 !important;
+}
+
+.modal-confirmacao .target-entity {
+    color: #2E77D0 !important;
+    font-weight: 700 !important;
+    font-size: 1.25rem !important;
+    display: block !important;
+    margin: 0.5rem 0 1.5rem 0 !important;
+}
+
+/* Caixa de aviso - CLASSE GENÉRICA */
+.modal-confirmacao .irreversible {
+    background: #FFF5F5 !important;
+    border: 1px solid #FAD4D4 !important;
+    color: #5f6b7a !important;
+    border-radius: 0.75rem !important;
+    padding: 0.75rem 0.9rem !important;
+    margin: 0 0 2rem 0 !important; /* Adicionar margem inferior para separar do footer */
+    display: flex !important;
+    gap: 0.5rem !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+
+/* Ícone de aviso na caixa - CLASSE GENÉRICA */
+.modal-confirmacao .irreversible i {
+    color: #D64545 !important;
+    font-size: 1.2rem !important;
+    flex-shrink: 0 !important;
+}
+
+/* Texto da caixa de aviso - CLASSE GENÉRICA */
+.modal-confirmacao .irreversible span {
+    color: #5f6b7a !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+}
+
+/* Footer - CLASSE GENÉRICA */
+.modal-confirmacao .modal-footer {
+    background: transparent !important;
+    border: none !important;
+    padding: 1.5rem 1.25rem 1.25rem 1.25rem !important; /* Aumentar padding superior */
+    gap: 0.6rem !important;
+    justify-content: center !important;
+}
+
+/* Botões - CLASSES GENÉRICAS */
+.modal-confirmacao .btn {
+    border-radius: 0.375rem !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border: none !important;
+    font-size: 0.875rem !important;
+}
+
+/* Botão cancelar - CLASSE GENÉRICA */
+.modal-confirmacao .btn-secondary {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.modal-confirmacao .btn-secondary:hover {
+    background: #5a6268 !important;
+}
+
+/* Botão excluir - CLASSE GENÉRICA */
+.modal-confirmacao .btn-danger {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.modal-confirmacao .btn-danger:hover {
+    background: #c82333 !important;
+}
+
+/* ===== COMPATIBILIDADE COM ID EXISTENTE ===== */
+/* Manter compatibilidade com modal existente */
+#modalConfirmacaoExclusao {
+    /* Aplicar todas as classes genéricas */
+}
+
+#modalConfirmacaoExclusao .modal-header,
+#modalConfirmacaoExclusao .modal-body,
+#modalConfirmacaoExclusao .modal-footer,
+#modalConfirmacaoExclusao .btn-close,
+#modalConfirmacaoExclusao .header-icon,
+#modalConfirmacaoExclusao .modal-title,
+#modalConfirmacaoExclusao .confirm-text,
+#modalConfirmacaoExclusao .target-entity,
+#modalConfirmacaoExclusao .irreversible,
+#modalConfirmacaoExclusao .btn {
+    /* Herdar estilos das classes genéricas */
 }

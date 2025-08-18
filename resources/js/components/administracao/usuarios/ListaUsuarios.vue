@@ -142,9 +142,9 @@
                                             <th class="fw-semibold text-custom">Usuário</th>
                                             <th class="fw-semibold text-custom">Email</th>
                                             <th class="fw-semibold text-custom">Papéis</th>
-                                            <th class="fw-semibold text-custom text-center" style="width: 100px;">Status</th>
-                                            <th class="fw-semibold text-custom text-center" style="width: 100px;">Tipo</th>
-                                            <th class="fw-semibold text-end text-custom" style="width: 100px;">Ações</th>
+                                            <th class="fw-semibold text-custom text-center w-100px">Status</th>
+                                            <th class="fw-semibold text-custom text-center w-100px">Tipo</th>
+                                            <th class="fw-semibold text-end text-custom w-100px">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -158,7 +158,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="text-truncate" style="max-width: 200px;" :title="usuario.email">
+                                                <div class="text-truncate max-w-200px" :title="usuario.email">
                                                     {{ usuario.email }}
                                                 </div>
                                             </td>
@@ -275,10 +275,10 @@
                                         <tr>
                                             <th>Papel</th>
                                             <th>Nome Interno</th>
-                                            <th style="width: 100px;">Permissões</th>
-                                            <th style="width: 100px;">Usuários</th>
-                                            <th style="width: 100px;">Status</th>
-                                            <th class="text-end" style="width: 180px;">Ações</th>
+                                            <th class="w-100px">Permissões</th>
+                                            <th class="w-100px">Usuários</th>
+                                            <th class="w-100px">Status</th>
+                                            <th class="text-end w-180px">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -414,10 +414,10 @@
                                         <tr>
                                             <th >Permissão</th>
                                             <th >Nome Interno</th>
-                                            <th style="width: 100px;">Papéis</th>
-                                            <th style="width: 100px;">Usuários Afetados</th>
-                                            <th style="width: 100px;">Status</th>
-                                            <th class="text-end" style="width: 180px;">Ações</th>
+                                            <th class="w-100px">Papéis</th>
+                                            <th class="w-100px">Usuários Afetados</th>
+                                            <th class="w-100px">Status</th>
+                                            <th class="text-end w-180px">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -500,7 +500,7 @@
 
 
         <!-- Paginação Dinâmica Fora do Card -->
-        <div v-if="dadosFiltrados.length > 0" class="paginacao-container mt-4" style="position: relative; z-index: 1000;">
+        <div v-if="dadosFiltrados.length > 0" class="paginacao-container mt-4 z-1000" style="position: relative;">
             <div class="d-flex justify-content-between align-items-center">
                 <!-- Informações de Registros -->
                 <div class="text-muted fw-medium">
@@ -511,7 +511,7 @@
                     <!-- Seletor de Itens por Página -->
                     <!-- <div class="d-flex align-items-center gap-2">
                         <label class="text-muted small mb-0">Itens por página:</label>
-                        <select class="form-select form-select-sm" style="width: auto;" v-model="itensPorPagina" @change="mudarPagina(1)">
+                        <select class="form-select form-select-sm" v-model="itensPorPagina" @change="mudarPagina(1)" style="width: auto;">
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
@@ -535,9 +535,9 @@
                                 class="page-item" 
                                 :class="{ active: pagina === paginaAtual, disabled: pagina === '...' }">
                                 <button v-if="pagina !== '...'" 
-                                        class="page-link page-link-transparent" 
+                                        class="page-link page-link-transparent cursor-pointer" 
                                         @click="mudarPagina(pagina)"
-                                        style="cursor: pointer; width: 100%; text-decoration: none;">
+                                        style="width: 100%; text-decoration: none;">
                                     {{ pagina }}
                                 </button>
                                 <span v-else class="page-link">{{ pagina }}</span>
@@ -771,13 +771,12 @@
                                 <div class="col-12">
                                     <div class="form-floating">
                                         <textarea 
-                                            class="form-control" 
+                                            class="form-control min-h-58 h-58 resize-vertical overflow-auto" 
                                             id="descricaoPapel" 
                                             v-model="formPapel.description"
                                             :class="{ 'is-invalid': errorsPapel.description }"
                                             placeholder="Descrição do papel"
                                             rows="3"
-                                            style="min-height: 58px; height: 58px; resize: vertical; overflow-y: auto;"
                                             required
                                         ></textarea>
                                         <label for="descricaoPapel">Descrição *</label>
@@ -885,13 +884,12 @@
                                 <div class="col-12">
                                     <div class="form-floating">
                                         <textarea 
-                                            class="form-control" 
+                                            class="form-control min-h-58 h-58 resize-vertical overflow-auto" 
                                             id="descricaoPermissao" 
                                             v-model="formPermissao.description"
                                             :class="{ 'is-invalid': errorsPermissao.description }"
                                             placeholder="Descrição da permissão"
                                             rows="3"
-                                            style="min-height: 58px; height: 58px; resize: vertical; overflow-y: auto;"
                                             required
                                         ></textarea>
                                         <label for="descricaoPermissao">Descrição *</label>
@@ -1567,24 +1565,36 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Modal de Confirmação de Exclusão -->
-    <div class="modal fade" id="modalConfirmacaoExclusao" tabindex="-1" ref="modalConfirmacaoRef">
-        <div class="modal-dialog">
+    <div class="modal fade modal-confirmacao" id="modalConfirmacaoExclusao" tabindex="-1" ref="modalConfirmacaoRef">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header modal-header-borderless">
-                    <h5 class="modal-title fw-semibold">
-                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                        Confirmar Exclusão
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon" aria-hidden="true">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h5 class="modal-title mb-0">
+                            Confirmar Exclusão
+                        </h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="mb-0" v-html="mensagemConfirmacao"></p>
+                <div class="modal-body text-center">
+                    <p class="confirm-text mb-1">Tem certeza que deseja excluir o usuário</p>
+                    <p class="target-entity fs-5 mb-3">
+                        <span id="nomeUsuario">"{{ itemParaExcluir?.name }}"</span>
+                    </p>
+
+                    <!-- Caixa de Aviso -->
+                    <div class="irreversible mb-1" role="status" aria-live="polite">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span>Esta ação é permanente e não poderá ser desfeita.</span>
+                    </div>
                 </div>
-                <div class="modal-footer modal-footer-borderless">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" @click="confirmarExclusao" :disabled="excluindo">
                         <span v-if="excluindo" class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <i v-else class="fas fa-trash me-2"></i>
@@ -1593,6 +1603,8 @@
                 </div>
             </div>
         </div>
+    </div>
+    <!-- fechamento do container principal da página -->
     </div>
 </template>
 

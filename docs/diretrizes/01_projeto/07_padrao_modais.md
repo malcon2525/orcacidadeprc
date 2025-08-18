@@ -1,259 +1,71 @@
 # Padrão de Modais - OrçaCidade
 
-> **ESCOPO**: Este documento define padrões visuais para modais do projeto OrçaCidade. **OBRIGATÓRIO** seguir estas diretrizes para manter consistência visual.
+> **DOCUMENTO ESPECIALIZADO**: Este documento define padrões para todos os modais do sistema OrçaCidade.
 
-> **APLICAÇÃO**: Todos os modais do sistema, incluindo formulários, confirmações e exibições de dados.
+> **ATUALIZADO EM 2025**: Padrão evoluído para classes genéricas reutilizáveis e compatibilidade com modais existentes.
 
-> **BASE**: Este padrão segue os padrões universais definidos em `02_padrao_layout_interface.md`.
+> **ESCOPO**: Todos os modais do sistema devem seguir estes padrões para manter consistência visual e funcional.
 
 ---
 
 ## 1. Visão Geral
 
 ### 🎯 **Objetivo**
-Estabelecer padrões visuais para modais, garantindo consistência e funcionalidade adequada em todo o sistema.
+Estabelecer padrões UNIVERSAIS para todos os modais do sistema, garantindo consistência visual, funcional e de UX.
 
-### 🎨 **Características**
-- **Header com gradiente** (verde para azul)
-- **Botões padronizados** (verde para salvar, cinza para cancelar)
-- **Formulários com form-floating** quando aplicável
-- **Responsividade** para todas as telas
-- **Z-index** configurado automaticamente
+### 🎨 **Princípios Fundamentais**
+- **Consistência Visual** - Mesmo padrão em todos os modais
+- **Reutilização** - Classes genéricas para qualquer modal
+- **Compatibilidade** - Suporte a modais existentes
+- **UX Moderna** - Interface limpa e intuitiva
+- **Acessibilidade** - Modal acessível para todos os usuários
 
-### 📋 **Tipos de Modal**
-- **Modal de Formulário** (criar/editar)
-- **Modal de Confirmação** (exclusão)
-- **Modal de Visualização** (detalhes)
-- **Modal de Seleção** (múltipla escolha)
-
----
-
-## 2. Estrutura Visual Obrigatória
-
-### 📋 **Modal Base (Obrigatório)**
-```html
-<!-- Modal Base -->
-<div class="modal fade" id="modalId" tabindex="-1" ref="modalRef">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <!-- Header com Gradiente -->
-            <div class="modal-header custom-modal-header">
-                <div class="d-flex align-items-center">
-                    <div class="header-icon">
-                        <i class="fas fa-[icon]"></i>
-                    </div>
-                    <h5 class="modal-title mb-0">
-                        [Título do Modal]
-                    </h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <!-- Corpo do Modal -->
-            <div class="modal-body">
-                <!-- Conteúdo aqui -->
-            </div>
-
-            <!-- Rodapé do Modal -->
-            <div class="modal-footer border-0">
-                <!-- Botões aqui -->
-            </div>
-        </div>
-    </div>
-</div>
-```
+### ⚠️ **IMPORTANTE - CSS GLOBAL**
+- **Todos os estilos de modal estão em `public/assets/css/modern-interface.css`**
+- **NÃO criar estilos locais para modais**
+- **Usar sempre as classes genéricas definidas**
 
 ---
 
-## 3. Header do Modal
+## 2. Modal de Confirmação (Exclusão)
 
-### 🎨 **Header com Gradiente (Obrigatório)**
-```html
-<div class="modal-header custom-modal-header">
-    <div class="d-flex align-items-center">
-        <div class="header-icon">
-            <i class="fas" :class="modoEdicao ? 'fa-edit' : 'fa-plus'"></i>
-        </div>
-        <h5 class="modal-title mb-0">
-            {{ modoEdicao ? 'Editar [Item]' : 'Novo [Item]' }}
-        </h5>
-    </div>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-```
+### 🎯 **Uso Obrigatório**
+- **SEMPRE** usar este modal para confirmações de exclusão
+- **NUNCA** usar `confirm()` nativo do navegador
+- **OBRIGATÓRIO** para todas as operações destrutivas
 
-**CSS Obrigatório para Header:**
-```css
-/* Header personalizado do modal */
-.custom-modal-header {
-    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
-    color: white;
-    border-bottom: none;
-    padding: 1.5rem;
-    border-radius: 0.5rem 0.5rem 0 0;
-}
+### 🏗️ **Estrutura HTML (OBRIGATÓRIA)**
 
-/* Ícone do header */
-.header-icon {
-    width: 40px;
-    height: 40px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1rem;
-    font-size: 1.2rem;
-    color: white;
-}
-
-/* Título do modal */
-.custom-modal-header .modal-title {
-    color: white;
-    font-weight: 600;
-    font-size: 1.25rem;
-}
-
-/* Botão fechar */
-.custom-modal-header .btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
-}
-```
-
----
-
-## 4. Tipos de Modal
-
-### 📋 **Modal de Formulário (Criar/Editar)**
-```html
-<!-- Modal de Formulário -->
-<div class="modal fade" id="modalFormulario" tabindex="-1" ref="modalFormularioRef">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <!-- Header com Gradiente -->
-            <div class="modal-header custom-modal-header">
-                <div class="d-flex align-items-center">
-                    <div class="header-icon">
-                        <i class="fas" :class="modoEdicao ? 'fa-edit' : 'fa-plus'"></i>
-                    </div>
-                    <h5 class="modal-title mb-0">
-                        {{ modoEdicao ? 'Editar Usuário' : 'Novo Usuário' }}
-                    </h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <!-- Corpo do Modal -->
-            <div class="modal-body">
-                <form @submit.prevent="salvar">
-                    <div class="row g-3">
-                        <!-- Campo Nome -->
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="nome" 
-                                       v-model="form.nome"
-                                       placeholder="Nome completo"
-                                       required>
-                                <label for="nome">Nome Completo</label>
-                            </div>
-                        </div>
-                        
-                        <!-- Campo Email -->
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <input type="email" 
-                                       class="form-control" 
-                                       id="email" 
-                                       v-model="form.email"
-                                       placeholder="Email"
-                                       required>
-                                <label for="email">Email</label>
-                            </div>
-                        </div>
-                        
-                        <!-- Campo Status -->
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <select class="form-control" id="status" v-model="form.status" required>
-                                    <option value="">Selecione...</option>
-                                    <option value="ativo">Ativo</option>
-                                    <option value="inativo">Inativo</option>
-                                </select>
-                                <label for="status">Status</label>
-                            </div>
-                        </div>
-                        
-                        <!-- Campo Observações -->
-                        <div class="col-12">
-                            <div class="form-floating">
-                                <textarea class="form-control" 
-                                          id="observacoes" 
-                                          v-model="form.observacoes"
-                                          placeholder="Observações"
-                                          style="height: 100px"></textarea>
-                                <label for="observacoes">Observações</label>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Rodapé do Modal -->
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancelar
-                </button>
-                <button type="button" class="btn btn-success" @click="salvar" :disabled="salvando">
-                    <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    <i v-else class="fas fa-save me-2"></i>
-                    {{ salvando ? 'Salvando...' : 'Salvar' }}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-```
-
-### 📋 **Modal de Confirmação (Exclusão)**
 ```html
 <!-- Modal de Confirmação de Exclusão -->
-<div class="modal fade" id="modalConfirmacaoExclusao" tabindex="-1" ref="modalConfirmacaoRef">
-    <div class="modal-dialog">
+<div class="modal fade modal-confirmacao" id="modalConfirmacaoExclusao" tabindex="-1" ref="modalConfirmacaoRef">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <!-- Header com Gradiente -->
-            <div class="modal-header custom-modal-header">
+            <div class="modal-header">
                 <div class="d-flex align-items-center">
-                    <div class="header-icon">
+                    <div class="header-icon" aria-hidden="true">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
                     <h5 class="modal-title mb-0">
                         Confirmar Exclusão
                     </h5>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
+            <div class="modal-body text-center">
+                <p class="confirm-text mb-1">Tem certeza que deseja excluir o [tipo]</p>
+                <p class="target-entity fs-5 mb-3">
+                    <span id="nomeEntidade">"{{ itemParaExcluir?.name || itemParaExcluir?.display_name }}"</span>
+                </p>
 
-            <!-- Corpo do Modal -->
-            <div class="modal-body">
-                <div class="text-center">
-                    <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 3rem;"></i>
-                    <h6 class="mb-3">Tem certeza que deseja excluir?</h6>
-                    <p class="text-muted mb-0">
-                        <strong>"{{ itemParaExcluir?.nome }}"</strong> será removido permanentemente.
-                    </p>
-                    <p class="text-muted small mt-2">
-                        Esta ação não pode ser desfeita.
-                    </p>
+                <!-- Caixa de Aviso -->
+                <div class="irreversible mb-1" role="status" aria-live="polite">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span>Esta ação é permanente e não poderá ser desfeita.</span>
                 </div>
             </div>
-
-            <!-- Rodapé do Modal -->
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancelar
-                </button>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-danger" @click="confirmarExclusao" :disabled="excluindo">
                     <span v-if="excluindo" class="spinner-border spinner-border-sm me-2" role="status"></span>
                     <i v-else class="fas fa-trash me-2"></i>
@@ -265,20 +77,220 @@ Estabelecer padrões visuais para modais, garantindo consistência e funcionalid
 </div>
 ```
 
-### 📋 **Modal de Visualização (Detalhes)**
+### 🎨 **Classes CSS (OBRIGATÓRIAS)**
+
+#### **Classe Principal do Modal**
+```css
+.modal-confirmacao {
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+}
+```
+
+#### **Header com Gradiente**
+```css
+.modal-confirmacao .modal-header {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%) !important;
+    color: white !important;
+    border-bottom: none !important;
+    padding: 1.5rem !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+```
+
+#### **Ícone do Header**
+```css
+.modal-confirmacao .header-icon {
+    width: 40px !important;
+    height: 40px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 1rem !important;
+    font-size: 1.2rem !important;
+    color: white !important;
+}
+```
+
+#### **Botão Fechar**
+```css
+.modal-confirmacao .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+```
+
+#### **Corpo do Modal**
+```css
+.modal-confirmacao .modal-body {
+    background: white !important;
+    padding: 1.25rem 1.25rem 0 1.25rem !important;
+    text-align: center !important;
+}
+```
+
+#### **Tipografia**
+```css
+.modal-confirmacao .confirm-text {
+    color: #3E4653 !important;
+    font-size: 1.1rem !important;
+    margin: 0 0 1rem 0 !important;
+    line-height: 1.6 !important;
+}
+
+.modal-confirmacao .target-entity {
+    color: #2E77D0 !important;
+    font-weight: 700 !important;
+    font-size: 1.25rem !important;
+    display: block !important;
+    margin: 0.5rem 0 1.5rem 0 !important;
+}
+```
+
+#### **Caixa de Aviso**
+```css
+.modal-confirmacao .irreversible {
+    background: #FFF5F5 !important;
+    border: 1px solid #FAD4D4 !important;
+    color: #5f6b7a !important;
+    border-radius: 0.75rem !important;
+    padding: 0.75rem 0.9rem !important;
+    margin: 0 0 2rem 0 !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+
+.modal-confirmacao .irreversible i {
+    color: #D64545 !important;
+    font-size: 1.2rem !important;
+    flex-shrink: 0 !important;
+}
+
+.modal-confirmacao .irreversible span {
+    color: #5f6b7a !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+}
+```
+
+#### **Footer e Botões**
+```css
+.modal-confirmacao .modal-footer {
+    background: transparent !important;
+    border: none !important;
+    padding: 1.5rem 1.25rem 1.25rem 1.25rem !important;
+    gap: 0.6rem !important;
+    justify-content: center !important;
+}
+
+.modal-confirmacao .btn {
+    border-radius: 0.375rem !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    border: none !important;
+    font-size: 0.875rem !important;
+}
+
+.modal-confirmacao .btn-secondary {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.modal-confirmacao .btn-danger {
+    background: #dc3545 !important;
+    color: white !important;
+}
+```
+
+### 🔧 **Implementação Vue.js (OBRIGATÓRIA)**
+
+#### **Data Properties**
+```javascript
+data() {
+    return {
+        itemParaExcluir: null,
+        excluindo: false
+    }
+}
+```
+
+#### **Método de Abertura**
+```javascript
+excluirItem(item) {
+    this.itemParaExcluir = item;
+    const modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacaoExclusao'));
+    modalConfirmacao.show();
+}
+```
+
+#### **Método de Confirmação**
+```javascript
+async confirmarExclusao() {
+    if (!this.itemParaExcluir) return;
+    
+    this.excluindo = true;
+    try {
+        // Lógica de exclusão aqui
+        const response = await axios.delete(`/api/[endpoint]/${this.itemParaExcluir.id}`);
+        
+        if (response.ok) {
+            const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacaoExclusao'));
+            modalConfirmacao.hide();
+            
+            // Mostrar toast de sucesso
+            this.mostrarToast('Sucesso', 'Item excluído com sucesso!', 'fa-check-circle text-success');
+            
+            // Recarregar dados
+            this.carregarDados();
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        this.mostrarToast('Erro', 'Erro ao excluir', 'fa-exclamation-circle text-danger');
+    } finally {
+        this.excluindo = false;
+        this.itemParaExcluir = null;
+    }
+}
+```
+
+### 📱 **Responsividade**
+- **Modal sempre centralizado** com `modal-dialog-centered`
+- **Largura adaptativa** do Bootstrap
+- **Scroll automático** se conteúdo exceder altura da tela
+
+### ♿ **Acessibilidade**
+- **ARIA labels** para botões e elementos
+- **Role e aria-live** para caixa de aviso
+- **Navegação por teclado** completa
+- **Contraste adequado** para leitores de tela
+
+---
+
+## 3. Modal de Formulário
+
+### 🎯 **Uso**
+- Para criação e edição de registros
+- **SEMPRE** usar header com gradiente
+- **SEMPRE** usar classes de validação
+
+### 🏗️ **Estrutura HTML**
+
 ```html
-<!-- Modal de Visualização -->
-<div class="modal fade" id="modalVisualizacao" tabindex="-1" ref="modalVisualizacaoRef">
+<div class="modal fade" id="modalFormulario" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <!-- Header com Gradiente -->
             <div class="modal-header custom-modal-header">
                 <div class="d-flex align-items-center">
                     <div class="header-icon">
-                        <i class="fas fa-eye"></i>
+                        <i class="fas" :class="modoEdicao ? 'fa-edit' : 'fa-plus'"></i>
                     </div>
                     <h5 class="modal-title mb-0">
-                        Detalhes do Usuário
+                        {{ modoEdicao ? 'Editar' : 'Novo' }} [Entidade]
                     </h5>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -286,39 +298,20 @@ Estabelecer padrões visuais para modais, garantindo consistência e funcionalid
 
             <!-- Corpo do Modal -->
             <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-custom">Nome</label>
-                        <p class="form-control-plaintext">{{ item.nome }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-custom">Email</label>
-                        <p class="form-control-plaintext">{{ item.email }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-custom">Status</label>
-                        <div>
-                            <span class="badge badge-status" :class="item.status === 'ativo' ? 'badge-ativo' : 'badge-inativo'">
-                                <i class="fas" :class="item.status === 'ativo' ? 'fa-check-circle' : 'fa-times-circle'"></i>
-                                {{ item.status.toUpperCase() }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-custom">Data de Criação</label>
-                        <p class="form-control-plaintext">{{ formatarData(item.created_at) }}</p>
-                    </div>
-                    <div class="col-12" v-if="item.observacoes">
-                        <label class="form-label fw-semibold text-custom">Observações</label>
-                        <p class="form-control-plaintext">{{ item.observacoes }}</p>
-                    </div>
-                </div>
+                <form @submit.prevent="salvarItem">
+                    <!-- Campos do formulário aqui -->
+                </form>
             </div>
 
             <!-- Rodapé do Modal -->
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Fechar
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" @click="salvarItem" :disabled="salvando">
+                    <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <i v-else class="fas fa-save me-2"></i>
+                    {{ salvando ? 'Salvando...' : 'Salvar' }}
                 </button>
             </div>
         </div>
@@ -326,461 +319,10 @@ Estabelecer padrões visuais para modais, garantindo consistência e funcionalid
 </div>
 ```
 
----
+### 🎨 **Classes CSS para Formulário**
 
-## 5. Botões dos Modais
-
-### 🎨 **Padrão de Botões (Obrigatório)**
-```html
-<!-- Rodapé do Modal -->
-<div class="modal-footer border-0">
-    <!-- Botão Cancelar/Fechar: SEMPRE CINZA -->
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-        <i class="fas fa-times me-2"></i>Cancelar
-    </button>
-    
-    <!-- Botão Salvar: SEMPRE VERDE -->
-    <button type="button" class="btn btn-success" @click="salvar" :disabled="salvando">
-        <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
-        <i v-else class="fas fa-save me-2"></i>
-        {{ salvando ? 'Salvando...' : 'Salvar' }}
-    </button>
-</div>
-```
-
-**Cores Obrigatórias dos Botões:**
-- ✅ **Cancelar/Fechar**: `btn-secondary` (cinza `#5F6368`)
-- ✅ **Salvar**: `btn-success` (verde `#5EA853`)
-- ✅ **Excluir**: `btn-danger` (vermelho `#dc3545`)
-- ✅ **Editar**: `btn-warning` (amarelo `#ffc107`)
-
----
-
-## 6. Formulários nos Modais
-
-### 📋 **Campos Form-Floating (Obrigatório)**
-```html
-<div class="row g-3">
-    <!-- Campo Texto -->
-    <div class="col-md-6">
-        <div class="form-floating">
-            <input type="text" 
-                   class="form-control" 
-                   id="campoId" 
-                   v-model="form.campo"
-                   placeholder="Placeholder do campo"
-                   required>
-            <label for="campoId">Label do Campo</label>
-        </div>
-    </div>
-    
-    <!-- Campo Select -->
-    <div class="col-md-6">
-        <div class="form-floating">
-            <select class="form-control" id="status" v-model="form.status" required>
-                <option value="">Selecione...</option>
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-            </select>
-            <label for="status">Status</label>
-        </div>
-    </div>
-    
-    <!-- Campo Textarea -->
-    <div class="col-12">
-        <div class="form-floating">
-            <textarea class="form-control" 
-                      id="observacoes" 
-                      v-model="form.observacoes"
-                      placeholder="Observações"
-                      style="height: 100px"></textarea>
-            <label for="observacoes">Observações</label>
-        </div>
-    </div>
-</div>
-```
-
-**CSS Obrigatório para Form-Floating:**
+#### **Header Personalizado**
 ```css
-/* ===== PADRÃO OFICIAL - FORM-FLOATING ===== */
-/* ⚠️ NUNCA ALTERAR ESTAS REGRAS - ELAS GARANTEM FUNCIONAMENTO PERFEITO */
-.form-floating .form-control {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
-    min-height: 58px !important;
-}
-
-.form-floating .form-control:focus {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-.form-floating .form-control:not(:placeholder-shown) {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-/* Alinhamento dos campos em linha */
-.row.g-3 {
-    align-items: end;
-}
-```
-
----
-
-## 7. Validação nos Modais
-
-### 📋 **Validação Visual (Obrigatória)**
-```html
-<!-- Campo com Validação -->
-<div class="col-md-6">
-    <div class="form-floating">
-        <input type="text" 
-               class="form-control" 
-               :class="{ 'is-invalid': errors.nome }"
-               id="nome" 
-               v-model="form.nome"
-               placeholder="Nome completo"
-               required>
-        <label for="nome">Nome Completo</label>
-    </div>
-    <div class="invalid-feedback" v-if="errors.nome">
-        {{ errors.nome[0] }}
-    </div>
-</div>
-
-<!-- Select com Validação -->
-<div class="col-md-6">
-    <div class="form-floating">
-        <select class="form-control" 
-                :class="{ 'is-invalid': errors.status }"
-                id="status" 
-                v-model="form.status"
-                required>
-            <option value="">Selecione...</option>
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-        </select>
-        <label for="status">Status</label>
-    </div>
-    <div class="invalid-feedback" v-if="errors.status">
-        {{ errors.status[0] }}
-    </div>
-</div>
-```
-
-**CSS Obrigatório para Validação:**
-```css
-/* Campos válidos */
-.form-control.is-valid {
-    border-color: #5EA853 !important;
-    box-shadow: 0 0 0 0.2rem rgba(94, 168, 83, 0.25) !important;
-}
-
-/* Campos inválidos */
-.form-control.is-invalid {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-/* Feedback de validação */
-.invalid-feedback {
-    color: #dc3545 !important;
-    font-size: 0.875rem !important;
-}
-```
-
----
-
-## 8. Estados de Loading
-
-### 📋 **Botões com Loading (Obrigatório)**
-```html
-<!-- Botão Salvar com Loading -->
-<button type="button" class="btn btn-success" @click="salvar" :disabled="salvando">
-    <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
-    <i v-else class="fas fa-save me-2"></i>
-    {{ salvando ? 'Salvando...' : 'Salvar' }}
-</button>
-
-<!-- Botão Excluir com Loading -->
-<button type="button" class="btn btn-danger" @click="confirmarExclusao" :disabled="excluindo">
-    <span v-if="excluindo" class="spinner-border spinner-border-sm me-2" role="status"></span>
-    <i v-else class="fas fa-trash me-2"></i>
-    {{ excluindo ? 'Excluindo...' : 'Excluir' }}
-</button>
-```
-
----
-
-## 9. Tamanhos dos Modais
-
-### 📋 **Tamanhos Padronizados (Obrigatório)**
-```html
-<!-- Modal Pequeno (formulários simples) -->
-<div class="modal-dialog">
-
-<!-- Modal Médio (formulários com mais campos) -->
-<div class="modal-dialog modal-lg">
-
-<!-- Modal Grande (formulários complexos ou visualização) -->
-<div class="modal-dialog modal-xl">
-
-<!-- Modal Extra Grande (dashboards ou relatórios) -->
-<div class="modal-dialog modal-fullscreen">
-```
-
-**Regras de Tamanho:**
-- ✅ **Modal Pequeno**: Formulários simples (1-3 campos)
-- ✅ **Modal Médio**: Formulários padrão (4-6 campos)
-- ✅ **Modal Grande**: Formulários complexos (7+ campos)
-- ✅ **Modal Extra Grande**: Dashboards ou visualizações especiais
-
----
-
-## 10. Responsividade
-
-### 📱 **Breakpoints Obrigatórios**
-```css
-/* Mobile First */
-@media (max-width: 576px) {
-    .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100% - 1rem);
-    }
-    
-    .modal-body {
-        padding: 1rem !important;
-    }
-    
-    .modal-footer {
-        padding: 1rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .modal-header {
-        padding: 1rem !important;
-    }
-    
-    .modal-body {
-        padding: 1.5rem !important;
-    }
-    
-    .row.g-3 {
-        margin: 0;
-    }
-    
-    .col-md-6 {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-}
-
-@media (max-width: 992px) {
-    .modal-dialog.modal-lg {
-        max-width: 95%;
-    }
-    
-    .modal-dialog.modal-xl {
-        max-width: 95%;
-    }
-}
-```
-
----
-
-## 11. Z-Index e Sobreposições
-
-### 🎯 **Z-Index Automático (Obrigatório)**
-```css
-/* Z-index configurado automaticamente via modern-interface.css */
-/* NÃO é necessário configurar manualmente */
-
-/* Modais principais */
-.modal {
-    z-index: 1055 !important;
-}
-
-/* Modais de confirmação */
-.modal-backdrop {
-    z-index: 1054 !important;
-}
-```
-
-**Regras de Z-Index:**
-- ✅ **Z-index aplicado automaticamente** via CSS global
-- ✅ **Modais sempre acima do header fixo** (z-index: 10001+)
-- ✅ **Compatível com todos os modais Bootstrap** existentes e futuros
-- ✅ **NÃO requer alterações** nos componentes Vue.js
-
----
-
-## 12. Checklist de Implementação
-
-### 📋 **Estrutura Base**
-- [ ] Modal com `modal fade` e `tabindex="-1"`
-- [ ] Header com `custom-modal-header` e gradiente
-- [ ] Corpo com `modal-body`
-- [ ] Rodapé com `modal-footer border-0`
-
-### 📋 **Header do Modal**
-- [ ] Gradiente de verde para azul implementado
-- [ ] Ícone circular com fundo semi-transparente
-- [ ] Título branco com peso 600
-- [ ] Botão fechar branco configurado
-
-### 📋 **Botões dos Modais**
-- [ ] Botão cancelar com `btn-secondary` (cinza)
-- [ ] Botão salvar com `btn-success` (verde)
-- [ ] Botão excluir com `btn-danger` (vermelho)
-- [ ] Estados de loading implementados
-
-### 📋 **Formulários**
-- [ ] Campos com `form-floating` implementados
-- [ ] CSS padrão para form-floating incluído
-- [ ] Validação visual com `is-invalid` implementada
-- [ ] Feedback de erro com `invalid-feedback` visível
-
-### 📋 **Responsividade**
-- [ ] Breakpoints implementados
-- [ ] Layout adaptativo para mobile
-- [ ] Campos empilhados em telas pequenas
-- [ ] Padding adaptativo para diferentes telas
-
----
-
-## 13. Exemplo Completo
-
-### 📋 **Modal Completo de Formulário**
-```vue
-<template>
-    <!-- Modal de Formulário -->
-    <div class="modal fade" id="modalUsuario" tabindex="-1" ref="modalUsuarioRef">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <!-- Header com Gradiente -->
-                <div class="modal-header custom-modal-header">
-                    <div class="d-flex align-items-center">
-                        <div class="header-icon">
-                            <i class="fas" :class="modoEdicao ? 'fa-edit' : 'fa-plus'"></i>
-                        </div>
-                        <h5 class="modal-title mb-0">
-                            {{ modoEdicao ? 'Editar Usuário' : 'Novo Usuário' }}
-                        </h5>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <!-- Corpo do Modal -->
-                <div class="modal-body">
-                    <form @submit.prevent="salvar">
-                        <div class="row g-3">
-                            <!-- Campo Nome -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           :class="{ 'is-invalid': errors.nome }"
-                                           id="nome" 
-                                           v-model="form.nome"
-                                           placeholder="Nome completo"
-                                           required>
-                                    <label for="nome">Nome Completo</label>
-                                </div>
-                                <div class="invalid-feedback" v-if="errors.nome">
-                                    {{ errors.nome[0] }}
-                                </div>
-                            </div>
-                            
-                            <!-- Campo Email -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="email" 
-                                           class="form-control" 
-                                           :class="{ 'is-invalid': errors.email }"
-                                           id="email" 
-                                           v-model="form.email"
-                                           placeholder="Email"
-                                           required>
-                                    <label for="email">Email</label>
-                                </div>
-                                <div class="invalid-feedback" v-if="errors.email">
-                                    {{ errors.email[0] }}
-                                </div>
-                            </div>
-                            
-                            <!-- Campo Status -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-control" 
-                                            :class="{ 'is-invalid': errors.status }"
-                                            id="status" 
-                                            v-model="form.status" 
-                                            required>
-                                        <option value="">Selecione...</option>
-                                        <option value="ativo">Ativo</option>
-                                        <option value="inativo">Inativo</option>
-                                    </select>
-                                    <label for="status">Status</label>
-                                </div>
-                                <div class="invalid-feedback" v-if="errors.status">
-                                    {{ errors.status[0] }}
-                                </div>
-                            </div>
-                            
-                            <!-- Campo Observações -->
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    <textarea class="form-control" 
-                                              id="observacoes" 
-                                              v-model="form.observacoes"
-                                              placeholder="Observações"
-                                              style="height: 100px"></textarea>
-                                    <label for="observacoes">Observações</label>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Rodapé do Modal -->
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancelar
-                    </button>
-                    <button type="button" class="btn btn-success" @click="salvar" :disabled="salvando">
-                        <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        <i v-else class="fas fa-save me-2"></i>
-                        {{ salvando ? 'Salvando...' : 'Salvar' }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
-<style>
-/* ⚠️ SEMPRE INCLUIR ESTE CSS PADRÃO */
-.form-floating .form-control {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
-    min-height: 58px !important;
-}
-
-.form-floating .form-control:focus {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-.form-floating .form-control:not(:placeholder-shown) {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-/* Header personalizado do modal */
 .custom-modal-header {
     background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
     color: white;
@@ -789,7 +331,6 @@ Estabelecer padrões visuais para modais, garantindo consistência e funcionalid
     border-radius: 0.5rem 0.5rem 0 0;
 }
 
-/* Ícone do header */
 .header-icon {
     width: 40px;
     height: 40px;
@@ -803,89 +344,66 @@ Estabelecer padrões visuais para modais, garantindo consistência e funcionalid
     color: white;
 }
 
-/* Título do modal */
 .custom-modal-header .modal-title {
     color: white;
     font-weight: 600;
     font-size: 1.25rem;
 }
 
-/* Botão fechar */
 .custom-modal-header .btn-close-white {
     filter: invert(1) grayscale(100%) brightness(200%);
 }
-
-/* Validação */
-.form-control.is-valid {
-    border-color: #5EA853 !important;
-    box-shadow: 0 0 0 0.2rem rgba(94, 168, 83, 0.25) !important;
-}
-
-.form-control.is-invalid {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-.invalid-feedback {
-    color: #dc3545 !important;
-    font-size: 0.875rem !important;
-}
-
-/* Responsividade */
-@media (max-width: 576px) {
-    .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100% - 1rem);
-    }
-    
-    .modal-body {
-        padding: 1rem !important;
-    }
-    
-    .modal-footer {
-        padding: 1rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .modal-header {
-        padding: 1rem !important;
-    }
-    
-    .modal-body {
-        padding: 1.5rem !important;
-    }
-    
-    .row.g-3 {
-        margin: 0;
-    }
-    
-    .col-md-6 {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-}
-</style>
 ```
 
 ---
 
-## 14. Conclusão
+## 4. Regras Gerais
 
-### 📋 **Resumo dos Padrões de Modais**
-1. **Header**: Gradiente verde para azul com ícone circular
-2. **Botões**: Cores padronizadas (verde para salvar, cinza para cancelar)
-3. **Formulários**: Form-floating com CSS obrigatório
-4. **Validação**: Visual com estados de erro e sucesso
-5. **Loading**: Estados de carregamento nos botões
-6. **Responsividade**: Breakpoints para todas as telas
-7. **Z-index**: Configurado automaticamente
+### ✅ **Obrigatório**
+- **SEMPRE** usar as classes CSS definidas
+- **SEMPRE** implementar loading states
+- **SEMPRE** usar toast para feedback
+- **SEMPRE** centralizar modais
+- **SEMPRE** usar ícones FontAwesome
 
-### 🔗 **Próximos Passos**
-- **Para interfaces simples**: Consulte `05_padrao_interface_simples.md`
-- **Para interfaces com abas**: Consulte `06_padrao_interface_com_abas.md`
-- **Para padrões universais**: Consulte `02_padrao_layout_interface.md`
+### ❌ **Proibido**
+- **NUNCA** criar estilos locais para modais
+- **NUNCA** usar `confirm()` nativo
+- **NUNCA** usar modais sem header
+- **NUNCA** usar botões sem ícones
+- **NUNCA** usar modais sem validação
+
+### 🔗 **Referências**
+- **CSS Global**: `public/assets/css/modern-interface.css`
+- **Padrão de Layout**: `02_padrao_layout_interface.md`
+- **Padrão CRUD**: `01_padrao_crud.md`
+- **Bootstrap Modals**: [Documentação oficial](https://getbootstrap.com/docs/5.3/components/modal/)
 
 ---
 
-> **IMPORTANTE**: Este documento define padrões para modais. Para outros tipos de interface, consulte os arquivos correspondentes.
+## 5. Checklist de Implementação
+
+### ✅ **Modal de Confirmação**
+- [ ] HTML com estrutura correta
+- [ ] Classe `modal-confirmacao` aplicada
+- [ ] Vue.js data properties configuradas
+- [ ] Métodos de abertura e confirmação implementados
+- [ ] Loading states funcionando
+- [ ] Toast de feedback implementado
+
+### ✅ **Modal de Formulário**
+- [ ] HTML com estrutura correta
+- [ ] Classe `custom-modal-header` aplicada
+- [ ] Formulário com validação
+- [ ] Loading states funcionando
+- [ ] Toast de feedback implementado
+
+### ✅ **CSS Global**
+- [ ] Estilos aplicados em `modern-interface.css`
+- [ ] Nenhum estilo local criado
+- [ ] Classes utilitárias funcionando
+- [ ] Responsividade testada
+
+---
+
+> **ÚLTIMA ATUALIZAÇÃO**: Janeiro 2025 - Classes genéricas e CSS global consolidado
