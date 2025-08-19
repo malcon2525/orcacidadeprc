@@ -551,59 +551,34 @@
 
 
 
-        <!-- Paginação Dinâmica Fora do Card -->
-        <div v-if="dadosFiltrados.length > 0" class="paginacao-container mt-4 z-1000" style="position: relative;">
+        <!-- Paginação (Fora do Card - Padrão) -->
+        <div v-if="dadosFiltrados.length > 0" class="paginacao-container mt-4">
             <div class="d-flex justify-content-between align-items-center">
-                <!-- Informações de Registros -->
                 <div class="text-muted fw-medium">
                     Mostrando {{ (paginaAtual - 1) * itensPorPagina + 1 }} até {{ Math.min(paginaAtual * itensPorPagina, dadosFiltrados.length) }} de {{ dadosFiltrados.length }} registros
                 </div>
-                
-                <div class="d-flex align-items-center">
-                    <!-- Seletor de Itens por Página -->
-                    <!-- <div class="d-flex align-items-center gap-2">
-                        <label class="text-muted small mb-0">Itens por página:</label>
-                        <select class="form-select form-select-sm" v-model="itensPorPagina" @change="mudarPagina(1)" style="width: auto;">
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                    </div> -->
-                    
-                    <!-- Navegação -->
-                    <nav>
-                        <ul class="pagination admin-pagination mb-0">
-                            <!-- Botão Anterior -->
-                            <li class="page-item" :class="{ disabled: paginaAtual === 1 }">
-                                <button class="page-link page-link-transparent" @click="mudarPagina(paginaAtual - 1)" aria-label="Anterior" :disabled="paginaAtual === 1">
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                            </li>
-                            
-                            <!-- Páginas -->
-                            <li v-for="pagina in paginasVisiveis" 
-                                :key="pagina" 
-                                class="page-item" 
-                                :class="{ active: pagina === paginaAtual, disabled: pagina === '...' }">
-                                <button v-if="pagina !== '...'" 
-                                        class="page-link page-link-transparent cursor-pointer" 
-                                        @click="mudarPagina(pagina)"
-                                        style="width: 100%; text-decoration: none;">
-                                    {{ pagina }}
-                                </button>
-                                <span v-else class="page-link">{{ pagina }}</span>
-                            </li>
-                            
-                            <!-- Botão Próximo -->
-                            <li class="page-item" :class="{ disabled: paginaAtual === totalPaginas }">
-                                <button class="page-link page-link-transparent" @click="mudarPagina(paginaAtual + 1)" aria-label="Próximo" :disabled="paginaAtual === totalPaginas">
-                                    <i class="fas fa-chevron-right"></i>
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+                <nav>
+                    <ul class="pagination admin-pagination mb-0">
+                        <!-- Botão Anterior -->
+                        <li class="page-item" :class="{ disabled: paginaAtual === 1 }">
+                            <a class="page-link" href="#" @click.prevent="mudarPagina(paginaAtual - 1)" aria-label="Anterior">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        <!-- Páginas Numeradas -->
+                        <li v-for="page in paginasVisiveis" :key="page" class="page-item" :class="{ active: page === paginaAtual }">
+                            <a class="page-link" href="#" @click.prevent="mudarPagina(page)">{{ page }}</a>
+                        </li>
+
+                        <!-- Botão Próximo -->
+                        <li class="page-item" :class="{ disabled: paginaAtual === totalPaginas }">
+                            <a class="page-link" href="#" @click.prevent="mudarPagina(paginaAtual + 1)" aria-label="Próximo">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -1890,7 +1865,7 @@ export default {
             
             // Paginação
             paginaAtual: 1,
-            itensPorPagina: 10,
+            itensPorPagina: 50,
             
             // Filtros por aba
             filtrosUsuariosVisiveis: false,
@@ -2225,11 +2200,16 @@ export default {
             const total = this.totalPaginas;
             const atual = this.paginaAtual;
             
-            if (total <= 7) {
+            // Sempre mostrar pelo menos a página atual
+            if (total <= 1) {
+                paginas.push(1);
+            } else if (total <= 7) {
+                // Para poucas páginas, mostrar todas
                 for (let i = 1; i <= total; i++) {
                     paginas.push(i);
                 }
             } else {
+                // Para muitas páginas, mostrar navegação inteligente
                 paginas.push(1);
                 
                 if (atual > 4) {
@@ -3558,4 +3538,52 @@ export default {
 
 <!-- CSS centralizado em modern-interface.css -->
 
-<!-- CSS centralizado em modern-interface.css -->
+<style scoped>
+/* Estilos específicos para paginação - Layout excepcional */
+.paginacao-container {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-pagination .page-link {
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.admin-pagination .page-link:hover {
+    color: #fff;
+    background-color: #5EA853;
+    border-color: #5EA853;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(94, 168, 83, 0.3);
+}
+
+.admin-pagination .page-item.active .page-link {
+    background-color: #5EA853;
+    border-color: #5EA853;
+    color: #fff;
+    font-weight: 600;
+}
+
+.admin-pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+}
+
+.admin-pagination .page-item.disabled .page-link:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    transform: none;
+    box-shadow: none;
+}
+</style>
