@@ -107,7 +107,28 @@
     </div>
     
     <div class="sidebar-content">
+        <!-- DEBUG TEMPORÁRIO -->
+        @php
+            $user = Auth::user();
+            $roles = $user->roles;
+            $isSuper = $user->isSuperAdmin();
+        @endphp
+        <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
+            <strong>DEBUG:</strong><br>
+            Usuário: {{ $user->name }}<br>
+            Email: {{ $user->email }}<br>
+            Papéis: {{ $roles->pluck('name')->implode(', ') ?: 'Nenhum papel' }}<br>
+            Count: {{ $roles->count() }}<br>
+            isSuperAdmin(): {{ $isSuper ? 'SIM' : 'NÃO' }}<br>
+            <hr>
+            <strong>Detalhes dos papéis:</strong><br>
+            @foreach($roles as $role)
+                - {{ $role->name }} ({{ $role->display_name }})<br>
+            @endforeach
+        </div>
+
         <!-- TABELAS OFICIAIS -->
+        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('importar_derpr') || Auth::user()->hasRole('importar_sinapi') || Auth::user()->hasRole('consultar_derpr') || Auth::user()->hasRole('consultar_sinapi'))
         <div class="menu-group">
             <div class="menu-header myBox">
                 <div class="menu-icon">
@@ -116,26 +137,36 @@
                 <span>TABELAS OFICIAIS</span>
             </div>
             <div class="menu-items">
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('importar_derpr'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-download"></i>
                     <span>Importar DER-PR</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('importar_sinapi'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-download"></i>
                     <span>Importar SINAPI</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_derpr'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-search"></i>
                     <span>Consultar DER-PR</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_sinapi'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-search"></i>
                     <span>Consultar SINAPI-PR</span>
                 </a>
+                @endif
             </div>
         </div>
+        @endif
 
         <!-- ADMINISTRAÇÃO -->
+        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuario') || Auth::user()->hasRole('gerenciar_municipio') || Auth::user()->hasRole('gerenciar_entidade') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura'))
         <div class="menu-group">
             <div class="menu-header myBox">
                 <div class="menu-icon">
@@ -144,29 +175,39 @@
                 <span>ADMINISTRAÇÃO</span>
             </div>
             <div class="menu-items">
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuario'))
                 <a href="{{ route('admin.usuarios.index') }}" class="menu-link">
                     <i class="fas fa-users-cog"></i>
                     <span>Gerenciamento de Usuários</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipio'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-map-marker-alt"></i>
                     <span>Municípios</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_entidade'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-building"></i>
                     <span>Entidades Orçamentárias</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_ad'))
                 <a href="{{ route('admin.active-directory.index') }}" class="menu-link">
                     <i class="fas fa-network-wired"></i>
                     <span>Active Directory</span>
                 </a>
+                @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_estrutura'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-sitemap"></i>
                     <span>Estrutura de Orçamentos</span>
                 </a>
-                
+                @endif
             </div>
         </div>
+        @endif
 
         <!-- USUÁRIO -->
         <div class="menu-group user-section">

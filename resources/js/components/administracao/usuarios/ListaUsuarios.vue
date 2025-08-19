@@ -10,12 +10,26 @@
 
             <!-- Corpo -->
             <div class="card-body">
+                <!-- DEBUG TEMPORÁRIO -->
+                <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
+                    <strong>DEBUG ListaUsuarios:</strong><br>
+                    currentUser: {{ currentUser ? 'Carregado' : 'Não carregado' }}<br>
+                    isSuper: {{ isSuper }}<br>
+                    canViewModule: {{ canViewModule }}<br>
+                    canPerformActions: {{ canPerformActions }}<br>
+                    activeTab: {{ activeTab }}<br>
+                    <hr>
+                    <strong>Dados do usuário:</strong><br>
+                    <pre>{{ JSON.stringify(currentUser, null, 2) }}</pre>
+                </div>
+                
                 <!-- Sistema de Abas -->
                 <div class="admin-tabs-container">
                     <!-- Navegação das Abas -->
                     <ul class="nav nav-tabs admin-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button 
+                                v-if="canViewModule"
                                 class="nav-link admin-tab" 
                                 :class="{ active: activeTab === 'usuarios' }"
                                 @click="changeTab('usuarios')"
@@ -28,6 +42,7 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button 
+                                v-if="canViewModule"
                                 class="nav-link admin-tab" 
                                 :class="{ active: activeTab === 'papeis' }"
                                 @click="changeTab('papeis')"
@@ -40,6 +55,7 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button 
+                                v-if="canViewModule"
                                 class="nav-link admin-tab" 
                                 :class="{ active: activeTab === 'permissoes' }"
                                 @click="changeTab('permissoes')"
@@ -52,6 +68,7 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button 
+                                v-if="canViewModule"
                                 class="nav-link admin-tab" 
                                 :class="{ active: activeTab === 'busca' }"
                                 @click="changeTab('busca')"
@@ -67,7 +84,7 @@
                     <!-- Conteúdo das Abas -->
                     <div class="tab-content admin-tab-content">
                         <!-- Aba Usuários -->
-                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'usuarios' }" role="tabpanel">
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'usuarios' }" role="tabpanel" v-if="canViewModule">
                             <!-- Cabeçalho Compacto da Aba Usuários -->
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0 text-custom">
@@ -81,7 +98,11 @@
                                         <i class="fas" :class="filtrosUsuariosVisiveis ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     </button>
                                     <!-- Botão Novo Usuário -->
-                                    <button class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2 btn-novo-usuario" @click="abrirModalCriarUsuario">
+                                    <button 
+                                        v-if="canPerformActions"
+                                        class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2 btn-novo-usuario" 
+                                        @click="abrirModalCriarUsuario"
+                                    >
                                         <i class="fas fa-plus"></i>
                                         <span>Novo Usuário</span>
                                     </button>
@@ -187,10 +208,20 @@
                                             </td>
                                             <td class="text-end">
                                                 <div class="d-flex gap-1 justify-content-end">
-                                                    <button class="btn btn-sm btn-warning" @click="editarUsuario(usuario)" title="Editar">
+                                                    <button 
+                                                        v-if="canPerformActions"
+                                                        class="btn btn-sm btn-warning" 
+                                                        @click="editarUsuario(usuario)" 
+                                                        title="Editar"
+                                                    >
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger" @click="excluirUsuario(usuario)" title="Excluir">
+                                                    <button 
+                                                        v-if="canPerformActions"
+                                                        class="btn btn-sm btn-danger" 
+                                                        @click="excluirUsuario(usuario)" 
+                                                        title="Excluir"
+                                                    >
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -217,7 +248,7 @@
                         </div>
 
                         <!-- Aba Papéis -->
-                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'papeis' }" role="tabpanel">
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'papeis' }" role="tabpanel" v-if="canViewModule">
                             <!-- Cabeçalho Compacto da Aba Papéis -->
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0 text-custom">
@@ -231,7 +262,11 @@
                                         <i class="fas" :class="filtrosPapeisVisiveis ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     </button>
                                     <!-- Botão Novo Papel -->
-                                    <button class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalCriarPapel">
+                                    <button 
+                                        v-if="canManagePapeis"
+                                        class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2" 
+                                        @click="abrirModalCriarPapel"
+                                    >
                                         <i class="fas fa-plus"></i>
                                         <span>Novo Papel</span>
                                     </button>
@@ -315,16 +350,32 @@
                                             </td>
                                             <td class="text-end">
                                                 <div class="d-flex gap-1 justify-content-end">
-                                                    <button class="btn btn-sm btn-info" @click="abrirModalGerenciarPermissoes(papel)" title="Gerenciar Permissões">
+                                                    <button 
+                                                        v-if="canManagePapeis || canViewPapeis"
+                                                        class="btn btn-sm btn-info" 
+                                                        @click="abrirModalGerenciarPermissoes(papel)" 
+                                                        title="Gerenciar Permissões"
+                                                    >
                                                         <i class="fas fa-key"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-info" @click="abrirModalGerenciarUsuarios(papel)" title="Gerenciar Usuários">
+                                                    <button 
+                                                        v-if="canManagePapeis || canViewPapeis"
+                                                        class="btn btn-sm btn-info" 
+                                                        @click="abrirModalGerenciarUsuarios(papel)" 
+                                                        title="Gerenciar Usuários"
+                                                    >
                                                         <i class="fas fa-users-cog"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning" @click="editarPapel(papel)" title="Editar Papel">
+                                                    <button 
+                                                        v-if="canManagePapeis"
+                                                        class="btn btn-sm btn-warning" 
+                                                        @click="editarPapel(papel)" 
+                                                        title="Editar Papel"
+                                                    >
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button 
+                                                        v-if="canManagePapeis"
                                                         class="btn btn-sm" 
                                                         :class="(papel.users_count > 0 || papel.permissions_count > 0) ? 'btn-excluir-desabilitado' : 'btn-danger'"
                                                         @click="(papel.users_count > 0 || papel.permissions_count > 0) ? mostrarMensagemPapelNaoExcluivel(papel) : handleExcluirPapel(papel)" 
@@ -356,7 +407,7 @@
                         </div>
                         
                         <!-- Aba Permissões -->
-                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'permissoes' }" role="tabpanel">
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'permissoes' }" role="tabpanel" v-if="canViewModule">
                             <!-- Cabeçalho Compacto da Aba Permissões -->
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0 text-custom">
@@ -370,7 +421,11 @@
                                         <i class="fas" :class="filtrosPermissoesVisiveis ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                                     </button>
                                     <!-- Botão Nova Permissão -->
-                                    <button class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalCriarPermissao">
+                                    <button 
+                                        v-if="canPerformActions"
+                                        class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2" 
+                                        @click="abrirModalCriarPermissao"
+                                    >
                                         <i class="fas fa-plus"></i>
                                         <span>Nova Permissão</span>
                                     </button>
@@ -460,10 +515,21 @@
                                                     <button class="btn btn-sm btn-info" @click="gerenciarPapeisPermissao(permissao)" title="Gerenciar Papéis">
                                                         <i class="fas fa-users-cog"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-warning" @click="editarPermissao(permissao)" title="Editar">
+                                                    <button 
+                                                        v-if="canPerformActions"
+                                                        class="btn btn-sm btn-warning" 
+                                                        @click="editarPermissao(permissao)" 
+                                                        title="Editar"
+                                                    >
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger" @click="excluirPermissao(permissao)" title="Excluir">
+                                                    <button 
+                                                        v-if="canPerformActions"
+                                                        class="btn btn-sm" 
+                                                        :class="(permissao.roles_count > 0) ? 'btn-excluir-desabilitado' : 'btn-danger'"
+                                                        @click="(permissao.roles_count > 0) ? mostrarMensagemPermissaoNaoExcluivel(permissao) : excluirPermissao(permissao)" 
+                                                        :title="(permissao.roles_count > 0) ? 'Não é possível excluir permissão com papéis vinculados' : `Excluir permissão '${permissao.display_name}'`"
+                                                    >
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -489,7 +555,7 @@
                             </div>
                         </div>
                         
-                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'busca' }" role="tabpanel">
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'busca' }" role="tabpanel" v-if="canViewModule">
                             <BuscaGlobal ref="buscaGlobal" :isActive="activeTab === 'busca'" />
                         </div>
                     </div>
@@ -1000,7 +1066,12 @@
                                                         <div class="fw-medium">{{ permissao.display_name }}</div>
                                                         <small class="text-muted">{{ permissao.description }}</small>
                                                     </div>
-                                                    <button class="btn btn-sm btn-danger" @click="removerPermissaoDoPapel(permissao)" title="Remover">
+                                                    <button 
+                                                        v-if="canManagePapeis"
+                                                        class="btn btn-sm btn-danger" 
+                                                        @click="removerPermissaoDoPapel(permissao)" 
+                                                        title="Remover"
+                                                    >
                                                         <i class="fas fa-minus"></i>
                                                     </button>
                                                 </div>
@@ -1044,7 +1115,12 @@
                                                         <div class="fw-medium">{{ permissao.display_name }}</div>
                                                         <small class="text-muted">{{ permissao.description }}</small>
                                                     </div>
-                                                    <button class="btn btn-sm btn-info" @click="adicionarPermissaoAoPapel(permissao)" title="Adicionar">
+                                                    <button 
+                                                        v-if="canManagePapeis"
+                                                        class="btn btn-sm btn-info" 
+                                                        @click="adicionarPermissaoAoPapel(permissao)" 
+                                                        title="Adicionar"
+                                                    >
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
@@ -1269,7 +1345,12 @@
                                                             <small class="text-muted">{{ usuario.email }}</small>
                                                         </div>
                                                     </div>
-                                                    <button class="btn btn-sm btn-danger" @click="removerUsuarioDoPapel(usuario)" title="Remover">
+                                                    <button 
+                                                        v-if="canManagePapeis"
+                                                        class="btn btn-sm btn-danger" 
+                                                        @click="removerUsuarioDoPapel(usuario)" 
+                                                        title="Remover"
+                                                    >
                                                         <i class="fas fa-user-minus"></i>
                                                     </button>
                                                 </div>
@@ -1316,7 +1397,12 @@
                                                             <small class="text-muted">{{ usuario.email }}</small>
                                                         </div>
                                                     </div>
-                                                    <button class="btn btn-sm btn-info" @click="adicionarUsuarioAoPapel(usuario)" title="Adicionar">
+                                                    <button 
+                                                        v-if="canManagePapeis"
+                                                        class="btn btn-sm btn-info" 
+                                                        @click="adicionarUsuarioAoPapel(usuario)" 
+                                                        title="Adicionar"
+                                                    >
                                                         <i class="fas fa-user-plus"></i>
                                                     </button>
                                                 </div>
@@ -1624,11 +1710,12 @@ export default {
             toastMessage: '',
             toastIcon: '',
             
+            // Dados do usuário logado
+            currentUser: null,
+            
             // Paginação
             paginaAtual: 1,
             itensPorPagina: 10,
-            
-
             
             // Filtros por aba
             filtrosUsuariosVisiveis: false,
@@ -1787,16 +1874,103 @@ export default {
         this.modalPermissao = new bootstrap.Modal(this.$refs.modalPermissao);
         this.modalGerenciarPermissoes = new bootstrap.Modal(this.$refs.modalGerenciarPermissoes);
         this.modalGerenciarUsuarios = new bootstrap.Modal(this.$refs.modalGerenciarUsuarios);
-        this.modalExclusaoInteligente = new bootstrap.Modal(this.$refs.modalExclusaoInteligente);
-        this.modalDetalhesPermissao = new bootstrap.Modal(this.$refs.modalDetalhesPermissao);
-        this.modalGerenciarPapeisPermissao = new bootstrap.Modal(this.$refs.modalGerenciarPapeisPermissao);
+        
+        // Inicializar toast
         this.toast = new bootstrap.Toast(document.getElementById('toast'));
+        
+        // Carregar dados do usuário logado
+        this.carregarDadosUsuario();
+        
+        // Carregar dados iniciais
         this.carregarUsuarios();
         this.carregarPapeis();
         this.carregarPermissoes();
     },
     
     computed: {
+        // Verifica se o usuário é super admin
+        isSuper() {
+            return this.currentUser && this.currentUser.roles && 
+                   this.currentUser.roles.some(role => role.name === 'super');
+        },
+        
+        // Verifica se o usuário pode executar ações (CRUD) no módulo atual
+        canPerformActions() {
+            // Se ainda não carregou o usuário, permite temporariamente
+            if (!this.currentUser) return true;
+            
+            if (this.isSuper) return true;
+            
+            if (!this.currentUser.roles) return false;
+            
+            // Verifica se tem qualquer permissão do módulo atual
+            const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
+            const permissionNames = permissions.map(p => p.name);
+            
+            switch (this.activeTab) {
+                case 'usuarios':
+                    return permissionNames.some(p => p.startsWith('usuario_'));
+                case 'papeis':
+                    return permissionNames.some(p => p.startsWith('papel_'));
+                case 'permissoes':
+                    return permissionNames.some(p => p.startsWith('permissao_'));
+                default:
+                    return false;
+            }
+        },
+        
+        // Verifica se o usuário pode visualizar o módulo atual
+        canViewModule() {
+            // Se ainda não carregou o usuário, permite temporariamente
+            if (!this.currentUser) return true;
+            
+            if (this.isSuper) return true;
+            
+            if (!this.currentUser.roles) return false;
+            
+            // Verifica se tem qualquer permissão do módulo atual
+            const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
+            const permissionNames = permissions.map(p => p.name);
+            
+            switch (this.activeTab) {
+                case 'usuarios':
+                    return permissionNames.some(p => p.startsWith('usuario_'));
+                case 'papeis':
+                    return permissionNames.some(p => p.startsWith('papel_'));
+                case 'permissoes':
+                    return permissionNames.some(p => p.startsWith('permissao_'));
+                default:
+                    return false;
+            }
+        },
+        
+        // Verifica se o usuário pode apenas visualizar (não pode executar ações)
+        canOnlyView() {
+            return this.canViewModule && !this.canPerformActions;
+        },
+        
+        // Verifica se o usuário pode gerenciar papéis (CRUD completo)
+        canManagePapeis() {
+            if (!this.currentUser) return true;
+            if (this.isSuper) return true;
+            
+            const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
+            const permissionNames = permissions.map(p => p.name);
+            
+            return permissionNames.includes('papel_crud');
+        },
+        
+        // Verifica se o usuário pode apenas consultar papéis
+        canViewPapeis() {
+            if (!this.currentUser) return true;
+            if (this.isSuper) return true;
+            
+            const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
+            const permissionNames = permissions.map(p => p.name);
+            
+            return permissionNames.includes('papel_consultar');
+        },
+        
         // Dados filtrados por aba
         dadosFiltrados() {
             switch (this.activeTab) {
@@ -2048,6 +2222,8 @@ export default {
             } catch (error) {
                 if (error.response && error.response.status === 422 && error.response.data.errors) {
                     this.errors = error.response.data.errors;
+                    console.log('Erros de validação:', this.errors);
+                    
                     // focar no primeiro campo inválido
                     this.$nextTick(() => {
                         if (this.errors.name) {
@@ -2062,6 +2238,7 @@ export default {
                     });
                 } else {
                     const mensagem = error.response?.data?.message || error.message || 'Erro ao salvar usuário';
+                    console.error('Erro completo:', error);
                     this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
                 }
             } finally {
@@ -2832,6 +3009,18 @@ export default {
             this.mostrarToast(titulo, mensagem, 'fa-info-circle text-warning');
         },
 
+        // Mostrar mensagem explicativa para permissão não excluível
+        mostrarMensagemPermissaoNaoExcluivel(permissao) {
+            let mensagem = '';
+            let titulo = 'Permissão não pode ser excluída';
+            
+            if (permissao.roles_count > 0) {
+                mensagem = `A permissão "${permissao.display_name}" não pode ser excluída porque está vinculada a ${permissao.roles_count} papel(éis). Para excluí-la, primeiro remova todas as vinculações com papéis.`;
+            }
+            
+            this.mostrarToast(titulo, mensagem, 'fa-info-circle text-warning');
+        },
+
         // ===== MÉTODOS PARA FUNCIONALIDADES DA ABA PERMISSÕES =====
 
 
@@ -3057,7 +3246,18 @@ export default {
             } finally {
                 this.salvandoPermissoesPapel = false;
             }
-        }
+        },
+        
+        // Carregar dados do usuário logado
+        async carregarDadosUsuario() {
+            try {
+                const response = await axios.get('/api/auth/me');
+                this.currentUser = response.data;
+                console.log('Usuário logado:', this.currentUser);
+            } catch (error) {
+                console.error('Erro ao carregar dados do usuário:', error);
+            }
+        },
     }
 }
 </script>

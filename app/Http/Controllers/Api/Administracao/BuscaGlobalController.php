@@ -27,9 +27,13 @@ class BuscaGlobalController extends Controller
     }
 
     /**
-     * Verifica permissões do usuário
+     * Sistema unificado de verificação de permissões
+     * 
+     * @param string|array $permissions Permissões necessárias
+     * @param bool $requireAll Se true, todas as permissões são obrigatórias (AND)
+     * @return bool
      */
-    private function checkPermissions()
+    private function checkAccess($permissions, $requireAll = false)
     {
         $user = Auth::user();
         
@@ -38,26 +42,46 @@ class BuscaGlobalController extends Controller
             return true;
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_usuarios') || 
-            $user->hasPermission('gerenciar_papeis') || 
-            $user->hasPermission('gerenciar_permissoes')) {
-            return true;
+        // 2. Verificação flexível de permissões
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
         }
         
-        // 3. Nenhuma das opções → Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente.');
+        if ($requireAll) {
+            // Todas as permissões são obrigatórias (AND)
+            foreach ($permissions as $permission) {
+                if (!$user->hasPermission($permission)) {
+                    abort(403, "Permissão obrigatória: {$permission}");
+                }
+            }
+        } else {
+            // Pelo menos uma permissão é suficiente (OR)
+            $hasAnyPermission = false;
+            foreach ($permissions as $permission) {
+                if ($user->hasPermission($permission)) {
+                    $hasAnyPermission = true;
+                    break;
+                }
+            }
+            
+            if (!$hasAnyPermission) {
+                abort(403, 'Acesso negado. Permissão insuficiente.');
+            }
+        }
+        
+        return true;
     }
 
     /**
-     * Realiza busca global em relacionamentos usuário-papel-permissão
+     * Realiza busca global otimizada em relacionamentos usuário-papel-permissão
      * 
-     * @param Request $request Requisição HTTP com filtros
-     * @return \Illuminate\Http\JsonResponse Resultados da tabela consolidada
+     * @param Request $request Requisição HTTP com filtros e paginação
+     * @return \Illuminate\Http\JsonResponse Resultados paginados e otimizados
      */
     public function buscar(Request $request)
     {
-        $this->checkPermissions();
+        // CONSULTA: verifica se tem usuario_crud OU usuario_consultar (ambos podem visualizar a aba busca global)
+        $this->checkAccess(['usuario_crud', 'usuario_consultar']);
         
         try {
             $inicio = microtime(true);
@@ -67,33 +91,46 @@ class BuscaGlobalController extends Controller
             $filtroPapel = $request->get('papel', '');
             $filtroPermissao = $request->get('permissao', '');
             
+            // Configurações de paginação
+            $perPage = min($request->get('per_page', 50), 100); // Máximo 100 por página
+            $page = $request->get('page', 1);
+            
             // Estrutura base para resultados
             $resultados = [];
+            $total = 0;
             
             // 1. FILTRO POR USUÁRIO: Mostra papéis e permissões de um usuário específico
             if (!empty($filtroUsuario)) {
-                $resultados = $this->buscarPorUsuario($filtroUsuario);
+                list($resultados, $total) = $this->buscarPorUsuario($filtroUsuario, $perPage, $page);
             }
             // 2. FILTRO POR PAPEL: Mostra usuários que têm um papel específico
             elseif (!empty($filtroPapel)) {
-                $resultados = $this->buscarPorPapel($filtroPapel);
+                list($resultados, $total) = $this->buscarPorPapel($filtroPapel, $perPage, $page);
             }
             // 3. FILTRO POR PERMISSÃO: Mostra usuários que têm uma permissão específica
             elseif (!empty($filtroPermissao)) {
-                $resultados = $this->buscarPorPermissao($filtroPermissao);
+                list($resultados, $total) = $this->buscarPorPermissao($filtroPermissao, $perPage, $page);
             }
-            // 4. SEM FILTROS: Mostra todos os relacionamentos
+            // 4. SEM FILTROS: Mostra todos os relacionamentos (PAGINADO)
             else {
-                $resultados = $this->buscarTodosRelacionamentos();
+                list($resultados, $total) = $this->buscarTodosRelacionamentos($perPage, $page);
             }
             
             $tempoBusca = round((microtime(true) - $inicio) * 1000, 2);
+            $totalPages = ceil($total / $perPage);
 
             return response()->json([
                 'success' => true,
                 'resultados' => $resultados,
+                'paginacao' => [
+                    'pagina_atual' => $page,
+                    'por_pagina' => $perPage,
+                    'total_registros' => $total,
+                    'total_paginas' => $totalPages,
+                    'tem_primeira_pagina' => $page > 1,
+                    'tem_proxima_pagina' => $page < $totalPages
+                ],
                 'tempo_busca' => $tempoBusca,
-                'total' => count($resultados),
                 'filtros_aplicados' => [
                     'usuario' => $filtroUsuario,
                     'papel' => $filtroPapel,
@@ -111,28 +148,35 @@ class BuscaGlobalController extends Controller
     }
 
     /**
-     * Busca papéis e permissões de um usuário específico
+     * Busca otimizada de papéis e permissões de um usuário específico
+     * 
+     * @param string $nomeUsuario Nome do usuário para buscar
+     * @param int $perPage Registros por página
+     * @param int $page Página atual
+     * @return array [resultados, total]
      */
-    private function buscarPorUsuario($nomeUsuario)
+    private function buscarPorUsuario($nomeUsuario, $perPage = 50, $page = 1)
     {
-        $resultados = [];
-        
-        // Buscar usuário
+        // Buscar usuários com eager loading otimizado
         $usuarios = User::where('name', 'like', "%{$nomeUsuario}%")
             ->where('is_active', true)
-            ->get();
+            ->with([
+                'roles' => function($query) {
+                    $query->where('is_active', true)
+                          ->with(['permissions' => function($q) {
+                              $q->where('is_active', true);
+                          }]);
+                }
+            ])
+            ->paginate($perPage, ['*'], 'page', $page);
         
-        foreach ($usuarios as $usuario) {
-            // Buscar papéis do usuário
-            $papeis = $usuario->roles()->where('is_active', true)->get();
-            
-            if ($papeis->count() > 0) {
-                foreach ($papeis as $papel) {
-                    // Buscar permissões do papel
-                    $permissoes = $papel->permissions()->where('is_active', true)->get();
-                    
-                    if ($permissoes->count() > 0) {
-                        foreach ($permissoes as $permissao) {
+        $resultados = [];
+        
+        foreach ($usuarios->items() as $usuario) {
+            if ($usuario->roles->count() > 0) {
+                foreach ($usuario->roles as $papel) {
+                    if ($papel->permissions->count() > 0) {
+                        foreach ($papel->permissions as $permissao) {
                             $resultados[] = [
                                 'user_name' => $usuario->name,
                                 'user_email' => $usuario->email,
@@ -142,7 +186,6 @@ class BuscaGlobalController extends Controller
                             ];
                         }
                     } else {
-                        // Papel sem permissões - mostrar apenas o papel
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
@@ -153,46 +196,51 @@ class BuscaGlobalController extends Controller
                     }
                 }
             } else {
-                // Usuário sem papéis - não criar registro artificial
-                // Só mostrar se for uma busca específica por usuário
-                if (!empty($nomeUsuario)) {
-                    $resultados[] = [
-                        'user_name' => $usuario->name,
-                        'user_email' => $usuario->email,
-                        'role_name' => null,
-                        'permission_name' => null,
-                        'has_relationships' => false
-                    ];
-                }
+                $resultados[] = [
+                    'user_name' => $usuario->name,
+                    'user_email' => $usuario->email,
+                    'role_name' => null,
+                    'permission_name' => null,
+                    'has_relationships' => false
+                ];
             }
         }
         
-        return $resultados;
+        return [$resultados, $usuarios->total()];
     }
 
     /**
-     * Busca usuários que têm um papel específico
+     * Busca otimizada de usuários que têm um papel específico
+     * 
+     * @param string $nomePapel Nome do papel para buscar
+     * @param int $perPage Registros por página
+     * @param int $page Página atual
+     * @return array [resultados, total]
      */
-    private function buscarPorPapel($nomePapel)
+    private function buscarPorPapel($nomePapel, $perPage = 50, $page = 1)
     {
-        $resultados = [];
-        
-        // Buscar papel
+        // Buscar papéis com eager loading otimizado
         $papeis = Role::where('display_name', 'like', "%{$nomePapel}%")
             ->where('is_active', true)
+            ->with([
+                'users' => function($query) use ($perPage, $page) {
+                    $query->where('is_active', true)
+                          ->paginate($perPage, ['*'], 'page', $page);
+                },
+                'permissions' => function($query) {
+                    $query->where('is_active', true);
+                }
+            ])
             ->get();
         
+        $resultados = [];
+        $total = 0;
+        
         foreach ($papeis as $papel) {
-            // Buscar usuários que têm este papel
-            $usuarios = $papel->users()->where('is_active', true)->get();
-            
-            if ($usuarios->count() > 0) {
-                foreach ($usuarios as $usuario) {
-                    // Buscar permissões do papel
-                    $permissoes = $papel->permissions()->where('is_active', true)->get();
-                    
-                    if ($permissoes->count() > 0) {
-                        foreach ($permissoes as $permissao) {
+            if ($papel->users->count() > 0) {
+                foreach ($papel->users->items() as $usuario) {
+                    if ($papel->permissions->count() > 0) {
+                        foreach ($papel->permissions as $permissao) {
                             $resultados[] = [
                                 'user_name' => $usuario->name,
                                 'user_email' => $usuario->email,
@@ -202,7 +250,6 @@ class BuscaGlobalController extends Controller
                             ];
                         }
                     } else {
-                        // Papel sem permissões - mostrar apenas o papel
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
@@ -212,79 +259,97 @@ class BuscaGlobalController extends Controller
                         ];
                     }
                 }
+                $total = $papel->users->total();
             } else {
-                // Papel sem usuários - não criar registro artificial
-                // Só mostrar se for uma busca específica por papel
-                if (!empty($nomePapel)) {
-                    $resultados[] = [
-                        'user_name' => null,
-                        'user_email' => null,
-                        'role_name' => $papel->display_name,
-                        'permission_name' => null,
-                        'has_relationships' => false
-                    ];
-                }
+                $resultados[] = [
+                    'user_name' => null,
+                    'user_email' => null,
+                    'role_name' => $papel->display_name,
+                    'permission_name' => null,
+                    'has_relationships' => false
+                ];
+                $total = 1;
             }
         }
         
-        return $resultados;
+        return [$resultados, $total];
     }
 
     /**
-     * Busca usuários que têm uma permissão específica
+     * Busca otimizada de usuários que têm uma permissão específica
+     * 
+     * @param string $nomePermissao Nome da permissão para buscar
+     * @param int $perPage Registros por página
+     * @param int $page Página atual
+     * @return array [resultados, total]
      */
-    private function buscarPorPermissao($nomePermissao)
+    private function buscarPorPermissao($nomePermissao, $perPage = 50, $page = 1)
     {
-        $resultados = [];
-        
-        // Buscar permissão
+        // Buscar permissões com eager loading otimizado
         $permissoes = Permission::where('display_name', 'like', "%{$nomePermissao}%")
             ->where('is_active', true)
+            ->with([
+                'roles' => function($query) {
+                    $query->where('is_active', true)
+                          ->with(['users' => function($q) use ($perPage, $page) {
+                              $q->where('is_active', true)
+                                ->paginate($perPage, ['*'], 'page', $page);
+                          }]);
+                }
+            ])
             ->get();
         
+        $resultados = [];
+        $total = 0;
+        
         foreach ($permissoes as $permissao) {
-            // Buscar papéis que têm esta permissão
-            $papeis = $permissao->roles()->where('is_active', true)->get();
-            
-            foreach ($papeis as $papel) {
-                // Buscar usuários que têm este papel
-                $usuarios = $papel->users()->where('is_active', true)->get();
-                
-                foreach ($usuarios as $usuario) {
-                    $resultados[] = [
-                        'user_name' => $usuario->name,
-                        'user_email' => $usuario->email,
-                        'role_name' => $papel->display_name,
-                        'permission_name' => $permissao->display_name
-                    ];
+            foreach ($permissao->roles as $papel) {
+                if ($papel->users->count() > 0) {
+                    foreach ($papel->users->items() as $usuario) {
+                        $resultados[] = [
+                            'user_name' => $usuario->name,
+                            'user_email' => $usuario->email,
+                            'role_name' => $papel->display_name,
+                            'permission_name' => $permissao->display_name,
+                            'has_relationships' => true
+                        ];
+                    }
+                    $total = $papel->users->total();
                 }
             }
         }
         
-        return $resultados;
+        return [$resultados, $total];
     }
 
     /**
-     * Busca todos os relacionamentos existentes
+     * Busca otimizada de todos os relacionamentos existentes (PAGINADO)
+     * 
+     * @param int $perPage Registros por página
+     * @param int $page Página atual
+     * @return array [resultados, total]
      */
-    private function buscarTodosRelacionamentos()
+    private function buscarTodosRelacionamentos($perPage = 50, $page = 1)
     {
+        // Buscar usuários ativos com eager loading otimizado e paginação
+        $usuarios = User::where('is_active', true)
+            ->with([
+                'roles' => function($query) {
+                    $query->where('is_active', true)
+                          ->with(['permissions' => function($q) {
+                              $q->where('is_active', true);
+                          }]);
+                }
+            ])
+            ->paginate($perPage, ['*'], 'page', $page);
+        
         $resultados = [];
         
-        // Buscar usuários ativos
-        $usuarios = User::where('is_active', true)->get();
-        
-        foreach ($usuarios as $usuario) {
-            // Buscar papéis do usuário
-            $papeis = $usuario->roles()->where('is_active', true)->get();
-            
-            if ($papeis->count() > 0) {
-                foreach ($papeis as $papel) {
-                    // Buscar permissões do papel
-                    $permissoes = $papel->permissions()->where('is_active', true)->get();
-                    
-                    if ($permissoes->count() > 0) {
-                        foreach ($permissoes as $permissao) {
+        foreach ($usuarios->items() as $usuario) {
+            if ($usuario->roles->count() > 0) {
+                foreach ($usuario->roles as $papel) {
+                    if ($papel->permissions->count() > 0) {
+                        foreach ($papel->permissions as $permissao) {
                             $resultados[] = [
                                 'user_name' => $usuario->name,
                                 'user_email' => $usuario->email,
@@ -294,7 +359,6 @@ class BuscaGlobalController extends Controller
                             ];
                         }
                     } else {
-                        // Papel sem permissões - mostrar apenas o papel
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
@@ -308,6 +372,6 @@ class BuscaGlobalController extends Controller
             // Usuários sem papéis não aparecem na busca geral
         }
         
-        return $resultados;
+        return [$resultados, $usuarios->total()];
     }
 }

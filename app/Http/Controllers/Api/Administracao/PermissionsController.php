@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Administracao;
 use App\Http\Controllers\Controller;
 use App\Models\Administracao\Permission;
 use App\Models\Administracao\Role;
+use App\Models\Administracao\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -23,24 +24,49 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Verifica permissões do usuário
+     * Sistema unificado de verificação de permissões
+     * 
+     * @param string|array $permissions Permissões necessárias
+     * @param bool $requireAll Se true, todas as permissões são obrigatórias (AND)
+     * @return bool
      */
-    private function checkPermissions()
+    private function checkAccess($permissions, $requireAll = false)
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
             return true;
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_permissoes')) {
-            return true;
+        // 2. Verificação flexível de permissões
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
         }
         
-        // 3. Nenhuma das opções → Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente.');
+        if ($requireAll) {
+            // Todas as permissões são obrigatórias (AND)
+            foreach ($permissions as $permission) {
+                if (!$user->hasPermission($permission)) {
+                    abort(403, "Permissão obrigatória: {$permission}");
+                }
+            }
+        } else {
+            // Pelo menos uma permissão é suficiente (OR)
+            $hasAnyPermission = false;
+            foreach ($permissions as $permission) {
+                if ($user->hasPermission($permission)) {
+                    $hasAnyPermission = true;
+                    break;
+                }
+            }
+            
+            if (!$hasAnyPermission) {
+                abort(403, 'Acesso negado. Permissão insuficiente.');
+            }
+        }
+        
+        return true;
     }
 
     /**
@@ -48,7 +74,8 @@ class PermissionsController extends Controller
      */
     public function index(Request $request)
     {
-        $this->checkPermissions();
+        // CONSULTA: verifica se tem permissao_crud OU permissao_consultar (ambos podem visualizar)
+        $this->checkAccess(['permissao_crud', 'permissao_consultar']);
         
         try {
             $query = Permission::with(['roles.users' => function($query) {
@@ -90,7 +117,8 @@ class PermissionsController extends Controller
      */
     public function show($id)
     {
-        $this->checkPermissions();
+        // CONSULTA: verifica se tem permissao_crud OU permissao_consultar (ambos podem visualizar)
+        $this->checkAccess(['permissao_crud', 'permissao_consultar']);
         
         try {
             $permission = Permission::with(['roles.users' => function($query) {
@@ -110,7 +138,8 @@ class PermissionsController extends Controller
      */
     public function attachRole($permissionId, $roleId)
     {
-        $this->checkPermissions();
+        // CRUD: apenas permissao_crud (modificar relacionamentos)
+        $this->checkAccess('permissao_crud');
         
         try {
             $permission = Permission::findOrFail($permissionId);
@@ -147,7 +176,8 @@ class PermissionsController extends Controller
      */
     public function detachRole($permissionId, $roleId)
     {
-        $this->checkPermissions();
+        // CRUD: apenas permissao_crud (modificar relacionamentos)
+        $this->checkAccess('permissao_crud');
         
         try {
             $permission = Permission::findOrFail($permissionId);
@@ -172,7 +202,8 @@ class PermissionsController extends Controller
      */
     public function store(Request $request)
     {
-        $this->checkPermissions();
+        // CRUD: apenas permissao_crud (criar nova permissão)
+        $this->checkAccess('permissao_crud');
         
         try {
             $request->validate([
@@ -206,7 +237,8 @@ class PermissionsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas permissao_crud (editar permissão existente)
+        $this->checkAccess('permissao_crud');
         
         try {
             $permission = Permission::findOrFail($id);
@@ -242,7 +274,8 @@ class PermissionsController extends Controller
      */
     public function destroy($id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas permissao_crud (excluir permissão)
+        $this->checkAccess('permissao_crud');
         
         try {
             $permission = Permission::findOrFail($id);

@@ -34,24 +34,49 @@ class UsuariosController extends Controller
     }
 
     /**
-     * Verifica permissões do usuário
+     * Sistema unificado de verificação de permissões
+     * 
+     * @param string|array $permissions Permissões necessárias
+     * @param bool $requireAll Se true, todas as permissões são obrigatórias (AND)
+     * @return bool
      */
-    private function checkPermissions()
+    private function checkAccess($permissions, $requireAll = false)
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
             return true;
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_usuarios')) {
-            return true;
+        // 2. Verificação flexível de permissões
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
         }
         
-        // 3. Nenhuma das opções → Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente.');
+        if ($requireAll) {
+            // Todas as permissões são obrigatórias (AND)
+            foreach ($permissions as $permission) {
+                if (!$user->hasPermission($permission)) {
+                    abort(403, "Permissão obrigatória: {$permission}");
+                }
+            }
+        } else {
+            // Pelo menos uma permissão é suficiente (OR)
+            $hasAnyPermission = false;
+            foreach ($permissions as $permission) {
+                if ($user->hasPermission($permission)) {
+                    $hasAnyPermission = true;
+                    break;
+                }
+            }
+            
+            if (!$hasAnyPermission) {
+                abort(403, 'Acesso negado. Permissão insuficiente.');
+            }
+        }
+        
+        return true;
     }
 
     /**
@@ -62,7 +87,8 @@ class UsuariosController extends Controller
      */
     public function index(Request $request)
     {
-        $this->checkPermissions();
+        // CONSULTA: verifica se tem usuario_crud OU usuario_consultar (ambos podem visualizar)
+        $this->checkAccess(['usuario_crud', 'usuario_consultar']);
         
         $query = User::with(['roles.permissions']);
 
@@ -97,7 +123,8 @@ class UsuariosController extends Controller
      */
     public function store(Request $request)
     {
-        $this->checkPermissions();
+        // CRUD: verifica se tem usuario_crud (apenas CRUD pode criar usuários)
+        $this->checkAccess('usuario_crud');
         
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -171,7 +198,8 @@ class UsuariosController extends Controller
      */
     public function show($id)
     {
-        $this->checkPermissions();
+        // Visualizar: usuario_crud OU usuario_consultar
+        $this->checkAccess(['usuario_crud', 'usuario_consultar']);
         
         try {
             $usuario = User::with(['roles.permissions'])->findOrFail($id);
@@ -188,7 +216,8 @@ class UsuariosController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas usuario_crud
+        $this->checkAccess('usuario_crud');
         
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -266,7 +295,8 @@ class UsuariosController extends Controller
      */
     public function destroy($id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas usuario_crud
+        $this->checkAccess('usuario_crud');
         
         try {
             $usuario = User::findOrFail($id);
@@ -307,7 +337,8 @@ class UsuariosController extends Controller
      */
     public function getRoles()
     {
-        $this->checkPermissions();
+        // Visualizar: usuario_crud OU usuario_consultar
+        $this->checkAccess(['usuario_crud', 'usuario_consultar']);
         
         $roles = Role::active()->get();
         return response()->json($roles);
@@ -318,7 +349,8 @@ class UsuariosController extends Controller
      */
     public function updatePassword(Request $request, $id)
     {
-        $this->checkPermissions();
+        // Visualizar: usuario_crud OU usuario_consultar
+        $this->checkAccess(['usuario_crud', 'usuario_consultar']);
         
         $validator = Validator::make($request->all(), [
             'password' => 'required|string|min:6',

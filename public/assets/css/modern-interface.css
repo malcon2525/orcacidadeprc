@@ -765,19 +765,26 @@ body {
 
 /* ===== SISTEMA DE BOTÕES DESABILITADOS ===== */
 .btn-excluir-desabilitado {
-    background-color: var(--color-cinza-medio) !important;
-    border-color: var(--color-cinza-medio) !important;
-    color: var(--color-branco) !important;
-    opacity: 0.6 !important;
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+    color: #6c757d !important;
     cursor: not-allowed !important;
-    pointer-events: none !important;
+    opacity: 0.6 !important;
 }
 
 .btn-excluir-desabilitado:hover {
-    background-color: var(--color-cinza-medio) !important;
-    border-color: var(--color-cinza-medio) !important;
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+    color: #6c757d !important;
     transform: none !important;
     box-shadow: none !important;
+}
+
+.btn-excluir-desabilitado:active {
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+    color: #6c757d !important;
+    transform: none !important;
 }
 
 /* ===== SISTEMA DE BOTÕES DESABILITADOS GENÉRICOS ===== */

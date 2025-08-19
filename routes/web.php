@@ -96,6 +96,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('papeis/{id}/permissions', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'updatePermissions'])->name('papeis.permissions.update');
         Route::get('papeis/{id}/permissions', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'getPermissions'])->name('papeis.permissions.get');
         Route::get('papeis/{id}/permissions/available', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'getAvailablePermissions'])->name('papeis.permissions.available');
+        // Usuários por papel
+        Route::get('papeis/{id}/users', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'getUsers'])->name('papeis.users.get');
+        Route::post('papeis/{id}/users', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'addUser'])->name('papeis.users.add');
+        Route::delete('papeis/{id}/users/{userId}', [\App\Http\Controllers\Api\Administracao\Roles\RolesController::class, 'removeUser'])->name('papeis.users.remove');
         
         // Permissões
         Route::apiResource('permissoes', \App\Http\Controllers\Api\Administracao\PermissionsController::class);

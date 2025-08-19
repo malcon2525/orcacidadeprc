@@ -34,24 +34,76 @@ class RolesController extends Controller
     }
 
     /**
-     * Verifica permissões do usuário
+     * Sistema unificado de verificação de permissões
+     * 
+     * @param string|array $permissions Permissões necessárias
+     * @param bool $requireAll Se true, todas as permissões são obrigatórias (AND)
+     * @return bool
      */
-    private function checkPermissions()
+    private function checkAccess($permissions, $requireAll = false)
     {
+        // Garantir que o usuário está autenticado
+        if (!Auth::check()) {
+            abort(401, 'Usuário não autenticado');
+        }
+        
         $user = Auth::user();
+        
+        // Log para debug
+        Log::info('Verificando permissões', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_roles' => $user->roles->pluck('name')->toArray(),
+            'permissions_required' => $permissions,
+            'require_all' => $requireAll
+        ]);
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
+            Log::info('Usuário é super admin - acesso concedido');
             return true;
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_papeis')) {
-            return true;
+        // 2. Verificação flexível de permissões
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
         }
         
-        // 3. Nenhuma das opções → Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente.');
+        if ($requireAll) {
+            // Todas as permissões são obrigatórias (AND)
+            foreach ($permissions as $permission) {
+                if (!$user->hasPermission($permission)) {
+                    Log::warning('Usuário sem permissão obrigatória - acesso negado', [
+                        'user_id' => $user->id,
+                        'permission_required' => $permission
+                    ]);
+                    abort(403, "Permissão obrigatória: {$permission}");
+                }
+            }
+            Log::info('Usuário tem todas as permissões obrigatórias - acesso concedido');
+        } else {
+            // Pelo menos uma permissão é suficiente (OR)
+            $hasAnyPermission = false;
+            foreach ($permissions as $permission) {
+                if ($user->hasPermission($permission)) {
+                    $hasAnyPermission = true;
+                    Log::info('Usuário tem permissão específica - acesso concedido', [
+                        'permission_used' => $permission
+                    ]);
+                    break;
+                }
+            }
+            
+            if (!$hasAnyPermission) {
+                Log::warning('Usuário sem permissão suficiente - acesso negado', [
+                    'user_id' => $user->id,
+                    'permissions_checked' => $permissions
+                ]);
+                abort(403, 'Acesso negado. Permissão insuficiente.');
+            }
+        }
+        
+        return true;
     }
 
     /**
@@ -62,7 +114,8 @@ class RolesController extends Controller
      */
     public function index(Request $request)
     {
-        $this->checkPermissions();
+        // CONSULTA: verifica se tem papel_crud OU papel_consultar (ambos podem visualizar)
+        $this->checkAccess(['papel_crud', 'papel_consultar']);
         
         try {
             $query = Role::query();
@@ -115,7 +168,8 @@ class RolesController extends Controller
      */
     public function store(Request $request)
     {
-        $this->checkPermissions();
+        // CRUD: apenas papel_crud
+        $this->checkAccess('papel_crud');
         
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:roles',
@@ -153,7 +207,8 @@ class RolesController extends Controller
      */
     public function show($id)
     {
-        $this->checkPermissions();
+        // Visualizar: papel_crud OU papel_consultar
+        $this->checkAccess(['papel_crud', 'papel_consultar']);
         
         try {
             $papel = Role::with(['permissions', 'users'])->findOrFail($id);
@@ -170,7 +225,8 @@ class RolesController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas papel_crud
+        $this->checkAccess('papel_crud');
         
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:roles,name,' . $id,
@@ -216,7 +272,8 @@ class RolesController extends Controller
      */
     public function destroy($id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas papel_crud
+        $this->checkAccess('papel_crud');
         
         try {
             $papel = Role::findOrFail($id);
@@ -278,7 +335,8 @@ class RolesController extends Controller
      */
     public function getPermissions($id)
     {
-        $this->checkPermissions();
+        // Visualizar: papel_crud OU papel_consultar
+        $this->checkAccess(['papel_crud', 'papel_consultar']);
         
         try {
             $papel = Role::findOrFail($id);
@@ -300,7 +358,8 @@ class RolesController extends Controller
      */
     public function updatePermissions(Request $request, $id)
     {
-        $this->checkPermissions();
+        // CRUD: apenas papel_crud
+        $this->checkAccess('papel_crud');
         
         $validator = Validator::make($request->all(), [
             'permissions' => 'array',
@@ -344,7 +403,8 @@ class RolesController extends Controller
      */
     public function getAvailablePermissions($id)
     {
-        $this->checkPermissions();
+        // Visualizar: papel_crud OU papel_consultar
+        $this->checkAccess(['papel_crud', 'papel_consultar']);
         
         try {
             $papel = Role::findOrFail($id);
@@ -362,6 +422,138 @@ class RolesController extends Controller
             return response()->json([
                 'message' => 'Papel não encontrado'
             ], 404);
+        }
+    }
+
+    /**
+     * Lista usuários de um papel específico
+     */
+    public function getUsers($id)
+    {
+        Log::info('Método getUsers chamado', ['role_id' => $id]);
+        
+        try {
+            // Visualizar: papel_crud OU papel_consultar
+            $this->checkAccess(['papel_crud', 'papel_consultar']);
+            Log::info('Permissões verificadas com sucesso');
+            
+            Log::info('Buscando papel no banco', ['role_id' => $id]);
+            $papel = Role::findOrFail($id);
+            Log::info('Papel encontrado', [
+                'role_id' => $papel->id,
+                'role_name' => $papel->name,
+                'role_display_name' => $papel->display_name
+            ]);
+            
+            // Retornar usuários ativos associados ao papel
+            Log::info('Buscando usuários associados ao papel');
+            $usuarios = $papel->users()
+                ->where('is_active', true)
+                ->with(['roles' => function($query) {
+                    $query->select('roles.id', 'roles.name', 'roles.display_name');
+                }])
+                ->get(['id', 'name', 'email', 'username', 'is_active', 'last_login_at']);
+            
+            Log::info('Usuários encontrados', ['count' => $usuarios->count()]);
+            return response()->json($usuarios);
+            
+        } catch (\Exception $e) {
+            Log::error('Erro no método getUsers', [
+                'role_id' => $id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return response()->json([
+                    'message' => 'Papel não encontrado',
+                    'error' => 'Role ID ' . $id . ' não existe no banco de dados'
+                ], 404);
+            }
+            
+            return response()->json([
+                'message' => 'Erro interno do servidor',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Adiciona um usuário a um papel
+     */
+    public function addUser(Request $request, $id)
+    {
+        // CRUD: apenas papel_crud
+        $this->checkAccess('papel_crud');
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => ['required', 'exists:users,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $papel = Role::findOrFail($id);
+            $usuario = User::findOrFail($request->user_id);
+
+            // Evitar duplicidade
+            if (!$papel->users()->where('users.id', $usuario->id)->exists()) {
+                $papel->users()->attach($usuario->id);
+            }
+
+            return response()->json([
+                'message' => 'Usuário vinculado ao papel com sucesso',
+                'role_id' => $papel->id,
+                'user_id' => $usuario->id,
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Erro ao adicionar usuário ao papel', [
+                'role_id' => $id,
+                'user_id' => $request->user_id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao adicionar usuário ao papel',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove um usuário de um papel
+     */
+    public function removeUser($id, $userId)
+    {
+        // CRUD: apenas papel_crud
+        $this->checkAccess('papel_crud');
+
+        try {
+            $papel = Role::findOrFail($id);
+            $usuario = User::findOrFail($userId);
+
+            $papel->users()->detach($usuario->id);
+
+            return response()->json([
+                'message' => 'Usuário removido do papel com sucesso',
+                'role_id' => $papel->id,
+                'user_id' => $usuario->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao remover usuário do papel', [
+                'role_id' => $id,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao remover usuário do papel',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

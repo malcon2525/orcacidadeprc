@@ -157,7 +157,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Usuário não autenticado'], 401);
         }
 
-        return response()->json(Auth::user());
+        $user = User::with('roles.permissions')->find(Auth::id());
+        
+        return response()->json($user);
     }
 
     /**
