@@ -2481,7 +2481,7 @@ export default {
             } catch (error) {
                 if (error.response && error.response.status === 422 && error.response.data.errors) {
                     this.errors = error.response.data.errors;
-                    console.log('Erros de validação:', this.errors);
+        
                     
                     // focar no primeiro campo inválido
                     this.$nextTick(() => {
@@ -2869,7 +2869,7 @@ export default {
             
             try {
                 const response = await axios.delete(`/api/administracao/papeis/${papel.id}`);
-                console.log('Resposta da exclusão:', response.data);
+
                 
                 this.mostrarToast('Sucesso', `Papel '${papel.display_name}' excluído com sucesso!`, 'fa-check-circle text-success');
                 await this.carregarPapeis();
@@ -2882,8 +2882,7 @@ export default {
         
         // Handler para exclusão de papel
         async handleExcluirPapel(papel) {
-            console.log('Tentando excluir papel:', papel.display_name);
-            console.log('Contadores - Usuários:', papel.users_count, 'Permissões:', papel.permissions_count);
+
             
             // Verificar se é o papel "Super Administrador"
             if (papel.name === 'super') {
@@ -2949,7 +2948,7 @@ export default {
                         const rolesAtuais = Array.isArray(usuario.roles) ? usuario.roles : [];
                         const papeisAtuais = rolesAtuais.filter(role => role && role.id !== this.papelParaExcluir.id);
                         
-                        console.log('Papéis após filtro:', papeisAtuais);
+            
                         
                         await axios.put(`/api/administracao/usuarios/${usuario.id}`, {
                             name: usuario.name,
@@ -3052,14 +3051,14 @@ export default {
             try {
                 const response = await axios.get('/api/administracao/papeis');
                 
-                console.log('Resposta da API de papéis:', response.data);
+
                 
                 // Garantir que sempre seja um array
                 this.papeis = Array.isArray(response.data) ? response.data : [];
                 
                 // Debug: mostrar contadores de cada papel
                 this.papeis.forEach(papel => {
-                    console.log(`Papel: ${papel.display_name} - Usuários: ${papel.users_count}, Permissões: ${papel.permissions_count}`);
+    
                 });
                 
             } catch (error) {
@@ -3546,7 +3545,7 @@ export default {
             try {
                 const response = await axios.get('/api/auth/me');
                 this.currentUser = response.data;
-                console.log('Usuário logado:', this.currentUser);
+    
             } catch (error) {
                 console.error('Erro ao carregar dados do usuário:', error);
             }

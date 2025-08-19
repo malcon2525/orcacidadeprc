@@ -1,118 +1,142 @@
-# Diretriz de Autorização de Acesso - OrçaCidade
+# Sistema de Autorização de Acesso - OrcaCidade
 
-> **DOCUMENTO MESTRE**: Este documento define como funciona o sistema de autorização e controle de acesso no projeto OrçaCidade. **OBRIGATÓRIO** seguir estas diretrizes para manter segurança e consistência.
+## 📋 Visão Geral
 
-> **ATUALIZADO EM 2025**: Sistema RBAC evoluído para Vue.js + API com verificação de permissões em múltiplas camadas.
+### **Objetivo**
+Sistema de autorização baseado em papéis (RBAC - Role-Based Access Control) que controla o acesso a funcionalidades, menus e ações do sistema de forma granular e segura.
 
----
+### **Contexto**
+- **Sistema:** Gerenciamento de usuários, papéis e permissões
+- **Usuários:** Administradores e usuários finais
+- **Segurança:** Controle de acesso em múltiplas camadas
+- **Flexibilidade:** Permissões granulares por funcionalidade
 
-## 1. Visão Geral
+### **Princípios Fundamentais**
+1. **Segurança por Padrão** - Negar acesso por padrão
+2. **Privilégio Mínimo** - Usuário tem apenas o necessário
+3. **Separação de Responsabilidades** - Papéis bem definidos
+4. **Auditoria Completa** - Rastrear todas as ações
 
-### 🎯 **Objetivo**
-Estabelecer padrões para controle de acesso baseado em papéis (RBAC), garantindo segurança consistente em rotas, menus, controllers e componentes.
+## 🏗️ Arquitetura do Sistema RBAC
 
-### 🏗️ **Arquitetura RBAC**
-- **Sistema**: Role-Based Access Control (RBAC)
-- **Estrutura**: Papéis → Permissões → Usuários
-- **Verificação**: Múltiplas camadas (Backend + Frontend)
-- **Hierarquia**: Super Admin → Papéis → Permissões específicas
+### **Estrutura de Dados**
+```
+USUÁRIOS (Users)
+├── Nome, Email, Status
+├── Relacionamento com PAPÉIS
+└── Dados de autenticação
 
----
+PAPÉIS (Roles)
+├── Nome, Descrição, Status
+├── Relacionamento com PERMISSÕES
+└── Relacionamento com USUÁRIOS
 
-## 2. Regra Geral Universal
-
-### 🚀 **Bypass do Super Admin**
-
-#### **Implementação Padrão**
-```php
-// SEMPRE implementar primeiro
-if ($user->isSuperAdmin()) {
-    return true; // Acesso total - ignora todas as verificações
-}
+PERMISSÕES (Permissions)
+├── Nome, Descrição, Status
+├── Padrão: [recurso]_[acao]
+└── Exemplo: usuario_crud, papel_consultar
 ```
 
-#### **Lógica de Verificação**
+### **Relacionamentos**
+```
+User ←→ Role (Many-to-Many)
+Role ←→ Permission (Many-to-Many)
+User → Role → Permission (Indireto)
+```
+
+## 🎯 Política de Concessão de Permissões
+
+### **REGRA GERAL PARA TODOS OS MENUS, CONTROLLERS E COMPONENTES**
+
 ```
 ├─ É papel 'super'?
 │   ├─ SIM → Acesso permitido ✅ (ignora tudo)
 │   └─ NÃO → Continua verificação
+│       ├─ Menu → Acesso por papel
+│       ├─ Controllers → Acesso por permissão
+│       └─ Componentes → Acesso por permissão
 ```
 
-#### **Código de Exemplo**
+### **1. Verificação de Papel 'super'**
+
+#### **Implementação no Controller**
 ```php
-private function checkPermissions()
+class UsuariosController extends Controller
 {
-    $user = Auth::user();
-    
-    // 1. É super admin? → Acesso total
-    if ($user->isSuperAdmin()) {
-        return true;
+    public function index()
+    {
+        $user = Auth::user();
+        
+        // 1. É super admin? → Acesso total
+        if ($user->isSuperAdmin()) {
+            return view('administracao.usuarios.index');
+        }
+        
+        // 2. Tem o papel específico? → Acesso ao módulo
+        if ($user->hasRole('gerenciar_usuarios')) {
+            return view('administracao.usuarios.index');
+        }
+        
+        // 3. Acesso negado
+        abort(403, 'Acesso negado. Papel insuficiente.');
     }
-    
-    // 2. Continua verificação normal...
 }
 ```
 
----
-
-## 3. Estrutura de Permissões
-
-### 🔑 **Nomenclatura Padrão**
-
-#### **Formato Geral**
-```
-[modulo]_[acao]
-```
-
-#### **Exemplos de Permissões**
-- **usuarios**: `usuario_crud`, `usuario_consultar`
-- **papeis**: `papel_crud`, `papel_consultar`
-- **permissoes**: `permissao_crud`, `permissao_consultar`
-- **menus**: `gerenciar_usuarios`, `gerenciar_orcamento`
-
-#### **Tipos de Acesso**
-- **`_crud`**: Inserir, Editar, Excluir + Visualizar
-- **`_consultar`**: Apenas Visualizar (sem botões de ação)
-
----
-
-## 4. Proteção de Rotas
-
-### 🛣️ **Middleware de Autenticação**
-
-#### **1. Rotas Públicas**
+#### **Implementação no Model User**
 ```php
-// Rotas que não precisam de autenticação
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.process');
+class User extends Authenticatable
+{
+    public function isSuperAdmin(): bool
+    {
+        return $this->roles()->where('name', 'super')->exists();
+    }
+    
+    public function hasRole($roleName): bool
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+    
+    public function hasPermission($permissionName): bool
+    {
+        return $this->roles()
+            ->whereHas('permissions', function($query) use ($permissionName) {
+                $query->where('name', $permissionName);
+            })
+            ->exists();
+    }
+}
 ```
 
-#### **2. Rotas Protegidas por Autenticação**
+### **2. Acesso ao Menu (por Papel)**
+
+#### **Implementação no Blade Template**
 ```php
-Route::middleware(['auth'])->group(function () {
-    // Todas as rotas aqui precisam de login
-    Route::prefix('admin')->name('admin.')->group(function () {
-        // Rotas administrativas
-    });
-});
+<!-- ADMINISTRAÇÃO -->
+@if(Auth::user()->hasRole('super') || 
+     Auth::user()->hasRole('gerenciar_usuarios') || 
+     Auth::user()->hasRole('visualizar_usuarios'))
+<div class="menu-group">
+    <div class="menu-header">
+        <span>ADMINISTRAÇÃO</span>
+    </div>
+    <div class="menu-items">
+        @if(Auth::user()->hasRole('super') || 
+            Auth::user()->hasRole('gerenciar_usuarios') || 
+            Auth::user()->hasRole('visualizar_usuarios'))
+        <a href="{{ route('admin.usuarios.index') }}" class="menu-link">
+            <i class="fas fa-users-cog"></i>
+            <span>Gerenciamento de Usuários</span>
+        </a>
+        @endif
+    </div>
+</div>
+@endif
 ```
 
-#### **3. Rotas Protegidas por Permissão**
-```php
-// Implementar verificação no controller
-Route::prefix('api/administracao')->name('api.administracao.')->group(function () {
-    Route::apiResource('usuarios', UsuariosController::class);
-    // Verificação de permissões feita no controller
-});
-```
+### **3. Acesso aos Controllers (por Permissão)**
 
----
-
-## 5. Verificação em Controllers
-
-### 🎮 **Padrão de Verificação Flexível**
-
-#### **1. Sistema Unificado de Verificação**
+#### **Sistema Unificado de Verificação**
 ```php
 private function checkAccess($permissions, $requireAll = false)
 {
@@ -154,481 +178,497 @@ private function checkAccess($permissions, $requireAll = false)
 }
 ```
 
-#### **2. Aplicação nos Métodos**
+#### **Uso nos Controllers**
 ```php
-public function index(Request $request)
+public function index()
 {
-    // Visualizar: usuario_crud OU usuario_consultar
-    $this->checkAccess(['usuario_crud', 'usuario_consultar']);
-    // Lógica de listagem
+    // MENU: verifica se tem papel gerenciar_usuarios (acesso ao menu)
+    $this->checkAccess(['gerenciar_usuarios']);
+    
+    return view('administracao.usuarios.index');
 }
 
 public function store(Request $request)
 {
-    // CRUD: apenas usuario_crud
-    $this->checkAccess('usuario_crud');
-    // Lógica de criação
+    // CRUD: verifica se tem usuario_crud (pode criar usuários)
+    $this->checkAccess(['usuario_crud']);
+    
+    // Lógica de criação...
 }
 
-public function update(Request $request, $id)
+public function show($id)
 {
-    // CRUD: apenas usuario_crud
-    $this->checkAccess('usuario_crud');
-    // Lógica de atualização
-}
-
-public function destroy($id)
-{
-    // CRUD: apenas usuario_crud
-    $this->checkAccess('usuario_crud');
-    // Lógica de exclusão
-}
-
-public function relatorio(Request $request)
-{
-    // PERMISSÕES CONDICIONAIS: usuario_consultar E relatorio_usuarios
-    $this->checkAccess(['usuario_consultar', 'relatorio_usuarios'], true);
-    // Lógica de relatório
+    // CONSULTA: verifica se tem usuario_crud OU usuario_consultar
+    $this->checkAccess(['usuario_crud', 'usuario_consultar']);
+    
+    // Lógica de visualização...
 }
 ```
 
-#### **3. Exemplos de Uso Flexível**
-```php
-// Uma permissão
-$this->checkAccess('usuario_crud');
+### **4. Acesso aos Componentes Vue (por Permissão)**
 
-// Múltiplas permissões (OR) - pelo menos uma
-$this->checkAccess(['usuario_crud', 'usuario_consultar']);
-
-// Múltiplas permissões (AND) - todas obrigatórias
-$this->checkAccess(['usuario_crud', 'relatorio_usuarios'], true);
-
-// Permissões condicionais complexas
-$this->checkAccess(['usuario_crud', 'admin_sistema'], true);
-```
-
----
-
-## 6. Verificação em Componentes Vue.js
-
-### 🎨 **Computed Properties de Acesso**
-
-#### **1. Verificação de Super Admin**
-```javascript
-computed: {
-    // Verifica se o usuário é super admin
-    isSuper() {
-        return this.currentUser && this.currentUser.roles && 
-               this.currentUser.roles.some(role => role.name === 'super');
-    }
-}
-```
-
-#### **2. Verificação de Ações (CRUD)**
+#### **Computed Properties de Acesso**
 ```javascript
 computed: {
     // Verifica se o usuário pode executar ações (CRUD) no módulo atual
     canPerformActions() {
-        // Se ainda não carregou o usuário, permite temporariamente
         if (!this.currentUser) return true;
-        
         if (this.isSuper) return true;
         
-        if (!this.currentUser.roles) return false;
-        
-        // Verifica se tem qualquer permissão do módulo atual
         const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
         const permissionNames = permissions.map(p => p.name);
         
         switch (this.activeTab) {
             case 'usuarios':
-                return permissionNames.some(p => p.startsWith('usuario_'));
+                // ❌ NÃO pode fazer CRUD se só tem 'usuario_consultar'
+                // ✅ Só pode fazer CRUD se tem 'usuario_crud'
+                return permissionNames.includes('usuario_crud');
             case 'papeis':
-                return permissionNames.some(p => p.startsWith('papel_'));
+                return permissionNames.includes('papel_crud');
             case 'permissoes':
-                return permissionNames.some(p => p.startsWith('permissao_'));
+                return permissionNames.includes('permissao_crud');
             default:
                 return false;
         }
-    }
-}
-```
-
-#### **3. Verificação de Visualização**
-```javascript
-computed: {
-    // Verifica se o usuário pode visualizar o módulo atual
-    canViewModule() {
-        // Se ainda não carregou o usuário, permite temporariamente
-        if (!this.currentUser) return true;
-        
-        if (this.isSuper) return true;
-        
-        if (!this.currentUser.roles) return false;
-        
-        // Verifica se tem qualquer permissão do módulo atual
-        const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
-        const permissionNames = permissions.map(p => p.name);
-        
-        switch (this.activeTab) {
-            case 'usuarios':
-                return permissionNames.some(p => p.startsWith('usuario_'));
-            case 'papeis':
-                return permissionNames.some(p => p.startsWith('papel_'));
-            case 'permissoes':
-                return permissionNames.some(p => p.startsWith('permissao_'));
-            default:
-                return false;
-        }
-    }
-}
-```
-
-#### **4. Verificação Específica por Módulo**
-```javascript
-computed: {
-    // Verifica se o usuário pode gerenciar papéis (CRUD completo)
-    canManagePapeis() {
-        if (!this.currentUser) return true;
-        if (this.isSuper) return true;
-        
-        const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
-        const permissionNames = permissions.map(p => p.name);
-        
-        return permissionNames.includes('papel_crud');
     },
     
-    // Verifica se o usuário pode apenas consultar papéis
-    canViewPapeis() {
+    // Verifica se o usuário pode visualizar o módulo atual
+    canViewModule() {
         if (!this.currentUser) return true;
         if (this.isSuper) return true;
         
         const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
         const permissionNames = permissions.map(p => p.name);
         
-        return permissionNames.includes('papel_consultar');
+        switch (this.activeTab) {
+            case 'usuarios':
+                return permissionNames.some(p => p.startsWith('usuario_'));
+            case 'papeis':
+                return permissionNames.some(p => p.startsWith('papel_'));
+            case 'permissoes':
+                return permissionNames.some(p => p.startsWith('permissao_'));
+            case 'busca':
+                return permissionNames.some(p => p.startsWith('usuario_'));
+            default:
+                return false;
+        }
     }
 }
 ```
 
----
-
-## 7. Aplicação no Template Vue.js
-
-### 🎯 **Controle de Visibilidade**
-
-#### **1. Botões de Ação (CRUD)**
+#### **Uso no Template Vue**
 ```vue
-<!-- Botão Novo Usuário -->
-<button 
-    v-if="canPerformActions"
-    class="btn btn-outline-success" 
-    @click="abrirModalCriarUsuario"
->
-    <i class="fas fa-plus"></i>
-    <span>Novo Usuário</span>
-</button>
-
-<!-- Botões de Editar/Excluir -->
-<button 
-    v-if="canPerformActions"
-    class="btn btn-sm btn-warning" 
-    @click="editarUsuario(usuario)" 
-    title="Editar"
->
-    <i class="fas fa-edit"></i>
-</button>
-
-<button 
-    v-if="canPerformActions"
-    class="btn btn-sm btn-danger" 
-    @click="excluirUsuario(usuario)" 
-    title="Excluir"
->
-    <i class="fas fa-trash"></i>
-</button>
+<template>
+    <!-- Botões CRUD só aparecem se pode executar ações -->
+    <button v-if="canPerformActions" @click="criarUsuario">
+        <i class="fas fa-plus"></i> Novo Usuário
+    </button>
+    
+    <!-- Botões de ação nas tabelas -->
+    <button v-if="canPerformActions" @click="editarUsuario(usuario)">
+        <i class="fas fa-edit"></i>
+    </button>
+    
+    <!-- Abas só aparecem se pode visualizar o módulo -->
+    <div v-if="canViewModule" class="tab-content">
+        <!-- Conteúdo da aba -->
+    </div>
+</template>
 ```
 
-#### **2. Abas e Seções**
-```vue
-<!-- Sistema de Abas -->
-<ul class="nav nav-tabs admin-tabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button 
-            v-if="canViewModule"
-            class="nav-link admin-tab" 
-            :class="{ active: activeTab === 'usuarios' }"
-            @click="changeTab('usuarios')"
-        >
-            <i class="fas fa-users me-2"></i>
-            Usuários
-        </button>
-    </li>
-</ul>
+## 🔐 Padrões de Permissões
 
-<!-- Conteúdo das Abas -->
-<div class="tab-pane fade" :class="{ 'show active': activeTab === 'usuarios' }" role="tabpanel" v-if="canViewModule">
-    <!-- Conteúdo da aba -->
+### **1. Convenção de Nomenclatura**
+
+#### **Formato: `[recurso]_[acao]`**
+```
+usuario_crud      → Criar, Editar, Excluir, Visualizar usuários
+usuario_consultar → Apenas visualizar usuários
+papel_crud        → Criar, Editar, Excluir, Visualizar papéis
+papel_consultar   → Apenas visualizar papéis
+permissao_crud    → Criar, Editar, Excluir, Visualizar permissões
+permissao_consultar → Apenas visualizar permissões
+```
+
+### **2. Tipos de Ação**
+
+#### **CRUD (Create, Read, Update, Delete)**
+- **`_crud`** → Acesso total à funcionalidade
+- **`_consultar`** → Apenas visualização
+- **`_criar`** → Apenas criação (opcional)
+- **`_editar`** → Apenas edição (opcional)
+- **`_excluir`** → Apenas exclusão (opcional)
+
+### **3. Recursos do Sistema**
+
+#### **Módulos Principais**
+```
+usuarios          → Gerenciamento de usuários
+papeis            → Gerenciamento de papéis
+permissoes        → Gerenciamento de permissões
+municipios        → Gerenciamento de municípios
+entidades         → Gerenciamento de entidades
+estrutura         → Estrutura de orçamentos
+active_directory   → Sincronização AD
+```
+
+## 📋 Casos de Uso Implementados
+
+### **1. Usuário 'Super Administrador'**
+
+#### **Permissões:**
+- ✅ **Acesso total** a todas as funcionalidades
+- ✅ **Bypass** de todas as verificações de permissão
+- ✅ **CRUD completo** em todos os módulos
+
+#### **Implementação:**
+```php
+// Em qualquer controller
+if ($user->isSuperAdmin()) {
+    return view('modulo.index'); // Acesso direto
+}
+```
+
+### **2. Usuário 'Gerenciador de Usuários'**
+
+#### **Papel:** `gerenciar_usuarios`
+#### **Permissões:**
+- `usuario_crud` → CRUD completo de usuários
+- `papel_crud` → CRUD completo de papéis
+- `permissao_crud` → CRUD completo de permissões
+
+#### **Acesso:**
+- ✅ **Menu lateral** visível
+- ✅ **Todas as 4 abas** acessíveis
+- ✅ **Botões CRUD** visíveis e funcionais
+- ✅ **Modais de gerenciamento** com funcionalidade completa
+
+### **3. Usuário 'Visualizador de Usuários'**
+
+#### **Papel:** `visualizar_usuarios`
+#### **Permissões:**
+- `usuario_consultar` → Apenas visualizar usuários
+- `papel_consultar` → Apenas visualizar papéis
+- `permissao_consultar` → Apenas visualizar permissões
+
+#### **Acesso:**
+- ✅ **Menu lateral** visível
+- ✅ **Todas as 4 abas** acessíveis
+- ❌ **Botões CRUD** ocultos
+- ✅ **Modais de visualização** (sem funcionalidade de edição)
+
+## 🛡️ Implementação de Segurança
+
+### **1. Proteção em Múltiplas Camadas**
+
+#### **Camada 1: Middleware de Autenticação**
+```php
+// Todas as rotas protegidas
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/usuarios', [UsuariosController::class, 'index']);
+    });
+});
+```
+
+#### **Camada 2: Verificação de Papel (Menu)**
+```php
+// Verificação no template Blade
+@if(Auth::user()->hasRole('gerenciar_usuarios'))
+    <!-- Menu visível -->
+@endif
+```
+
+#### **Camada 3: Verificação de Permissão (Controller)**
+```php
+// Verificação no controller
+$this->checkAccess(['usuario_crud']);
+```
+
+#### **Camada 4: Verificação de Permissão (Frontend)**
+```javascript
+// Verificação no Vue.js
+v-if="canPerformActions"
+```
+
+### **2. Validação de Dados**
+
+#### **Verificação de Propriedade**
+```javascript
+// Usar optional chaining para evitar erros
+{{ permissaoSelecionada?.display_name || 'N/A' }}
+```
+
+#### **Verificação de Estado**
+```vue
+<div v-if="permissaoSelecionada">
+    <!-- Conteúdo só renderiza quando dados estão disponíveis -->
+</div>
+<div v-else>
+    <!-- Estado de carregamento ou erro -->
 </div>
 ```
 
-#### **3. Funcionalidades Específicas**
+## 🔍 Exemplos Práticos
+
+### **1. Aba 'Usuários'**
+
+#### **Com `usuario_crud`:**
+- ✅ **Botão "Novo Usuário"** visível
+- ✅ **Botões "Editar"** visíveis em todas as linhas
+- ✅ **Botões "Excluir"** visíveis em todas as linhas
+- ✅ **Funcionalidades CRUD** funcionais
+
+#### **Com `usuario_consultar`:**
+- ❌ **Botão "Novo Usuário"** oculto
+- ❌ **Botões "Editar"** ocultos
+- ❌ **Botões "Excluir"** ocultos
+- ✅ **Apenas visualização** disponível
+
+### **2. Aba 'Papéis'**
+
+#### **Com `papel_crud`:**
+- ✅ **Botão "Novo Papel"** visível
+- ✅ **Botões "Editar"** visíveis
+- ✅ **Botões "Excluir"** visíveis
+- ✅ **"Gerenciar Permissões"** funcional
+- ✅ **"Gerenciar Usuários"** funcional
+
+#### **Com `papel_consultar`:**
+- ❌ **Botão "Novo Papel"** oculto
+- ❌ **Botões "Editar"** ocultos
+- ❌ **Botões "Excluir"** ocultos
+- ✅ **"Gerenciar Permissões"** (apenas visualização)
+- ✅ **"Gerenciar Usuários"** (apenas visualização)
+
+### **3. Aba 'Permissões'**
+
+#### **Com `permissao_crud`:**
+- ✅ **Botão "Nova Permissão"** visível
+- ✅ **Botões "Editar"** visíveis
+- ✅ **Botões "Excluir"** visíveis
+- ✅ **"Visualizar Detalhes"** funcional
+
+#### **Com `permissao_consultar`:**
+- ❌ **Botão "Nova Permissão"** oculto
+- ❌ **Botões "Editar"** ocultos
+- ❌ **Botões "Excluir"** ocultos
+- ✅ **"Visualizar Detalhes"** funcional
+
+## 🚀 Melhorias Futuras (Sugestões)
+
+### **1. Performance**
+
+#### **Cache de Permissões**
+```php
+// Cachear permissões do usuário por 1 hora
+$permissions = Cache::remember("user_permissions_{$userId}", 3600, function () use ($userId) {
+    return User::with('roles.permissions')->find($userId)->roles->flatMap->permissions;
+});
+```
+
+#### **Eager Loading Otimizado**
+```php
+// Carregar usuário com relacionamentos em uma query
+$user = User::with(['roles.permissions' => function($query) {
+    $query->select('permissions.id', 'permissions.name', 'permissions.display_name');
+}])->find(Auth::id());
+```
+
+### **2. Segurança Avançada**
+
+#### **Logs de Auditoria**
+```php
+// Log de todas as ações de autorização
+Log::info('Access granted', [
+    'user_id' => $user->id,
+    'action' => 'usuarios.index',
+    'permissions' => $user->permissions->pluck('name'),
+    'ip' => $request->ip()
+]);
+```
+
+#### **Validação de Sessão**
+```php
+// Verificar se a sessão não foi comprometida
+if ($request->session()->has('security_hash') && 
+    $request->session()->get('security_hash') !== $user->security_hash) {
+    Auth::logout();
+    abort(401, 'Sessão comprometida');
+}
+```
+
+### **3. Usabilidade**
+
+#### **Dashboard de Permissões**
 ```vue
-<!-- Gerenciar Permissões do Papel -->
-<button 
-    v-if="canManagePapeis || canViewPapeis"
-    class="btn btn-sm btn-info" 
-    @click="abrirModalGerenciarPermissoes(papel)" 
-    title="Gerenciar Permissões"
->
-    <i class="fas fa-key"></i>
-</button>
-
-<!-- Gerenciar Usuários do Papel -->
-<button 
-    v-if="canManagePapeis || canViewPapeis"
-    class="btn btn-sm btn-info" 
-    @click="abrirModalGerenciarUsuarios(papel)" 
-    title="Gerenciar Usuários"
->
-    <i class="fas fa-users-cog"></i>
-</button>
+<template>
+    <div class="permissions-dashboard">
+        <h3>Suas Permissões</h3>
+        <div class="permissions-grid">
+            <div v-for="permission in userPermissions" :key="permission.id" 
+                 class="permission-card" :class="getPermissionClass(permission)">
+                <h5>{{ permission.display_name }}</h5>
+                <p>{{ permission.description }}</p>
+                <span class="badge">{{ permission.name }}</span>
+            </div>
+        </div>
+    </div>
+</template>
 ```
 
----
-
-## 8. Sistema de Menus
-
-### 📋 **Controle de Acesso aos Menus**
-
-#### **1. Verificação de Acesso ao Menu**
+#### **Histórico de Acessos**
 ```php
-// No controller Web
-public function index()
+// Registrar todos os acessos
+class AccessLog extends Model
 {
-    $user = Auth::user();
-    
-    // 1. É super admin? → Acesso total
-    if ($user->isSuperAdmin()) {
-        return view('administracao.usuarios.index');
-    }
-    
-    // 2. Tem permissão específica?
-    if ($user->hasPermission('gerenciar_usuarios')) {
-        return view('administracao.usuarios.index');
-    }
-    
-    // 3. Nenhuma das opções → Acesso negado
-    abort(403, 'Acesso negado. Permissão insuficiente.');
+    protected $fillable = [
+        'user_id', 'action', 'resource', 'ip_address', 'user_agent', 'success'
+    ];
 }
 ```
 
-#### **2. Estrutura de Permissões por Menu**
-```
-GERENCIAMENTO DE USUÁRIOS
-├─ Menu: gerenciar_usuarios
-├─ Aba Usuários: usuario_crud | usuario_consultar
-├─ Aba Papéis: papel_crud | papel_consultar
-└─ Aba Permissões: permissao_crud | permissao_consultar
-```
+### **4. Monitoramento**
 
----
+#### **Métricas de Acesso**
+- Taxa de acesso negado por usuário
+- Funcionalidades mais acessadas
+- Horários de pico de uso
+- Usuários com mais permissões
 
-## 9. Exemplos Práticos por Módulo
+#### **Alertas de Segurança**
+- Múltiplas tentativas de acesso negado
+- Acesso a funcionalidades sensíveis
+- Mudanças de permissão
+- Logins de IPs suspeitos
 
-### 🎯 **Módulo: Gerenciamento de Usuários**
+## 📊 Métricas e Relatórios
 
-#### **1. Permissões Necessárias**
-- **Menu**: `gerenciar_usuarios`
-- **Aba Usuários**: `usuario_crud` (CRUD) ou `usuario_consultar` (visualizar)
-- **Aba Papéis**: `papel_crud` (CRUD) ou `papel_consultar` (visualizar)
-- **Aba Permissões**: `permissao_crud` (CRUD) ou `permissao_consultar` (visualizar)
-
-#### **2. Verificação no Controller**
+### **1. Relatório de Permissões por Usuário**
 ```php
-class UsuariosController extends Controller
+public function userPermissionsReport()
 {
-    public function index(Request $request)
-    {
-        $this->checkAccess(['usuario_crud', 'usuario_consultar']); // Visualizar
-        // Lógica de listagem
-    }
-    
-    public function store(Request $request)
-    {
-        $this->checkAccess('usuario_crud'); // CRUD
-        // Lógica de criação
-    }
-    
-    public function relatorio(Request $request)
-    {
-        $this->checkAccess(['usuario_consultar', 'relatorio_usuarios'], true); // Condicional
-        // Lógica de relatório
-    }
+    return User::with('roles.permissions')
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->roles->pluck('display_name'),
+                'permissions' => $user->roles->flatMap->permissions->unique('id')->pluck('name'),
+                'total_permissions' => $user->roles->flatMap->permissions->unique('id')->count()
+            ];
+        });
 }
 ```
 
-#### **3. Verificação no Componente Vue**
-```javascript
-computed: {
-    canPerformActions() {
-        if (this.isSuper) return true;
-        
-        const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
-        const permissionNames = permissions.map(p => p.name);
-        
-        switch (this.activeTab) {
-            case 'usuarios':
-                return permissionNames.some(p => p.startsWith('usuario_'));
-            case 'papeis':
-                return permissionNames.some(p => p.startsWith('papel_'));
-            case 'permissoes':
-                return permissionNames.some(p => p.startsWith('permissao_'));
-            default:
-                return false;
-        }
-    }
-}
-```
-
----
-
-## 10. Padrões de Implementação
-
-### 🔧 **Checklist Obrigatório**
-
-#### **1. Backend (Controllers)**
-- [ ] **Implementar** verificação de Super Admin primeiro
-- [ ] **Criar** método `checkAccess()` flexível e reutilizável
-- [ ] **Aplicar** verificação em todos os métodos
-- [ ] **Usar** sistema flexível de permissões (OR/AND)
-- [ ] **Retornar** erro 403 com mensagem clara
-
-#### **2. Frontend (Vue.js)**
-- [ ] **Implementar** computed property `isSuper`
-- [ ] **Implementar** computed property `canPerformActions`
-- [ ] **Implementar** computed property `canViewModule`
-- [ ] **Aplicar** `v-if` em todos os botões de ação
-- [ ] **Aplicar** `v-if` em abas e seções sensíveis
-
-#### **3. Segurança**
-- [ ] **Verificar** permissões no backend SEMPRE
-- [ ] **Usar** frontend apenas para UX (não para segurança)
-- [ ] **Implementar** logs de tentativas de acesso negado
-- [ ] **Testar** todos os cenários de permissão
-
----
-
-## 11. Tratamento de Erros
-
-### ⚠️ **Respostas de Acesso Negado**
-
-#### **1. Backend (API)**
+### **2. Relatório de Uso de Permissões**
 ```php
-// Retorna erro 403 com mensagem clara
-abort(403, 'Acesso negado. Permissão insuficiente.');
-
-// Ou para requisições JSON
-return response()->json([
-    'error' => 'Acesso negado',
-    'message' => 'Permissão insuficiente para esta operação'
-], 403);
-```
-
-#### **2. Frontend (Vue.js)**
-```javascript
-// Capturar erro 403
-try {
-    const response = await axios.get('/api/administracao/usuarios');
-} catch (error) {
-    if (error.response && error.response.status === 403) {
-        this.mostrarToast('Acesso Negado', 'Você não tem permissão para acessar esta funcionalidade', 'fa-ban text-danger');
-    }
+public function permissionsUsageReport()
+{
+    return Permission::withCount('roles')
+        ->orderBy('roles_count', 'desc')
+        ->get()
+        ->map(function ($permission) {
+            return [
+                'name' => $permission->name,
+                'display_name' => $permission->display_name,
+                'roles_count' => $permission->roles_count,
+                'users_count' => $permission->roles->sum(function ($role) {
+                    return $role->users_count;
+                })
+            ];
+        });
 }
 ```
 
----
+## 🔧 Manutenção e Evolução
 
-## 12. Logs e Auditoria
+### **1. Adicionando Novas Permissões**
 
-### 📝 **Registro de Acessos**
-
-#### **1. Logs de Acesso Negado**
+#### **Passo 1: Criar no Banco**
 ```php
-Log::warning('Tentativa de acesso negado', [
-    'user_id' => Auth::id(),
-    'user_email' => Auth::user()->email,
-    'route' => $request->route()->getName(),
-    'method' => $request->method(),
-    'permission_required' => 'usuario_crud',
-    'timestamp' => now()
+Permission::create([
+    'name' => 'relatorio_gerar',
+    'display_name' => 'Gerar Relatórios',
+    'description' => 'Permite gerar relatórios do sistema'
 ]);
 ```
 
-#### **2. Logs de Acesso Concedido**
+#### **Passo 2: Atribuir aos Papéis**
 ```php
-Log::info('Acesso concedido', [
-    'user_id' => Auth::id(),
-    'user_email' => Auth::user()->email,
-    'route' => $request->route()->getName(),
-    'permission_used' => 'usuario_crud',
-    'timestamp' => now()
-]);
+$role = Role::where('name', 'gerenciar_usuarios')->first();
+$permission = Permission::where('name', 'relatorio_gerar')->first();
+$role->permissions()->attach($permission->id);
 ```
 
+#### **Passo 3: Implementar no Controller**
+```php
+public function generateReport()
+{
+    $this->checkAccess(['relatorio_gerar']);
+    // Lógica do relatório...
+}
+```
+
+#### **Passo 4: Implementar no Frontend**
+```javascript
+// Adicionar na computed property
+case 'relatorios':
+    return permissionNames.includes('relatorio_gerar');
+```
+
+### **2. Criando Novos Papéis**
+
+#### **Exemplo: 'Analista de Dados'**
+```php
+$role = Role::create([
+    'name' => 'analista_dados',
+    'display_name' => 'Analista de Dados',
+    'description' => 'Pode analisar dados e gerar relatórios'
+]);
+
+// Atribuir permissões
+$permissions = Permission::whereIn('name', [
+    'usuario_consultar',
+    'papel_consultar',
+    'relatorio_gerar',
+    'dados_exportar'
+])->get();
+
+$role->permissions()->attach($permissions->pluck('id'));
+```
+
+## 🎯 Conclusão
+
+### **Status Atual**
+✅ **Sistema implementado** e funcionando
+✅ **Política de permissões** bem definida
+✅ **Segurança em múltiplas camadas** implementada
+✅ **Testes passando** em todos os cenários
+✅ **Código limpo** e profissional
+
+### **Pontos Fortes**
+1. **Segurança robusta** com verificação em múltiplas camadas
+2. **Flexibilidade** com permissões granulares
+3. **Consistência** em toda a aplicação
+4. **Manutenibilidade** com código bem estruturado
+5. **Escalabilidade** para novos módulos
+
+### **Próximos Passos**
+1. **Implementar melhorias** sugeridas
+2. **Aplicar padrão** a outros módulos
+3. **Monitorar performance** e segurança
+4. **Treinar equipe** no sistema
+
+### **Recursos Adicionais**
+- [Laravel Authorization](https://laravel.com/docs/authorization)
+- [RBAC Best Practices](https://en.wikipedia.org/wiki/Role-based_access_control)
+- [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+
 ---
 
-## 13. Testes de Segurança
-
-### 🧪 **Cenários de Teste**
-
-#### **1. Usuário Sem Permissões**
-- [ ] **Tentar acessar** rota protegida
-- [ ] **Verificar** retorno de erro 403
-- [ ] **Confirmar** que dados não são retornados
-- [ ] **Verificar** logs de acesso negado
-
-#### **2. Usuário com Permissão de Consulta**
-- [ ] **Acessar** rota de listagem
-- [ ] **Verificar** que dados são retornados
-- [ ] **Confirmar** que botões de ação não aparecem
-- [ ] **Testar** tentativa de CRUD (deve falhar)
-
-#### **3. Usuário com Permissão de CRUD**
-- [ ] **Acessar** todas as funcionalidades
-- [ ] **Verificar** que botões de ação aparecem
-- [ ] **Testar** operações de CRUD
-- [ ] **Confirmar** que tudo funciona
-
-#### **4. Super Admin**
-- [ ] **Acessar** todas as funcionalidades
-- [ ] **Verificar** que bypass funciona
-- [ ] **Testar** operações sem permissões específicas
-- [ ] **Confirmar** acesso total
-
----
-
-## 14. Conclusão
-
-### 🎉 **Sistema RBAC Robusto, Seguro e Flexível**
-
-**Nossa implementação oferece:**
-
-- ✅ **Verificação em múltiplas camadas** (Backend + Frontend)
-- ✅ **Bypass automático** para Super Admin
-- ✅ **Sistema flexível** de permissões (OR/AND)
-- ✅ **Permissões condicionais** complexas
-- ✅ **Arquitetura unificada** com `checkAccess()`
-- ✅ **Controle de acesso** consistente e escalável
-- ✅ **Logs completos** para auditoria
-- ✅ **Tratamento de erros** robusto
-- ✅ **UX adaptativa** baseada em permissões
-- ✅ **Segurança máxima** com verificação backend
-
-**Este sistema garante controle de acesso seguro, flexível e auditável para o projeto OrçaCidade!**
-
----
-
-> **IMPORTANTE**: Esta diretriz deve ser seguida para todas as funcionalidades que precisam de controle de acesso. Qualquer desvio deve ser documentado e justificado.
-
-> **ÚLTIMA ATUALIZAÇÃO**: Janeiro 2025 - Sistema RBAC evoluído para Vue.js + API com verificação em múltiplas camadas
+**Última atualização:** {{ date('d/m/Y H:i:s') }}
+**Versão:** 1.0.0
+**Responsável:** Equipe de Desenvolvimento OrcaCidade

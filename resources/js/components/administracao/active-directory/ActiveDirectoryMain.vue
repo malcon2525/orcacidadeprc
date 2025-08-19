@@ -310,13 +310,13 @@ const executarSincronizacao = async () => {
         const response = await axios.post('/api/administracao/active-directory/sync')
         
         // Armazenar resultados
-        console.log('Resposta da API:', response.data)
+        
         
         if (response.data && response.data.data && response.data.data.resultados) {
-            console.log('Usando estrutura data.resultados')
+            
             resultadosSincronizacao.value = response.data.data.resultados
         } else if (response.data && response.data.resultados) {
-            console.log('Usando estrutura direta resultados')
+            
             resultadosSincronizacao.value = response.data.resultados
         } else {
             console.error('Estrutura de dados inesperada:', response.data)
@@ -330,7 +330,7 @@ const executarSincronizacao = async () => {
             }
         }
         
-        console.log('Resultados finais:', resultadosSincronizacao.value)
+        
         
         clearInterval(progressInterval)
         progresso.value = 100

@@ -303,9 +303,7 @@ export default {
                 if (response.data && response.data.success && response.data.resultados) {
                     this.resultados = response.data.resultados;
                     this.tempoBusca = response.data.tempo_busca || null;
-                    console.log('Dados carregados com sucesso:', this.resultados.length, 'registros');
-                    console.log('Filtros aplicados:', response.data.filtros_aplicados);
-                    console.log('Dados brutos:', this.resultados);
+                    
                 } else {
                     console.error('Estrutura de resposta inválida:', response.data);
                     this.resultados = [];
