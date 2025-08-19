@@ -105,9 +105,11 @@ Route::middleware(['auth'])->group(function () {
         
         // Permissões
         Route::apiResource('permissoes', \App\Http\Controllers\Api\Administracao\PermissionsController::class);
+        Route::get('permissoes/{id}/roles', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'getRoles'])->name('permissoes.roles.get');
+        Route::get('permissoes/{id}/users', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'getUsers'])->name('permissoes.users.get');
         Route::post('permissoes/{permissionId}/roles/{roleId}/attach', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'attachRole'])->name('permissoes.roles.attach');
         Route::delete('permissoes/{permissionId}/roles/{roleId}/detach', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'detachRole'])->name('permissoes.roles.detach');
-        Route::get('permissoes/role/{roleId}', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'getByRole'])->name('permissoes.by-role');
+        Route::get('permissoes/role/{roleId}', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'getByRole'])->name('permissoes.roles.by-role');
         Route::post('permissoes/role/{roleId}/sync', [\App\Http\Controllers\Api\Administracao\PermissionsController::class, 'syncRolePermissions'])->name('permissoes.roles.sync');
         
         // Busca Global

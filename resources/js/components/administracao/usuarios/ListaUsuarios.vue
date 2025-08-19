@@ -509,11 +509,8 @@
                                             </td>
                                             <td class="text-end">
                                                 <div class="d-flex gap-1 justify-content-end">
-                                                    <button class="btn btn-sm btn-info" @click="verDetalhesPermissao(permissao)" title="Ver Detalhes">
+                                                    <button class="btn btn-sm btn-info" @click="abrirModalVisualizarDetalhes(permissao)" title="Visualizar Detalhes">
                                                         <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-info" @click="gerenciarPapeisPermissao(permissao)" title="Gerenciar Papéis">
-                                                        <i class="fas fa-users-cog"></i>
                                                     </button>
                                                     <button 
                                                         v-if="canPerformActions"
@@ -1273,6 +1270,187 @@
             </div>
         </div>
 
+        <!-- Modal Visualizar Detalhes da Permissão -->
+        <div class="modal fade" id="modalVisualizarDetalhes" tabindex="-1" aria-labelledby="modalVisualizarDetalhesLabel" aria-hidden="true" ref="modalVisualizarDetalhes">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <!-- Cabeçalho do Modal -->
+                    <div class="modal-header custom-modal-header">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="modal-title mb-0" id="modalVisualizarDetalhesLabel">
+                                    Visualizar Detalhes da Permissão
+                                </h5>
+                                <p class="mb-0 text-white-50" v-if="permissaoSelecionada">
+                                    {{ permissaoSelecionada?.display_name || 'N/A' }}
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <!-- Corpo do Modal -->
+                    <div class="modal-body">
+                        <div v-if="loadingDetalhesPermissao" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Carregando detalhes da permissão...</p>
+                        </div>
+                        
+                        <div v-else-if="permissaoSelecionada">
+                            <!-- Informações Básicas da Permissão -->
+                            <div class="card card-border-primary mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Informações da Permissão
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Nome da Permissão:</label>
+                                                <p class="mb-0 text-custom">{{ permissaoSelecionada?.display_name || 'N/A' }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Nome Interno:</label>
+                                                <p class="mb-0"><code class="text-muted">{{ permissaoSelecionada?.name || 'N/A' }}</code></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Descrição:</label>
+                                        <p class="mb-0 text-muted">{{ permissaoSelecionada?.description || 'Sem descrição' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Layout em Duas Colunas -->
+                            <div class="layout-two-columns">
+                                <!-- COLUNA 1: Papéis que Utilizam -->
+                                <div class="column-flexible">
+                                    <div class="card card-border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-users me-2"></i>
+                                                Papéis que Utilizam ({{ papeisPermissao.length }})
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Filtro por Papel -->
+                                            <div class="mb-3">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                    <input 
+                                                        type="text" 
+                                                        class="form-control" 
+                                                        placeholder="Filtrar por papel..."
+                                                        v-model="filtroPapelPermissao"
+                                                    >
+                                                </div>
+                                            </div>
+                                            
+                                            <div v-if="papeisPermissaoFiltrados.length === 0" class="text-center py-3">
+                                                <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
+                                                <p class="text-muted mb-0">Nenhum papel encontrado</p>
+                                            </div>
+                                            <div v-else>
+                                                <div v-for="papel in papeisPermissaoFiltrados" :key="papel.id" class="d-flex align-items-center p-2 border-bottom">
+                                                    <div class="avatar-admin me-2">{{ papel?.display_name?.charAt(0)?.toUpperCase() || '?' }}</div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-medium">{{ papel?.display_name || 'N/A' }}</div>
+                                                        <small class="text-muted">{{ papel?.description || 'Sem descrição' }}</small>
+                                                    </div>
+                                                    <span class="badge" :class="papel?.is_active ? 'badge-success' : 'badge-danger'">
+                                                        {{ papel?.is_active ? 'ATIVO' : 'INATIVO' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- COLUNA 2: Usuários Afetados -->
+                                <div class="column-flexible">
+                                    <div class="card card-border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-user-check me-2"></i>
+                                                Usuários Afetados ({{ usuariosPermissao.length }})
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Filtro por Usuário -->
+                                            <div class="mb-3">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                    <input 
+                                                        type="text" 
+                                                        class="form-control" 
+                                                        placeholder="Filtrar por usuário..."
+                                                        v-model="filtroUsuarioPermissao"
+                                                    >
+                                                </div>
+                                            </div>
+                                            
+                                            <div v-if="usuariosPermissaoFiltrados.length === 0" class="text-center py-3">
+                                                <i class="fas fa-users text-muted mb-2 icon-medium"></i>
+                                                <p class="text-muted mb-0">Nenhum usuário encontrado</p>
+                                            </div>
+                                            <div v-else>
+                                                <div v-for="usuario in usuariosPermissaoPaginados" :key="usuario.id" class="d-flex align-items-center p-2 border-bottom">
+                                                    <div class="avatar-admin me-2">{{ usuario?.name?.charAt(0)?.toUpperCase() || '?' }}</div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-medium">{{ usuario?.name || 'N/A' }}</div>
+                                                        <small class="text-muted">{{ usuario?.email || 'N/A' }}</small>
+                                                    </div>
+                                                    <span class="badge" :class="usuario?.is_active ? 'badge-success' : 'badge-danger'">
+                                                        {{ usuario?.is_active ? 'ATIVO' : 'INATIVO' }}
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- Paginação para Usuários -->
+                                                <div v-if="totalPaginasUsuarios > 1" class="mt-3">
+                                                    <nav>
+                                                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                                                            <li class="page-item" :class="{ disabled: paginaUsuarios === 1 }">
+                                                                <button class="page-link" @click="mudarPaginaUsuarios(paginaUsuarios - 1)" :disabled="paginaUsuarios === 1">
+                                                                    <i class="fas fa-chevron-left"></i>
+                                                                </button>
+                                                            </li>
+                                                            <li v-for="pagina in paginasUsuariosVisiveis" :key="pagina" class="page-item" :class="{ active: pagina === paginaUsuarios }">
+                                                                <button class="page-link" @click="mudarPaginaUsuarios(pagina)">{{ pagina }}</button>
+                                                            </li>
+                                                            <li class="page-item" :class="{ disabled: paginaUsuarios === totalPaginasUsuarios }">
+                                                                <button class="page-link" @click="mudarPaginaUsuarios(paginaUsuarios + 1)" :disabled="paginaUsuarios === totalPaginasUsuarios">
+                                                                    <i class="fas fa-chevron-right"></i>
+                                                                </button>
+                                                            </li>
+                                                        </ul>
+                                                    </nav>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal Gerenciar Usuários do Papel - VERSÃO SIMPLIFICADA -->
         <div class="modal fade" id="modalGerenciarUsuarios" tabindex="-1" aria-labelledby="modalGerenciarUsuariosLabel" aria-hidden="true" ref="modalGerenciarUsuarios">
             <div class="modal-dialog modal-xl">
@@ -1828,8 +2006,19 @@ export default {
             
             // Dados para gerenciar usuários dos papéis
             modalGerenciarUsuarios: null,
+            modalVisualizarDetalhes: null,
             papelSelecionado: null,
             loadingUsuariosPapel: false,
+            
+            // Dados para visualizar detalhes da permissão
+            permissaoSelecionada: null,
+            loadingDetalhesPermissao: false,
+            papeisPermissao: [],
+            usuariosPermissao: [],
+            filtroPapelPermissao: '',
+            filtroUsuarioPermissao: '',
+            paginaUsuarios: 1,
+            itensPorPaginaUsuarios: 20,
             salvandoUsuariosPapel: false,
             usuariosAtuais: [],
             usuariosDisponiveis: [],
@@ -1873,7 +2062,8 @@ export default {
         this.modalPapel = new bootstrap.Modal(this.$refs.modalPapel);
         this.modalPermissao = new bootstrap.Modal(this.$refs.modalPermissao);
         this.modalGerenciarPermissoes = new bootstrap.Modal(this.$refs.modalGerenciarPermissoes);
-        this.modalGerenciarUsuarios = new bootstrap.Modal(this.$refs.modalGerenciarUsuarios);
+                    this.modalGerenciarUsuarios = new bootstrap.Modal(this.$refs.modalGerenciarUsuarios);
+            this.modalVisualizarDetalhes = new bootstrap.Modal(this.$refs.modalVisualizarDetalhes);
         
         // Inicializar toast
         this.toast = new bootstrap.Toast(document.getElementById('toast'));
@@ -2125,6 +2315,71 @@ export default {
                 permissao.display_name.toLowerCase().includes(filtro) ||
                 permissao.description.toLowerCase().includes(filtro)
             );
+        },
+        
+        // Filtros para detalhes da permissão
+        papeisPermissaoFiltrados() {
+            if (!this.filtroPapelPermissao) return this.papeisPermissao;
+            const filtro = this.filtroPapelPermissao.toLowerCase();
+            return this.papeisPermissao.filter(papel => 
+                papel.display_name.toLowerCase().includes(filtro) ||
+                (papel.description && papel.description.toLowerCase().includes(filtro))
+            );
+        },
+        
+        usuariosPermissaoFiltrados() {
+            if (!this.filtroUsuarioPermissao) return this.usuariosPermissao;
+            const filtro = this.filtroUsuarioPermissao.toLowerCase();
+            return this.usuariosPermissao.filter(usuario => 
+                usuario.name.toLowerCase().includes(filtro) ||
+                usuario.email.toLowerCase().includes(filtro)
+            );
+        },
+        
+        usuariosPermissaoPaginados() {
+            const inicio = (this.paginaUsuarios - 1) * this.itensPorPaginaUsuarios;
+            const fim = inicio + this.itensPorPaginaUsuarios;
+            return this.usuariosPermissaoFiltrados.slice(inicio, fim);
+        },
+        
+        totalPaginasUsuarios() {
+            return Math.ceil(this.usuariosPermissaoFiltrados.length / this.itensPorPaginaUsuarios);
+        },
+        
+        paginasUsuariosVisiveis() {
+            const total = this.totalPaginasUsuarios;
+            const atual = this.paginaUsuarios;
+            const paginas = [];
+            
+            if (total <= 7) {
+                for (let i = 1; i <= total; i++) {
+                    paginas.push(i);
+                }
+            } else {
+                if (atual <= 4) {
+                    for (let i = 1; i <= 5; i++) {
+                        paginas.push(i);
+                    }
+                    paginas.push('...');
+                    paginas.push(total);
+                } else if (atual >= total - 3) {
+                    paginas.push(1);
+                    paginas.push('...');
+                    for (let i = total - 4; i <= total; i++) {
+                        paginas.push(i);
+                    }
+                } else {
+                    paginas.push(1);
+                    paginas.push('...');
+                    for (let i = atual - 1; i <= atual + 1; i++) {
+                        paginas.push(i);
+                    }
+                    paginas.push('...');
+                    paginas.push(total);
+                }
+            }
+            
+            return paginas;
         }
     },
     
@@ -2551,6 +2806,40 @@ export default {
         // Toggle filtros de papéis
         toggleFiltrosPapeis() {
             this.filtrosPapeisVisiveis = !this.filtrosPapeisVisiveis;
+        },
+        
+        // ===== MÉTODOS PARA VISUALIZAR DETALHES DA PERMISSÃO =====
+        
+        async abrirModalVisualizarDetalhes(permissao) {
+            try {
+                this.permissaoSelecionada = permissao;
+                this.loadingDetalhesPermissao = true;
+                this.filtroPapelPermissao = '';
+                this.filtroUsuarioPermissao = '';
+                this.paginaUsuarios = 1;
+                
+                // Carregar papéis que utilizam esta permissão
+                const responsePapeis = await axios.get(`/api/administracao/permissoes/${permissao.id}/roles`);
+                this.papeisPermissao = responsePapeis.data.roles || [];
+                
+                // Carregar usuários afetados por esta permissão
+                const responseUsuarios = await axios.get(`/api/administracao/permissoes/${permissao.id}/users`);
+                this.usuariosPermissao = responseUsuarios.data.users || [];
+                
+                this.loadingDetalhesPermissao = false;
+                this.modalVisualizarDetalhes.show();
+                
+            } catch (error) {
+                console.error('Erro ao carregar detalhes da permissão:', error);
+                this.loadingDetalhesPermissao = false;
+                this.mostrarToast('Erro', 'Erro ao carregar detalhes da permissão', 'error');
+            }
+        },
+        
+        mudarPaginaUsuarios(pagina) {
+            if (pagina >= 1 && pagina <= this.totalPaginasUsuarios) {
+                this.paginaUsuarios = pagina;
+            }
         },
         
         // Abrir modal para criar papel

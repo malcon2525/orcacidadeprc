@@ -339,5 +339,66 @@ class PermissionsController extends Controller
             ], 500);
         }
     }
+    
+    /**
+     * Obter papéis que utilizam uma permissão específica
+     */
+    public function getRoles($id)
+    {
+        // CONSULTA: verifica se tem permissao_crud OU permissao_consultar (ambos podem visualizar)
+        $this->checkAccess(['permissao_crud', 'permissao_consultar']);
+        
+        try {
+            $permission = Permission::findOrFail($id);
+            
+            $roles = $permission->roles()
+                ->where('is_active', true)
+                ->select('roles.id', 'roles.name', 'roles.display_name', 'roles.description', 'roles.is_active')
+                ->orderBy('roles.display_name')
+                ->get();
+            
+            return response()->json([
+                'roles' => $roles
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao carregar papéis da permissão'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Obter usuários afetados por uma permissão específica
+     */
+    public function getUsers($id)
+    {
+        // CONSULTA: verifica se tem permissao_crud OU permissao_consultar (ambos podem visualizar)
+        $this->checkAccess(['permissao_crud', 'permissao_consultar']);
+        
+        try {
+            $permission = Permission::findOrFail($id);
+            
+            $users = $permission->roles()
+                ->with(['users' => function($query) {
+                    $query->select('users.id', 'users.name', 'users.email', 'users.is_active')
+                          ->where('users.is_active', true);
+                }])
+                ->get()
+                ->pluck('users')
+                ->flatten()
+                ->unique('id')
+                ->values();
+            
+            return response()->json([
+                'users' => $users
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao carregar usuários da permissão'
+            ], 500);
+        }
+    }
 }
 
