@@ -166,7 +166,7 @@
         @endif
 
         <!-- ADMINISTRAÇÃO -->
-        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipio') || Auth::user()->hasRole('gerenciar_entidade') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura'))
+        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura'))
         <div class="menu-group">
             <div class="menu-header myBox">
                 <div class="menu-icon">
@@ -194,12 +194,14 @@
                     <span>Municípios</span>
                 </a>
                 @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_entidade'))
-                <a href="#" class="menu-link">
+                
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria'))
+                <a href="{{ route('admin.entidades-orcamentarias.index') }}" class="menu-link">
                     <i class="fas fa-building"></i>
                     <span>Entidades Orçamentárias</span>
                 </a>
                 @endif
+
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_estrutura'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-sitemap"></i>

@@ -22,6 +22,7 @@ import ActiveDirectoryMain from './components/administracao/active-directory/Act
 import ListaUsuarios from './components/administracao/usuarios/ListaUsuarios.vue';
 import BuscaGlobal from './components/administracao/usuarios/BuscaGlobal.vue';
 import ListaMunicipios from './components/administracao/municipios/ListaMunicipios.vue';
+import ListaEntidadesOrcamentariasAdmin from './components/administracao/entidades-orcamentarias/ListaEntidadesOrcamentariasAdmin.vue';
 
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
@@ -30,6 +31,7 @@ app.component('active-directory-main', ActiveDirectoryMain);
 app.component('lista-usuarios', ListaUsuarios);
 app.component('busca-global', BuscaGlobal);
 app.component('lista-municipios', ListaMunicipios);
+app.component('lista-entidades-orcamentarias-admin', ListaEntidadesOrcamentariasAdmin);
 
 /**
  * The following block of code may be used to automatically register your

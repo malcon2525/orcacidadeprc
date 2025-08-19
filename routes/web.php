@@ -70,6 +70,9 @@ Route::middleware(['auth'])->group(function () {
         
         // Municípios
         Route::resource('municipios', \App\Http\Controllers\Web\Administracao\Municipios\MunicipioController::class);
+        
+        // Entidades Orçamentárias
+        Route::resource('entidades-orcamentarias', \App\Http\Controllers\Web\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class);
     });
     
     // ===== ROTAS API - DADOS =====
@@ -134,6 +137,11 @@ Route::middleware(['auth'])->group(function () {
         // Municípios
         Route::apiResource('municipios', \App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class);
         Route::post('municipios/importar', [\App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class, 'importar'])->name('municipios.importar');
+        
+        // Entidades Orçamentárias
+        Route::apiResource('entidades-orcamentarias', \App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class);
+        Route::get('entidades-orcamentarias/listar-select', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'listarSelect'])->name('entidades-orcamentarias.listar-select');
+        Route::post('entidades-orcamentarias/importar-municipios', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'importarMunicipios'])->name('entidades-orcamentarias.importar-municipios');
     });
     
     // ===== ROTAS TEMPORÁRIAS (REDIRECIONAM PARA HOME) =====
