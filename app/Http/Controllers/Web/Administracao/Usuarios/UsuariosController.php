@@ -69,8 +69,24 @@ class UsuariosController extends Controller
     public function index()
     {
         // MENU: verifica se tem papel gerenciar_usuarios (acesso ao menu)
-        $this->checkAccess('gerenciar_usuarios');
+        $user = Auth::user();
         
-        return view('administracao.usuarios.index');
+        // 1. É super admin? → Acesso total
+        if ($user->isSuperAdmin()) {
+            return view('administracao.usuarios.index');
+        }
+        
+        // 2. Tem o papel gerenciar_usuarios? → Acesso ao módulo
+        if ($user->hasRole('gerenciar_usuarios')) {
+            return view('administracao.usuarios.index');
+        }
+        
+        // 3. Tem o papel visualizar_usuarios? → Acesso ao módulo (apenas consulta)
+        if ($user->hasRole('visualizar_usuarios')) {
+            return view('administracao.usuarios.index');
+        }
+        
+        // 3. Acesso negado
+        abort(403, 'Acesso negado. Papel insuficiente.');
     }
 }

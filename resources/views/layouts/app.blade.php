@@ -166,7 +166,7 @@
         @endif
 
         <!-- ADMINISTRAÇÃO -->
-        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuario') || Auth::user()->hasRole('gerenciar_municipio') || Auth::user()->hasRole('gerenciar_entidade') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura'))
+        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipio') || Auth::user()->hasRole('gerenciar_entidade') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura'))
         <div class="menu-group">
             <div class="menu-header myBox">
                 <div class="menu-icon">
@@ -175,7 +175,7 @@
                 <span>ADMINISTRAÇÃO</span>
             </div>
             <div class="menu-items">
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuario'))
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios'))
                 <a href="{{ route('admin.usuarios.index') }}" class="menu-link">
                     <i class="fas fa-users-cog"></i>
                     <span>Gerenciamento de Usuários</span>

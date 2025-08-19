@@ -10,18 +10,7 @@
 
             <!-- Corpo -->
             <div class="card-body">
-                <!-- DEBUG TEMPORÁRIO -->
-                <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
-                    <strong>DEBUG ListaUsuarios:</strong><br>
-                    currentUser: {{ currentUser ? 'Carregado' : 'Não carregado' }}<br>
-                    isSuper: {{ isSuper }}<br>
-                    canViewModule: {{ canViewModule }}<br>
-                    canPerformActions: {{ canPerformActions }}<br>
-                    activeTab: {{ activeTab }}<br>
-                    <hr>
-                    <strong>Dados do usuário:</strong><br>
-                    <pre>{{ JSON.stringify(currentUser, null, 2) }}</pre>
-                </div>
+
                 
                 <!-- Sistema de Abas -->
                 <div class="admin-tabs-container">
@@ -1077,8 +1066,8 @@
                                     </div>
                                 </div>
 
-                                <!-- COLUNA 2: Adicionar Permissões -->
-                                <div class="column-flexible">
+                                <!-- COLUNA 2: Adicionar Permissões (SÓ PARA USUÁRIOS COM CRUD) -->
+                                <div class="column-flexible" v-if="canManagePapeis">
                                     <div class="card card-border-success">
                                         <div class="card-header bg-success text-white">
                                             <h6 class="mb-0">
@@ -1113,7 +1102,6 @@
                                                         <small class="text-muted">{{ permissao.description }}</small>
                                                     </div>
                                                     <button 
-                                                        v-if="canManagePapeis"
                                                         class="btn btn-sm btn-info" 
                                                         @click="adicionarPermissaoAoPapel(permissao)" 
                                                         title="Adicionar"
@@ -1446,6 +1434,13 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Estado de erro -->
+                        <div v-else class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning mb-3 icon-large"></i>
+                            <h6 class="text-warning mb-2">Erro ao carregar permissão</h6>
+                            <p class="text-muted mb-0">Não foi possível carregar os detalhes da permissão selecionada.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1537,8 +1532,8 @@
                                     </div>
                                 </div>
 
-                                <!-- COLUNA 2: Adicionar Usuários -->
-                                <div class="column-flexible">
+                                <!-- COLUNA 2: Adicionar Usuários (SÓ PARA USUÁRIOS COM CRUD) -->
+                                <div class="column-flexible" v-if="canManagePapeis">
                                     <div class="card card-border-success">
                                         <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0">
@@ -2093,17 +2088,23 @@ export default {
             
             if (!this.currentUser.roles) return false;
             
-            // Verifica se tem qualquer permissão do módulo atual
+            // Verifica se tem permissões CRUD (não apenas consulta)
             const permissions = this.currentUser.roles.flatMap(role => role.permissions || []);
             const permissionNames = permissions.map(p => p.name);
             
             switch (this.activeTab) {
                 case 'usuarios':
-                    return permissionNames.some(p => p.startsWith('usuario_'));
+                    // ❌ NÃO pode fazer CRUD se só tem 'usuario_consultar'
+                    // ✅ Só pode fazer CRUD se tem 'usuario_crud'
+                    return permissionNames.includes('usuario_crud');
                 case 'papeis':
-                    return permissionNames.some(p => p.startsWith('papel_'));
+                    // ❌ NÃO pode fazer CRUD se só tem 'papel_consultar'
+                    // ✅ Só pode fazer CRUD se tem 'papel_crud'
+                    return permissionNames.includes('papel_crud');
                 case 'permissoes':
-                    return permissionNames.some(p => p.startsWith('permissao_'));
+                    // ❌ NÃO pode fazer CRUD se só tem 'permissao_consultar'
+                    // ✅ Só pode fazer CRUD se tem 'permissao_crud'
+                    return permissionNames.includes('permissao_crud');
                 default:
                     return false;
             }
@@ -2129,6 +2130,9 @@ export default {
                     return permissionNames.some(p => p.startsWith('papel_'));
                 case 'permissoes':
                     return permissionNames.some(p => p.startsWith('permissao_'));
+                case 'busca':
+                    // Para busca global, verifica se tem permissões de usuário (que permitem visualizar relacionamentos)
+                    return permissionNames.some(p => p.startsWith('usuario_'));
                 default:
                     return false;
             }
