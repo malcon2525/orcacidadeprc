@@ -102,10 +102,15 @@
                             <td class="align-middle">
                                 <div v-for="(permissoes, papel) in grupo.papeis" :key="papel" class="mb-3">
                                     <div class="d-flex align-items-center mb-2">
-                                        <span class="badge me-2" :class="papel === 'Nenhum papel' ? 'badge-secondary' : 'badge-info'">
-                                            <i class="fas me-1" :class="papel === 'Nenhum papel' ? 'fa-user-slash' : 'fa-shield-alt'"></i>
-                                            {{ papel }}
-                                        </span>
+                                        <div>
+                                            <span class="badge me-2" :class="papel === 'Nenhum papel' ? 'badge-secondary' : 'badge-info'">
+                                                <i class="fas me-1" :class="papel === 'Nenhum papel' ? 'fa-user-slash' : 'fa-shield-alt'"></i>
+                                                {{ papel }}
+                                            </span>
+                                            <small class="text-info d-block" v-if="papel !== 'Nenhum papel'">
+                                                <code>{{ getPapelName(papel) }}</code>
+                                            </small>
+                                        </div>
                                     </div>
                                     
                                     <!-- Permissões -->
@@ -115,13 +120,17 @@
                                             <i class="fas fa-exclamation-triangle me-1"></i>
                                             Sem permissões
                                         </span>
-                                        <span v-else
-                                              v-for="permissao in permissoes.filter(p => p !== null)" 
-                                              :key="permissao" 
-                                              class="badge badge-success me-1 mb-1 d-inline-block">
-                                            <i class="fas fa-key me-1"></i>
-                                            {{ permissao }}
-                                        </span>
+                                        <div v-else v-for="permissao in permissoes.filter(p => p !== null)" :key="permissao" class="d-inline-block me-2 mb-2">
+                                            <div class="text-center">
+                                                <span class="badge badge-success d-block">
+                                                    <i class="fas fa-key me-1"></i>
+                                                    {{ permissao }}
+                                                </span>
+                                                <small class="text-info d-block mt-1">
+                                                    <code>{{ getPermissaoName(permissao) }}</code>
+                                                </small>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -375,6 +384,47 @@ export default {
             }
             
             return 'Tente ajustar os filtros de busca.';
+        },
+
+        // Obter nome interno do papel
+        getPapelName(displayName) {
+            // Mapeamento de display_name para name (nome interno)
+            const mapeamentoPapeis = {
+                'Super Administrador': 'super',
+                'Gerenciador de Usuários': 'gerenciar_usuarios',
+                'Visualizador de Usuários': 'visualizar_usuarios',
+                'Gerenciador de Municípios': 'gerenciar_municipios',
+                'Visualizador de Municípios': 'visualizar_municipios',
+                'Gerenciador de Entidade Orçamentária': 'gerenciar_entidade_orcamentaria',
+                'Visualizador de Entidade Orçamentária': 'visualizar_entidade_orcamentaria',
+                'Gerenciador de Integração com o AD': 'gerenciar_ad',
+                'Gerenciador de Estrutura': 'gerenciar_estrutura'
+            };
+            
+            return mapeamentoPapeis[displayName] || displayName;
+        },
+
+        // Obter nome interno da permissão
+        getPermissaoName(displayName) {
+            // Mapeamento de display_name para name (nome interno) - CORRIGIDO
+            const mapeamentoPermissoes = {
+                'Consultar Usuários': 'usuario_consultar',
+                'Gerenciar Usuários (CRUD)': 'usuario_crud',
+                'Consultar Papéis': 'papel_consultar',
+                'Gerenciar Papéis (CRUD)': 'papel_crud',
+                'Consultar Permissões': 'permissao_consultar',
+                'Gerenciar Permissões (CRUD)': 'permissao_crud',
+                'Sincronizar com AD': 'sincronizar_ad',
+                'Gerenciar Municípios (CRUD)': 'municipio_crud',
+                'Consultar Municípios': 'municipio_consultar',
+                'Importar Municípios': 'municipio_importar',
+                'Gerenciar Entidades Orçamentárias (CRUD)': 'entidade_orcamentaria_crud',
+                'Consultar Entidades Orçamentárias': 'entidade_orcamentaria_consultar',
+                'Importar Entidades Orçamentárias': 'entidade_orcamentaria_importar',
+                'Sem permissões': 'no_permissions'
+            };
+            
+            return mapeamentoPermissoes[displayName] || displayName;
         }
 
 

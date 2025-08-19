@@ -1051,6 +1051,7 @@
                                                     <div>
                                                         <div class="fw-medium">{{ permissao.display_name }}</div>
                                                         <small class="text-muted">{{ permissao.description }}</small>
+                                                        <small class="text-info d-block"><code>{{ permissao.name }}</code></small>
                                                     </div>
                                                     <button 
                                                         v-if="canManagePapeis"
@@ -1100,6 +1101,7 @@
                                                     <div>
                                                         <div class="fw-medium">{{ permissao.display_name }}</div>
                                                         <small class="text-muted">{{ permissao.description }}</small>
+                                                        <small class="text-info d-block"><code>{{ permissao.name }}</code></small>
                                                     </div>
                                                     <button 
                                                         class="btn btn-sm btn-info" 

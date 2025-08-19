@@ -91,7 +91,13 @@ Route::middleware(['auth'])->group(function () {
         return response()->json(['authenticated' => false], 401);
     });
     
-    // ===== ROTAS API ADMINISTRATIVAS =====
+
+
+
+
+
+
+    // ===== ROTAS API ADMINISTRATIVAS - OPERAÇÕES COM BANCO DE DADOS =====
     
     // Prefixo para todas as APIs administrativas
     Route::prefix('api/administracao')->name('api.administracao.')->group(function () {
@@ -143,6 +149,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('entidades-orcamentarias/listar-select', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'listarSelect'])->name('entidades-orcamentarias.listar-select');
         Route::post('entidades-orcamentarias/importar-municipios', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'importarMunicipios'])->name('entidades-orcamentarias.importar-municipios');
     });
+
+
+
+
+
+
+
+    
     
     // ===== ROTAS TEMPORÁRIAS (REDIRECIONAM PARA HOME) =====
     
