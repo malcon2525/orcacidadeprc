@@ -2,6 +2,8 @@
 
 @section('content')
 <div class="container-fluid">
-    <lista-municipios></lista-municipios>
+    <lista-municipios 
+        :permissoes='@json($permissoes ?? ["crud" => true, "consultar" => true, "importar" => true])'>
+    </lista-municipios>
 </div>
 @endsection

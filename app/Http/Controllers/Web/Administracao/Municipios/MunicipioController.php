@@ -27,12 +27,40 @@ class MunicipioController extends Controller
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
-            return view('administracao.municipios.index');
+            return view('administracao.municipios.index', [
+                'permissoes' => [
+                    'crud' => true,
+                    'consultar' => true,
+                    'importar' => true
+                ]
+            ]);
         }
         
-        // 2. Tem o papel gerenciar_municipio? → Acesso ao módulo
-        if ($user->hasRole('gerenciar_municipio')) {
-            return view('administracao.municipios.index');
+        // 2. Tem o papel gerenciar_municipios? → Verificar permissões específicas
+        if ($user->hasRole('gerenciar_municipios')) {
+            $permissoes = [
+                'crud' => $user->hasPermission('municipio_crud'),
+                'consultar' => $user->hasPermission('municipio_consultar'),
+                'importar' => $user->hasPermission('municipio_importar')
+            ];
+            
+            // Deve ter pelo menos uma permissão
+            if (!in_array(true, $permissoes)) {
+                abort(403, 'Acesso negado. Nenhuma permissão específica encontrada.');
+            }
+            
+            return view('administracao.municipios.index', compact('permissoes'));
+        }
+        
+        // 3. Tem o papel visualizar_municipios? → Acesso somente leitura
+        if ($user->hasRole('visualizar_municipios')) {
+            $permissoes = [
+                'crud' => false,
+                'consultar' => true,
+                'importar' => false
+            ];
+            
+            return view('administracao.municipios.index', compact('permissoes'));
         }
         
         // 3. Nenhuma das opções → Acesso negado

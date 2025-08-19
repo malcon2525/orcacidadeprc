@@ -188,7 +188,7 @@
                 </a>
                 @endif
 
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipio'))
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios'))
                 <a href="{{ route('admin.municipios.index') }}" class="menu-link">
                     <i class="fas fa-map-marker-alt"></i>
                     <span>Municípios</span>

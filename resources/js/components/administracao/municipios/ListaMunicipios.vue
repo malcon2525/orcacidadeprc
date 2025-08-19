@@ -11,11 +11,11 @@
                         <span>Filtros</span>
                         <i class="fas" :class="filtrosVisiveis ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                     </button>
-                    <button class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalCriar">
+                    <button v-if="permissoes.crud" class="btn btn-moderno btn-success-moderno d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalCriar">
                         <i class="fas fa-plus"></i>
                         <span>Novo Município</span>
                     </button>
-                    <button class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2" @click="importarMunicipios" :disabled="loading">
+                    <button v-if="permissoes.importar" class="btn btn-moderno btn-primary-moderno d-flex align-items-center gap-2 px-3 py-2" @click="importarMunicipios" :disabled="loading">
                         <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
                         <i v-else class="fas fa-file-import"></i>
                         <span>Importar</span>
@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="table-responsive" v-if="municipios.data.length > 0">
-                    <table class="table table-hover align-middle usuarios-table">
+                    <table class="table table-hover align-middle admin-table">
                         <thead>
                             <tr>
                                 <th class="fw-semibold text-custom">Nome</th>
@@ -74,7 +74,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="municipio in municipios.data" :key="municipio.id" class="usuario-row">
+                            <tr v-for="municipio in municipios.data" :key="municipio.id" class="admin-row">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="fw-medium">{{ municipio.nome }}</div>
@@ -104,13 +104,16 @@
                                     </div>
                                 </td>
                                 <td class="text-end">
-                                    <div class="btn-group-actions">
+                                    <div class="btn-group-actions" v-if="permissoes.crud">
                                         <button class="btn btn-action btn-warning me-1" @click="editarMunicipio(municipio)" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button class="btn btn-action btn-danger" @click="confirmarExclusao(municipio)" title="Excluir">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                    </div>
+                                    <div v-else class="text-muted small">
+                                        <i class="fas fa-eye me-1"></i>Apenas visualização
                                     </div>
                                 </td>
                             </tr>
@@ -373,6 +376,16 @@ import { Modal, Toast } from 'bootstrap';
 import axios from 'axios';
 
 export default {
+    props: {
+        permissoes: {
+            type: Object,
+            default: () => ({
+                crud: true,
+                consultar: true,
+                importar: true
+            })
+        }
+    },
     data() {
         return {
             municipios: {
@@ -612,21 +625,4 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Estilos específicos para corrigir altura dos filtros */
-.form-floating .form-control-lg {
-    height: 58px !important;
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-.form-floating .form-control-lg:focus {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-.form-floating .form-control-lg:not(:placeholder-shown) {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-</style>
+<!-- Estilos específicos removidos - usando CSS global modern-interface.css -->
