@@ -189,7 +189,7 @@
                 @endif
 
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipio'))
-                <a href="#" class="menu-link">
+                <a href="{{ route('admin.municipios.index') }}" class="menu-link">
                     <i class="fas fa-map-marker-alt"></i>
                     <span>Municípios</span>
                 </a>

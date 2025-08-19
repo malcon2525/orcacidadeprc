@@ -21,6 +21,7 @@ import HeaderComponent from './components/Header.vue';
 import ActiveDirectoryMain from './components/administracao/active-directory/ActiveDirectoryMain.vue';
 import ListaUsuarios from './components/administracao/usuarios/ListaUsuarios.vue';
 import BuscaGlobal from './components/administracao/usuarios/BuscaGlobal.vue';
+import ListaMunicipios from './components/administracao/municipios/ListaMunicipios.vue';
 
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
@@ -28,6 +29,7 @@ app.component('header-component', HeaderComponent);
 app.component('active-directory-main', ActiveDirectoryMain);
 app.component('lista-usuarios', ListaUsuarios);
 app.component('busca-global', BuscaGlobal);
+app.component('lista-municipios', ListaMunicipios);
 
 /**
  * The following block of code may be used to automatically register your

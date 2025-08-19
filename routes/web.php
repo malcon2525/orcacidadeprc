@@ -67,6 +67,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/config', [\App\Http\Controllers\Web\Administracao\ActiveDirectory\ActiveDirectoryController::class, 'config'])->name('config');
             Route::get('/sync', [\App\Http\Controllers\Web\Administracao\ActiveDirectory\ActiveDirectoryController::class, 'sync'])->name('sync');
         });
+        
+        // Municípios
+        Route::resource('municipios', \App\Http\Controllers\Web\Administracao\Municipios\MunicipioController::class);
     });
     
     // ===== ROTAS API - DADOS =====
@@ -127,6 +130,10 @@ Route::middleware(['auth'])->group(function () {
             Route::get('sync/status', [\App\Http\Controllers\Api\Administracao\ActiveDirectory\SyncController::class, 'status'])->name('sync.status');
             Route::get('sync/test-connection', [\App\Http\Controllers\Api\Administracao\ActiveDirectory\SyncController::class, 'testConnection'])->name('sync.test-connection');
         });
+        
+        // Municípios
+        Route::apiResource('municipios', \App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class);
+        Route::post('municipios/importar', [\App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class, 'importar'])->name('municipios.importar');
     });
     
     // ===== ROTAS TEMPORÁRIAS (REDIRECIONAM PARA HOME) =====
