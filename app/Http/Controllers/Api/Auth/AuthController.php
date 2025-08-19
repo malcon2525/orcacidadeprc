@@ -144,8 +144,8 @@ class AuthController extends Controller
             ]);
         }
 
-        // Se for uma requisição web (formulário), redireciona para login
-        return redirect()->route('login');
+        // Se for uma requisição web (formulário), redireciona para welcome
+        return redirect()->route('welcome');
     }
 
     /**

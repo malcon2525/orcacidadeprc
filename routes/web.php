@@ -28,9 +28,11 @@ Route::get('/login', [App\Http\Controllers\Web\Auth\AuthController::class, 'show
 // ===== ROTAS API - DADOS =====
 Route::prefix('api/auth')->name('api.auth.')->group(function () {
     Route::post('/login', [App\Http\Controllers\Api\Auth\AuthController::class, 'login'])->name('login');
-    Route::post('/logout', [App\Http\Controllers\Api\Auth\AuthController::class, 'logout'])->middleware('auth')->name('logout');
     Route::get('/me', [App\Http\Controllers\Api\Auth\AuthController::class, 'me'])->middleware('auth')->name('me');
 });
+
+// ===== ROTA DE LOGOUT WEB =====
+Route::post('/logout', [App\Http\Controllers\Api\Auth\AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // ===================================================================
 // ROTAS PROTEGIDAS (REQUEREM AUTENTICAÇÃO)

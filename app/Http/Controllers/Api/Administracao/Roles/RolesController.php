@@ -448,11 +448,11 @@ class RolesController extends Controller
             // Retornar usuários ativos associados ao papel
             Log::info('Buscando usuários associados ao papel');
             $usuarios = $papel->users()
-                ->where('is_active', true)
+                ->where('users.is_active', true)
                 ->with(['roles' => function($query) {
                     $query->select('roles.id', 'roles.name', 'roles.display_name');
                 }])
-                ->get(['id', 'name', 'email', 'username', 'is_active', 'last_login_at']);
+                ->get(['users.id', 'users.name', 'users.email', 'users.username', 'users.is_active', 'users.last_login_at']);
             
             Log::info('Usuários encontrados', ['count' => $usuarios->count()]);
             return response()->json($usuarios);

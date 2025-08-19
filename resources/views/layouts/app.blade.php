@@ -300,7 +300,7 @@
     </script>
 
     <!-- Formulário de logout oculto -->
-    <form id="logout-form" action="{{ route('api.auth.logout') }}" method="POST" style="display: none;">
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
         @csrf
     </form>
 
