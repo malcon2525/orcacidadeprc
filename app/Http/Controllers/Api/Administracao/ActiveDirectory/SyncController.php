@@ -32,7 +32,7 @@ class SyncController extends Controller
         }
         
         // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_active_directory')) {
+        if ($user->hasPermission('sincronizar_ad')) {
             return true;
         }
         

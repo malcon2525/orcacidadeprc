@@ -181,6 +181,13 @@
                     <span>Gerenciamento de Usuários</span>
                 </a>
                 @endif
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_ad'))
+                <a href="{{ route('admin.active-directory.index') }}" class="menu-link">
+                    <i class="fas fa-network-wired"></i>
+                    <span>Active Directory</span>
+                </a>
+                @endif
+
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipio'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-map-marker-alt"></i>
@@ -191,12 +198,6 @@
                 <a href="#" class="menu-link">
                     <i class="fas fa-building"></i>
                     <span>Entidades Orçamentárias</span>
-                </a>
-                @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_ad'))
-                <a href="{{ route('admin.active-directory.index') }}" class="menu-link">
-                    <i class="fas fa-network-wired"></i>
-                    <span>Active Directory</span>
                 </a>
                 @endif
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_estrutura'))

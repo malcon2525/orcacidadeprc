@@ -13,7 +13,7 @@
 // Registrar componente Vue do Active Directory
 if (typeof Vue !== 'undefined') {
     // O componente será registrado quando for criado
-    console.log('Active Directory module loaded');
+    // console.log('Active Directory module loaded');
 }
 </script>
 @endsection

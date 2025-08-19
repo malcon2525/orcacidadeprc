@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Administracao\ActiveDirectory;
 
 use App\Http\Controllers\Controller;
+use App\Models\Administracao\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,15 +23,15 @@ class ActiveDirectoryController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
             return view('administracao.active-directory.index');
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_active_directory')) {
+        // 2. Tem o papel gerenciar_ad? → Acesso ao módulo
+        if ($user->hasRole('gerenciar_ad')) {
             return view('administracao.active-directory.index');
         }
         
@@ -43,16 +44,16 @@ class ActiveDirectoryController extends Controller
      */
     public function config()
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
-            return view('administracao.active-directory.config');
+            return view('administracao.active-directory.index');
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_active_directory')) {
-            return view('administracao.active-directory.config');
+        // 2. Tem o papel gerenciar_ad? → Acesso ao módulo
+        if ($user->hasRole('gerenciar_ad')) {
+            return view('administracao.active-directory.index');
         }
         
         // 3. Nenhuma das opções → Acesso negado
@@ -64,16 +65,16 @@ class ActiveDirectoryController extends Controller
      */
     public function sync()
     {
-        $user = Auth::user();
+        $user = User::find(Auth::id());
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
-            return view('administracao.active-directory.sync');
+            return view('administracao.active-directory.index');
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_active_directory')) {
-            return view('administracao.active-directory.sync');
+        // 2. Tem o papel gerenciar_ad? → Acesso ao módulo
+        if ($user->hasRole('gerenciar_ad')) {
+            return view('administracao.active-directory.index');
         }
         
         // 3. Nenhuma das opções → Acesso negado

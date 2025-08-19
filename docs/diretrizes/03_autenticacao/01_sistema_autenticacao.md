@@ -31,7 +31,7 @@ Sistema de autenticação robusto e seguro para aplicação web interna, baseado
 ### **Stack Tecnológico**
 ```
 Frontend: Vue.js 3 + Bootstrap 5
-Backend: Laravel 10 + PHP 8.1
+Backend: Laravel 12 + PHP 8.2
 Banco: MySQL 8.0
 Sessões: Laravel Session (padrão)
 ```
@@ -59,15 +59,13 @@ Sessões: Laravel Session (padrão)
 
 ### **1. Middleware de Autenticação**
 
-#### **Configuração Padrão do Laravel**
+#### **Configuração Laravel 12 (Estrutura Moderna)**
 ```php
-// app/Http/Kernel.php
-protected $middlewareGroups = [
-    'web' => [
-        \App\Http\Middleware\Authenticate::class,
-        // outros middlewares padrão...
-    ],
-];
+// bootstrap/app.php
+->withMiddleware(function (Middleware $middleware): void {
+    // Middleware configurado via closure
+    // Laravel 12 usa nova estrutura
+})
 ```
 
 #### **Middleware de Autenticação Padrão**
@@ -247,44 +245,58 @@ const handleLogin = async () => {
 
 ## 🔧 Configuração
 
-### **1. Configuração de Sessões (`config/session.php`)**
+### **1. Configuração de Sessões REAL (`config/session.php`)**
 
-#### **Configurações Recomendadas**
+#### **Configurações Implementadas no Projeto**
 ```php
 return [
-    'driver' => env('SESSION_DRIVER', 'file'),
-    'lifetime' => env('SESSION_LIFETIME', 120), // 2 horas
-    'expire_on_close' => false,
-    'encrypt' => true,
-    'secure' => env('SESSION_SECURE_COOKIE', false), // true em produção
-    'http_only' => true,
-    'same_site' => 'lax',
+    'driver' => env('SESSION_DRIVER', 'database'), // ← SESSÕES NO BANCO!
+    'lifetime' => (int) env('SESSION_LIFETIME', 120), // 2 horas
+    'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
+    'encrypt' => env('SESSION_ENCRYPT', false), // ← SEM CRIPTOGRAFIA
+    'table' => env('SESSION_TABLE', 'sessions'), // ← TABELA 'sessions'
+    'connection' => env('SESSION_CONNECTION'), // ← CONEXÃO DO BANCO
 ];
 ```
 
 #### **Variáveis de Ambiente (`.env`)**
 ```env
-SESSION_DRIVER=file
+SESSION_DRIVER=database
 SESSION_LIFETIME=120
-SESSION_SECURE_COOKIE=false
-SESSION_DOMAIN=null
+SESSION_EXPIRE_ON_CLOSE=false
+SESSION_ENCRYPT=false
+SESSION_TABLE=sessions
 ```
 
-### **2. Configuração de Autenticação (`config/auth.php`)**
+### **2. Configuração de Autenticação REAL (`config/auth.php`)**
 
-#### **Configurações de Usuário**
+#### **Configurações Implementadas no Projeto**
 ```php
-'providers' => [
-    'users' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\User::class,
-    ],
+'defaults' => [
+    'guard' => 'web',
+    'passwords' => 'users',
 ],
 
 'guards' => [
     'web' => [
-        'driver' => 'session',
+        'driver' => 'session', // ← SESSÕES, não JWT!
         'provider' => 'users',
+    ],
+],
+
+'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\Administracao\User::class, // ← MODELO REAL!
+    ],
+],
+
+'passwords' => [
+    'users' => [
+        'provider' => 'users',
+        'table' => 'password_reset_tokens',
+        'expire' => 60, // 1 hora para reset de senha
+        'throttle' => 60, // 1 minuto entre tentativas
     ],
 ],
 ```
