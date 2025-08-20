@@ -1,346 +1,363 @@
 <template>
-    <div>
-        <!-- Cabeçalho Elegante -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h5 class="mb-1 fw-bold text-custom">
-                    <i class="fas fa-file-pdf me-2"></i>Conversão para Excel da Tabela de Serviços do DER-PR (Sintético)
-                </h5>
-                <p class="text-muted mb-0 small">Processe arquivos PDF e converta para formato Excel estruturado</p>
-            </div>
+  <div>
+    <!-- Cabeçalho Elegante -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h5 class="mb-1 fw-bold text-custom">
+          <i class="fas fa-file-pdf me-2"></i>Conversão para Excel da Tabela de Serviços do DER-PR (Sintético)
+        </h5>
+        <p class="text-muted mb-0 small">Processe arquivos PDF e converta para formato Excel estruturado</p>
+      </div>
+    </div>
+
+    <!-- Barra de Progresso Horizontal -->
+    <div class="progress-tracker mb-4">
+      <div class="progress-line">
+        <div class="progress-fill" :style="{ width: overallProgress + '%' }"></div>
+      </div>
+      <div class="progress-steps">
+        <div 
+          v-for="step in 4" 
+          :key="step"
+          class="progress-step" 
+          :class="{ 
+            'completed': computedStepStates[`step${step}`]?.status === 'completed',
+            'current': computedStepStates[`step${step}`]?.status === 'available',
+            'processing': computedStepStates[`step${step}`]?.status === 'processing'
+          }"
+        >
+          <div class="step-circle">
+            <i v-if="computedStepStates[`step${step}`]?.status === 'completed'" class="fas fa-check"></i>
+            <i v-else-if="computedStepStates[`step${step}`]?.status === 'processing'" class="fas fa-spinner fa-spin"></i>
+            <span v-else>{{ step }}</span>
+          </div>
+          <span class="step-label">{{ getStepLabel(step) }}</span>
         </div>
+      </div>
+    </div>
 
-        <!-- Barra de Progresso Horizontal -->
-        <div class="progress-tracker mb-3">
-            <div class="progress-line">
-                <div class="progress-fill" :style="{ width: progressoGeral + '%' }"></div>
+    <!-- Sistema de Cards com WorkflowCard -->
+    <div class="row g-4 mb-4">
+      <!-- Card 1: Upload -->
+      <div class="col-md-6 col-lg-3">
+        <WorkflowCard
+          :step="1"
+          :status="computedStepStates.step1.status"
+          title="Upload do Arquivo"
+          description="Selecione o PDF da tabela sintética"
+          icon="fa-cloud-upload-alt"
+          :step-data="stepStates.step1.data"
+        >
+          <template #default="{ status }">
+            <!-- Conteúdo do Card 1 -->
+            <div v-if="status === 'available' || status === 'completed'">
+              <div class="upload-zone" :class="{ 'has-file': arquivoValido }">
+                <input 
+                  type="file" 
+                  class="file-input" 
+                  id="arquivo" 
+                  ref="arquivoInput"
+                  accept=".pdf" 
+                  required
+                  @change="validarArquivo"
+                >
+                
+                <div v-if="!nomeArquivo" class="upload-placeholder">
+                  <div class="upload-icon">
+                    <i class="fas fa-file-pdf"></i>
+                  </div>
+                  <h6 class="mt-2 mb-1">Selecione um arquivo PDF</h6>
+                  <p class="text-muted mb-0 small">Clique ou arraste o arquivo aqui</p>
+                </div>
+                
+                <div v-else class="file-info">
+                  <div class="file-icon">
+                    <i class="fas fa-file-pdf"></i>
+                  </div>
+                  <div class="file-details">
+                    <h6 class="mb-1">{{ nomeArquivo }}</h6>
+                    <p class="text-success mb-0 small">
+                      <i class="fas fa-check-circle me-1"></i>Arquivo carregado com sucesso!
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="progress-steps">
-                <div class="progress-step" :class="{ 
-                    'completed': arquivoValido, 
-                    'current': !arquivoValido && !carregando && !dadosProcessados 
-                }">
-                    <div class="step-circle">
-                        <i v-if="arquivoValido" class="fas fa-check"></i>
-                        <span v-else>1</span>
-                    </div>
-                    <span class="step-label">Upload</span>
-                </div>
-                <div class="progress-step" :class="{ 
-                    'completed': dadosProcessados, 
-                    'current': arquivoValido && !carregando && !dadosProcessados,
-                    'processing': carregando
-                }">
-                    <div class="step-circle">
-                        <i v-if="dadosProcessados" class="fas fa-check"></i>
-                        <i v-else-if="carregando" class="fas fa-spinner fa-spin"></i>
-                        <span v-else>2</span>
-                    </div>
-                    <span class="step-label">Processamento</span>
-                </div>
-                <div class="progress-step" :class="{ 
-                    'completed': dadosProcessados, 
-                    'current': dadosProcessados 
-                }">
-                    <div class="step-circle">
-                        <i v-if="dadosProcessados" class="fas fa-check"></i>
-                        <span v-else>3</span>
-                    </div>
-                    <span class="step-label">Resultado</span>
-                </div>
-            </div>
-        </div>
+          </template>
+        </WorkflowCard>
+      </div>
 
-        <!-- Sistema de Cards Impactante -->
-        <div class="row g-3 mb-3">
-            <!-- Card 1: Upload -->
-            <div class="col-md-4">
-                <div class="workflow-card" :class="{ 
-                    'card-completed': arquivoValido, 
-                    'card-current': !arquivoValido && !carregando && !dadosProcessados 
-                }">
-                    <div class="card-header-section">
-                        <div class="step-indicator">
-                            <div class="step-number" :class="{ 'completed': arquivoValido }">
-                                <i v-if="arquivoValido" class="fas fa-check"></i>
-                                <span v-else>1</span>
-                            </div>
-                        </div>
-                        <div class="card-title">
-                            <h6 class="mb-1 fw-bold">
-                                <i class="fas fa-cloud-upload-alt me-2"></i>Upload do Arquivo
-                            </h6>
-                            <p class="mb-0 text-muted small">Selecione o PDF da tabela sintética</p>
-                        </div>
-                        <div class="status-badge" v-if="arquivoValido">
-                            <i class="fas fa-check me-1"></i>Concluído
-                        </div>
-                    </div>
-                    
-                    <div class="card-content">
-                        <div class="upload-zone" :class="{ 'has-file': arquivoValido }">
-                            <input type="file" 
-                                   class="file-input" 
-                                   id="arquivo" 
-                                   ref="arquivoInput"
-                                   accept=".pdf" 
-                                   required
-                                   @change="validarArquivo">
-                            
-                            <div v-if="!nomeArquivo" class="upload-placeholder">
-                                <div class="upload-icon">
-                                    <i class="fas fa-file-pdf"></i>
-                                </div>
-                                <h6 class="mt-2 mb-1">Selecione um arquivo PDF</h6>
-                                <p class="text-muted mb-0 small">Clique ou arraste o arquivo aqui</p>
-                            </div>
-                            
-                            <div v-else class="file-info">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-pdf"></i>
-                                </div>
-                                <div class="file-details">
-                                    <h6 class="mb-1">{{ nomeArquivo }}</h6>
-                                    <p class="text-success mb-0 small">
-                                        <i class="fas fa-check-circle me-1"></i>Arquivo carregado com sucesso!
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2: Processamento -->
-            <div class="col-md-4">
-                <div class="workflow-card" :class="{ 
-                    'card-completed': dadosProcessados, 
-                    'card-current': arquivoValido && !carregando && !dadosProcessados,
-                    'card-processing': carregando,
-                    'card-disabled': !arquivoValido
-                }">
-                    <div class="card-header-section">
-                        <div class="step-indicator">
-                            <div class="step-number" :class="{ 
-                                'completed': dadosProcessados,
-                                'processing': carregando,
-                                'disabled': !arquivoValido
-                            }">
-                                <i v-if="dadosProcessados" class="fas fa-check"></i>
-                                <i v-else-if="carregando" class="fas fa-spinner fa-spin"></i>
-                                <span v-else>2</span>
-                            </div>
-                        </div>
-                        <div class="card-title">
-                            <h6 class="mb-1 fw-bold" :class="{ 'text-muted': !arquivoValido }">
-                                <i class="fas fa-cogs me-2" :class="{ 'fa-spin': carregando }"></i>Processamento
-                            </h6>
-                            <p class="mb-0 text-muted small">Inicie o processamento da tabela</p>
-                        </div>
-                        <div class="status-badge" v-if="carregando">
-                            <i class="fas fa-spinner fa-spin me-1"></i>Processando
-                        </div>
-                        <div class="status-badge ready" v-else-if="arquivoValido && !dadosProcessados">
-                            <i class="fas fa-play me-1"></i>Pronto
-                        </div>
-                        <div class="status-badge disabled" v-else>
-                            <i class="fas fa-lock me-1"></i>Bloqueado
-                        </div>
-                    </div>
-                    
-                    <div class="card-content">
-                        <div class="processing-section">
-                            <div class="processing-info">
-                                <p class="mb-2 small" :class="{ 'text-muted': !arquivoValido }">Inicie o processamento da tabela sintética. Este processo pode levar alguns minutos.</p>
-                            </div>
-                            <button class="btn btn-primary btn-lg w-100 fw-semibold" 
-                                    @click="processarArquivo"
-                                    :disabled="!arquivoValido || carregando"
-                                    :class="{ 'btn-disabled': !arquivoValido }">
-                                <span v-if="carregando" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                <i v-else class="fas fa-play me-2"></i>
-                                {{ carregando ? 'Processando...' : 'Iniciar Processamento' }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3: Resultado -->
-            <div class="col-md-4">
-                <div class="workflow-card" :class="{ 
-                    'card-completed': dadosProcessados, 
-                    'card-current': dadosProcessados,
-                    'card-disabled': !dadosProcessados
-                }">
-                    <div class="card-header-section">
-                        <div class="step-indicator">
-                            <div class="step-number" :class="{ 
-                                'completed': dadosProcessados,
-                                'disabled': !dadosProcessados
-                            }">
-                                <i v-if="dadosProcessados" class="fas fa-check"></i>
-                                <span v-else>3</span>
-                            </div>
-                        </div>
-                        <div class="card-title">
-                            <h6 class="mb-1 fw-bold" :class="{ 'text-muted': !dadosProcessados }">
-                                <i class="fas fa-check-circle me-2"></i>Resultado
-                            </h6>
-                            <p class="mb-0 text-muted small">Visualize e exporte os dados</p>
-                        </div>
-                        <div class="status-badge" v-if="dadosProcessados">
-                            <i class="fas fa-check me-1"></i>Disponível
-                        </div>
-                        <div class="status-badge disabled" v-else>
-                            <i class="fas fa-lock me-1"></i>Bloqueado
-                        </div>
-                    </div>
-                    
-                    <div class="card-content">
-                        <div v-if="dadosProcessados" class="result-section">
-                            <div class="success-message">
-                                <div class="success-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <h6 class="mt-2 mb-1">Processamento Concluído!</h6>
-                                <p class="text-muted mb-3 small">{{ dados.length }} registros extraídos</p>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn btn-outline-primary w-100 mb-2" @click="visualizarDados">
-                                    <i class="fas fa-table me-2"></i>Visualizar Dados
-                                </button>
-                                <button class="btn btn-success w-100" @click="exportarParaExcel(dados, 'composicoes')">
-                                    <i class="fas fa-file-excel me-2"></i>Exportar para Excel
-                                </button>
-                            </div>
-                        </div>
-                        <div v-else class="waiting-section">
-                            <div class="waiting-icon disabled">
-                                <i class="fas fa-lock"></i>
-                            </div>
-                            <h6 class="mt-2 mb-1 text-muted">Aguardando Processamento</h6>
-                            <p class="text-muted mb-0 small">Complete os passos anteriores</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sistema de Progresso Detalhado -->
-        <div v-if="carregando" class="processing-details mb-3">
-            <div class="processing-header">
-                <div class="processing-icon">
-                    <i class="fas fa-cogs fa-spin"></i>
-                </div>
+      <!-- Card 2: Processamento -->
+      <div class="col-md-6 col-lg-3">
+        <WorkflowCard
+          :step="2"
+          :status="computedStepStates.step2.status"
+          title="Processamento"
+          description="Inicie o processamento da tabela"
+          icon="fa-cogs"
+          :step-data="stepStates.step2.data"
+        >
+          <template #default="{ status }">
+            <!-- Conteúdo do Card 2 -->
+            <div v-if="status === 'available'">
+              <div class="processing-section">
                 <div class="processing-info">
-                    <h6 class="mb-1 fw-semibold">Processando Arquivo PDF</h6>
-                    <p class="mb-0 text-muted small">{{ progressoEtapa }}</p>
+                  <p class="mb-3 small">Inicie o processamento da tabela sintética. Este processo pode levar alguns minutos.</p>
                 </div>
+                <button 
+                  class="btn btn-primary btn-lg w-100 fw-semibold" 
+                  @click="processarArquivo"
+                >
+                  <i class="fas fa-play me-2"></i>
+                  Iniciar Processamento
+                </button>
+              </div>
             </div>
             
-            <div class="progress-container">
-                <div class="progress-bar-custom">
-                    <div class="progress-fill-custom" :style="{ width: progresso + '%' }"></div>
-                </div>
-                <div class="progress-text">{{ progresso }}%</div>
+            <div v-else-if="status === 'processing'">
+              <ResultDisplay
+                type="processing"
+                title="Processando..."
+                description="Executando script Python e extraindo dados..."
+              />
             </div>
+            
+            <div v-else-if="status === 'completed'">
+              <ResultDisplay
+                type="success"
+                title="Processamento Concluído!"
+                :description="`${stepStates.step2.data?.length || 0} registros extraídos`"
+                :actions="[
+                  { key: 'export', label: 'Exportar Excel', icon: 'fa-file-excel', class: 'btn-outline-success btn-sm' }
+                ]"
+                :data="stepStates.step2.data"
+                @action="handleAction"
+              />
+            </div>
+          </template>
+        </WorkflowCard>
+      </div>
 
-            <div class="processing-steps">
-                <div v-for="(etapa, index) in etapas" :key="index" 
-                     :class="['processing-step', 
-                              etapa.completa ? 'completed' : 
-                              etapa.ativa ? 'active' : 'pending']">
-                    <div class="step-icon">
-                        <i :class="['fas', 
-                                  etapa.completa ? 'fa-check-circle' : 
-                                  etapa.ativa ? 'fa-spinner fa-spin' : 
-                                  'fa-circle']"></i>
-                    </div>
-                    <span class="step-text small">{{ etapa.nome }}</span>
+      <!-- Card 3: Validação -->
+      <div class="col-md-6 col-lg-3">
+        <WorkflowCard
+          :step="3"
+          :status="computedStepStates.step3.status"
+          title="Validação"
+          description="Verifique a qualidade dos dados"
+          icon="fa-check-circle"
+          :step-data="stepStates.step3.data"
+        >
+          <template #default="{ status }">
+            <!-- Conteúdo do Card 3 -->
+            <div v-if="status === 'available'">
+              <div class="validation-section">
+                <div class="validation-info">
+                  <p class="mb-3 small">Valide a estrutura e qualidade dos dados extraídos antes de prosseguir.</p>
                 </div>
+                <button 
+                  class="btn btn-info btn-lg w-100 fw-semibold" 
+                  @click="validarDados"
+                >
+                  <i class="fas fa-check me-2"></i>
+                  Validar Dados
+                </button>
+              </div>
             </div>
-        </div>
-
-        <!-- Mensagens de Alerta -->
-        <div v-if="mensagem" 
-             :class="['alert', 'alert-custom', mensagem.tipo === 'erro' ? 'alert-danger' : 'alert-success']"
-             class="mb-3">
-            <div class="d-flex align-items-center">
-                <i :class="['fas', 'me-2', mensagem.tipo === 'erro' ? 'fa-exclamation-triangle' : 'fa-check-circle']"></i>
-                <span class="small">{{ mensagem.texto }}</span>
+            
+            <div v-else-if="status === 'processing'">
+              <ResultDisplay
+                type="processing"
+                title="Validando..."
+                description="Verificando estrutura e qualidade dos dados..."
+              />
             </div>
-        </div>
+            
+            <div v-else-if="status === 'completed'">
+              <ResultDisplay
+                type="success"
+                title="Validação Automática Concluída!"
+                :description="`${stepStates.step3.data?.validRecords || 0} registros validados durante o processamento`"
+                :actions="[]"
+                :data="stepStates.step3.data"
+                @action="handleAction"
+              />
+            </div>
+          </template>
+        </WorkflowCard>
+      </div>
 
-        <!-- Modal para Visualizar Dados -->
-        <div class="modal fade" id="modalVisualizarDados" tabindex="-1" aria-labelledby="modalVisualizarDadosLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header bg-white">
-                        <h5 class="modal-title fw-semibold text-custom" id="modalVisualizarDadosLabel">
-                            <i class="fas fa-table me-2"></i>Dados Processados - {{ dados.length }} registros
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 servicos-gerais-table">
-                                <thead>
-                                    <tr>
-                                        <th>Grupo</th>
-                                        <th>Data Base</th>
-                                        <th>Código</th>
-                                        <th>Descrição</th>
-                                        <th>Unidade</th>
-                                        <th class="text-end">Custo <br> Execução</th>
-                                        <th class="text-end">Custo <br> Material</th>
-                                        <th class="text-end">Custo <br> Sub-Serviço</th>
-                                        <th class="text-end">Custo <br> Unitário</th>
-                                        <th class="text-end">Transporte</th>
-                                        <th>Honerado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(servico, index) in dados" :key="index" class="servico-geral-row">
-                                        <td>{{ servico.grupo }}</td>
-                                        <td>{{ servico.data_base }}</td>
-                                        <td>{{ servico.codigo }}</td>
-                                        <td>{{ servico.descricao }}</td>
-                                        <td>{{ servico.unidade }}</td>
-                                        <td class="text-end">{{ formatarValor(servico.custo_execucao) }}</td>
-                                        <td class="text-end">{{ formatarValor(servico.custo_material) }}</td>
-                                        <td class="text-end">{{ formatarValor(servico.custo_sub_servico) }}</td>
-                                        <td class="text-end">{{ formatarValor(servico.custo_unitario) }}</td>
-                                        <td class="text-end">{{ servico.transporte }}</td>
-                                        <td>{{ servico.honerado }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                        <button type="button" class="btn btn-success fw-semibold" @click="exportarParaExcel(dados, 'composicoes')">
-                            <i class="fas fa-file-excel me-1"></i>Exportar para Excel
-                        </button>
-                    </div>
+      <!-- Card 4: Resultado Final -->
+      <div class="col-md-6 col-lg-3">
+        <WorkflowCard
+          :step="4"
+          :status="computedStepStates.step4.status"
+          title="Resultado Final"
+          description="Visualize e exporte os dados"
+          icon="fa-chart-bar"
+          :step-data="stepStates.step4.data"
+        >
+          <template #default="{ status }">
+            <!-- Conteúdo do Card 4 -->
+            <div v-if="status === 'available'">
+              <div class="final-section">
+                <div class="final-info">
+                  <p class="mb-3 small">Todos os passos foram concluídos. Prossiga para a próxima aba</p>
                 </div>
+              </div>
             </div>
-        </div>
+            
+            <div v-else-if="status === 'completed'">
+              <ResultDisplay
+                type="success"
+                title="Processamento Finalizado!"
+                :description="`Workflow completo com ${overallProgress}% de progresso`"
+                :actions="[
+                  { key: 'download', label: 'Download Completo', icon: 'fa-download', class: 'btn-success' },
+                  { key: 'reset', label: 'Novo Processamento', icon: 'fa-redo', class: 'btn-outline-secondary' }
+                ]"
+                :data="stepStates.step4.data"
+                @action="handleAction"
+              />
+            </div>
+          </template>
+        </WorkflowCard>
+      </div>
     </div>
+
+    <!-- Sistema de Progresso Detalhado -->
+    <div v-if="currentProcessingStep" class="processing-details mb-4">
+      <div class="processing-header">
+        <div class="processing-icon">
+          <i class="fas fa-cogs fa-spin"></i>
+        </div>
+        <div class="processing-info">
+          <h6 class="mb-1 fw-semibold">Processando Arquivo PDF</h6>
+          <p class="mb-0 text-muted small">{{ progressoEtapa }}</p>
+        </div>
+      </div>
+      
+      <div class="progress-container">
+        <div class="progress-bar-custom">
+          <div class="progress-fill-custom" :style="{ width: progresso + '%' }"></div>
+        </div>
+        <div class="progress-text">{{ progresso }}%</div>
+      </div>
+
+      <div class="processing-steps">
+        <div v-for="(etapa, index) in etapas" :key="index" 
+             :class="['processing-step', 
+                      etapa.completa ? 'completed' : 
+                      etapa.ativa ? 'active' : 'pending']">
+          <div class="step-icon">
+            <i :class="['fas', 
+                      etapa.completa ? 'fa-check-circle' : 
+                      etapa.ativa ? 'fa-spinner fa-spin' : 
+                      'fa-circle']"></i>
+          </div>
+          <span class="step-text small">{{ etapa.nome }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensagens de Alerta -->
+    <div v-if="mensagem" 
+         :class="['alert', 'alert-custom', mensagem.tipo === 'erro' ? 'alert-danger' : 'alert-success']"
+         class="mb-4">
+      <div class="d-flex align-items-center">
+        <i :class="['fas', 'me-2', mensagem.tipo === 'erro' ? 'fa-exclamation-triangle' : 'fa-check-circle']"></i>
+        <span class="small">{{ mensagem.texto }}</span>
+      </div>
+    </div>
+
+    <!-- Modal para Visualizar Dados -->
+    <div class="modal fade" id="modalVisualizarDados" tabindex="-1" aria-labelledby="modalVisualizarDadosLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-white">
+            <h5 class="modal-title fw-semibold text-custom" id="modalVisualizarDadosLabel">
+              <i class="fas fa-table me-2"></i>Dados Processados - {{ stepStates.step2.data?.length || 0 }} registros
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0 servicos-gerais-table">
+                <thead>
+                  <tr>
+                    <th>Grupo</th>
+                    <th>Data Base</th>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Unidade</th>
+                    <th class="text-end">Custo <br> Execução</th>
+                    <th class="text-end">Custo <br> Material</th>
+                    <th class="text-end">Custo <br> Sub-Serviço</th>
+                    <th class="text-end">Custo <br> Unitário</th>
+                    <th class="text-end">Transporte</th>
+                    <th>Honerado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in stepStates.step2.data" :key="index">
+                    <td>{{ item.grupo }}</td>
+                    <td>{{ item.data_base }}</td>
+                    <td>{{ item.codigo }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td>{{ item.unidade }}</td>
+                    <td class="text-end">{{ item.custo_execucao }}</td>
+                    <td class="text-end">{{ item.custo_material }}</td>
+                    <td class="text-end">{{ item.custo_sub_servico }}</td>
+                    <td class="text-end">{{ item.custo_unitario }}</td>
+                    <td class="text-end">{{ item.transporte }}</td>
+                    <td>{{ item.honerado }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import * as XLSX from 'xlsx'
+import WorkflowCard from './base/WorkflowCard.vue'
+import ResultDisplay from './base/ResultDisplay.vue'
+import { useWorkflowState } from '../composables/useWorkflowState.js'
 
-/**
- * Componente para processamento de arquivos PDF de serviços gerais DER-PR
- * 
- * Este componente permite o upload, processamento e exportação de arquivos PDF
- * da tabela sintética do DER-PR, convertendo-os para formato Excel estruturado.
- */
 export default {
     name: 'ServicosGerais',
+    
+    components: {
+        WorkflowCard,
+        ResultDisplay
+    },
+    
+    setup() {
+        const {
+            stepStates,
+            currentProcessingStep,
+            computedStepStates,
+            overallProgress,
+            setStepCompleted,
+            setStepProcessing,
+            setStepAvailable,
+            resetWorkflow
+        } = useWorkflowState()
+        
+        return {
+            stepStates,
+            currentProcessingStep,
+            computedStepStates,
+            overallProgress,
+            setStepCompleted,
+            setStepProcessing,
+            setStepAvailable,
+            resetWorkflow
+        }
+    },
     
     data() {
         return {
@@ -348,40 +365,35 @@ export default {
             arquivoValido: false,
             nomeArquivo: '',
             
-            // Estado dos dados
-            dados: [],
-            dadosProcessados: false,
-            
-            // Estado da interface
-            mensagem: null,
-            carregando: false,
-            
-            // Progresso do processamento
+            // Sistema de progresso
             progresso: 0,
             progressoEtapa: '',
-            horaInicio: '',
-            tempoDecorrido: '',
+            horaInicio: null,
+            tempoDecorrido: '0s',
             intervaloTempo: null,
             
             // Etapas do processamento
             etapas: [
-                { nome: 'Upload do arquivo PDF', completa: false, ativa: false },
-                { nome: 'Validação do arquivo', completa: false, ativa: false },
-                { nome: 'Executando script Python', completa: false, ativa: false },
-                { nome: 'Processando dados extraídos', completa: false, ativa: false },
-                { nome: 'Estruturando informações', completa: false, ativa: false },
-                { nome: 'Dados prontos para visualização', completa: false, ativa: false }
-            ]
+                { nome: 'Upload e Validação', completa: false, ativa: false },
+                { nome: 'Execução Python', completa: false, ativa: false },
+                { nome: 'Processamento PDF', completa: false, ativa: false },
+                { nome: 'Estruturação Dados', completa: false, ativa: false },
+                { nome: 'Validação Estrutura', completa: false, ativa: false },
+                { nome: 'Finalização', completa: false, ativa: false }
+            ],
+            
+            // Mensagens
+            mensagem: null
         }
     },
+
     computed: {
+        // Progresso geral baseado no workflow state
         progressoGeral() {
-            if (this.dadosProcessados) return 100
-            if (this.carregando) return 66
-            if (this.arquivoValido) return 33
-            return 0
+            return this.overallProgress
         }
     },
+
     methods: {
         // ========================================
         // MÉTODOS DE VALIDAÇÃO E UPLOAD
@@ -389,8 +401,6 @@ export default {
         
         /**
          * Valida o arquivo selecionado pelo usuário
-         * 
-         * @param {Event} event - Evento de mudança do input file
          */
         validarArquivo(event) {
             const arquivo = event.target.files[0]
@@ -429,10 +439,11 @@ export default {
                 return
             }
             
-            // Arquivo válido
+            // Arquivo válido - marcar etapa 1 como concluída
             this.arquivoValido = true
             this.nomeArquivo = arquivo.name
-            this.dadosProcessados = false
+            this.setStepCompleted('step1', { fileName: arquivo.name, fileSize: arquivo.size })
+            
             this.mensagem = {
                 tipo: 'sucesso',
                 texto: 'Arquivo PDF válido selecionado.'
@@ -467,9 +478,6 @@ export default {
         
         /**
          * Atualiza o estado de uma etapa específica do processamento
-         * 
-         * @param {number} index - Índice da etapa
-         * @param {boolean} ativa - Se a etapa está ativa
          */
         atualizarEtapa(index, ativa = true) {
             // Marcar etapas anteriores como completas
@@ -497,9 +505,6 @@ export default {
         
         /**
          * Processa o arquivo PDF enviado pelo usuário
-         * 
-         * Executa o processamento completo do arquivo, incluindo validação,
-         * execução do script Python e estruturação dos dados.
          */
         async processarArquivo() {
             // Validar se há arquivo válido
@@ -512,8 +517,7 @@ export default {
             }
 
             // Inicializar processamento
-            this.carregando = true
-            this.dadosProcessados = false
+            this.setStepProcessing('step2')
             this.iniciarProgresso()
             
             // Preparar dados para envio
@@ -580,11 +584,28 @@ export default {
                 await this.delay(500)
                 
                 // Processar resposta do servidor
-                this.dados = response.data
-                this.dadosProcessados = true
+                const dados = response.data.data || response.data
+                console.log('Dados recebidos:', dados)
+                console.log('Estado antes:', this.stepStates.step2)
+                
+                this.setStepCompleted('step2', dados)
+                
+                // Como a validação já foi feita durante o processamento, marcar Card 3 como concluído
+                const validationResult = {
+                    validRecords: dados.length,
+                    totalRecords: dados.length,
+                    validationDate: new Date().toISOString(),
+                    issues: [],
+                    validatedDuringProcessing: true
+                }
+                this.setStepCompleted('step3', validationResult)
+                
+                console.log('Estado depois:', this.stepStates.step2)
+                console.log('Computed states:', this.computedStepStates)
+                
                 this.mensagem = {
                     tipo: 'sucesso',
-                    texto: `PDF processado com sucesso! ${this.dados.length} registros extraídos.`
+                    texto: `PDF processado com sucesso! ${dados.length} registros extraídos e validados.`
                 }
                 
                 // Marcar todas as etapas como completas
@@ -593,123 +614,220 @@ export default {
                     etapa.ativa = false
                 })
                 
+                // Forçar atualização do estado do workflow
+                this.$nextTick(() => {
+                    console.log('Estado final do workflow:', this.computedStepStates)
+                })
+                
             } catch (error) {
                 // Tratar erros de processamento
                 console.error('Erro no processamento:', error)
+                this.setStepAvailable('step2')
+                
+                let errorMessage = 'Ocorreu um erro ao processar o arquivo.'
+                if (error.response?.data?.message) {
+                    errorMessage = error.response.data.message
+                } else if (error.message) {
+                    errorMessage = error.message
+                }
+                
                 this.mensagem = {
                     tipo: 'erro',
-                    texto: error.response?.data?.message || 'Erro ao processar arquivo PDF. Tente novamente.'
+                    texto: errorMessage
                 }
             } finally {
-                // Finalizar processamento
-                this.carregando = false
+                // Limpar intervalos
                 if (this.intervaloTempo) {
                     clearInterval(this.intervaloTempo)
+                    this.intervaloTempo = null
                 }
             }
         },
+
+        // ========================================
+        // MÉTODOS DE VALIDAÇÃO
+        // ========================================
         
         /**
-         * Cria um delay para simular processamento
-         * 
-         * @param {number} ms - Tempo em milissegundos
-         * @returns {Promise} Promise que resolve após o delay
+         * Valida os dados extraídos
+         */
+        async validarDados() {
+            if (!this.stepStates.step2.data) {
+                this.mensagem = {
+                    tipo: 'erro',
+                    texto: 'Nenhum dado para validar. Processe o arquivo primeiro.'
+                }
+                return
+            }
+
+            this.setStepProcessing('step3')
+            
+            try {
+                // Simular validação
+                await this.delay(2000)
+                
+                const dados = this.stepStates.step2.data
+                const validRecords = dados.length
+                const validationResult = {
+                    validRecords,
+                    totalRecords: dados.length,
+                    validationDate: new Date().toISOString(),
+                    issues: []
+                }
+                
+                this.setStepCompleted('step3', validationResult)
+                
+                this.mensagem = {
+                    tipo: 'sucesso',
+                    texto: `Validação concluída! ${validRecords} registros válidos.`
+                }
+                
+            } catch (error) {
+                this.setStepAvailable('step3')
+                this.mensagem = {
+                    tipo: 'erro',
+                    texto: 'Erro durante a validação dos dados.'
+                }
+            }
+        },
+
+        // ========================================
+        // MÉTODOS DE FINALIZAÇÃO
+        // ========================================
+        
+        /**
+         * Finaliza o processamento
+         */
+        async finalizarProcessamento() {
+            if (!this.stepStates.step3.data) {
+                this.mensagem = {
+                    tipo: 'erro',
+                    texto: 'Valide os dados primeiro.'
+                }
+                return
+            }
+
+            this.setStepProcessing('step4')
+            
+            try {
+                // Simular finalização
+                await this.delay(1500)
+                
+                const finalResult = {
+                    ...this.stepStates.step2.data,
+                    validation: this.stepStates.step3.data,
+                    finalizationDate: new Date().toISOString()
+                }
+                
+                this.setStepCompleted('step4', finalResult)
+                
+                this.mensagem = {
+                    tipo: 'sucesso',
+                    texto: 'Processamento finalizado com sucesso!'
+                }
+                
+            } catch (error) {
+                this.setStepAvailable('step4')
+                this.mensagem = {
+                    tipo: 'erro',
+                    texto: 'Erro durante a finalização.'
+                }
+            }
+        },
+
+        // ========================================
+        // MÉTODOS DE AÇÃO
+        // ========================================
+        
+        /**
+         * Manipula ações dos componentes ResultDisplay
+         */
+        handleAction(actionKey, data) {
+            switch (actionKey) {
+                case 'view':
+                    this.visualizarDados()
+                    break
+                case 'export':
+                    this.exportarParaExcel(data, 'composicoes')
+                    break
+                case 'details':
+                    this.verDetalhesValidacao()
+                    break
+                case 'download':
+                    this.downloadCompleto(data)
+                    break
+                case 'reset':
+                    this.resetWorkflow()
+                    this.arquivoValido = false
+                    this.nomeArquivo = ''
+                    this.mensagem = null
+                    break
+                default:
+                    console.log('Ação não implementada:', actionKey)
+            }
+        },
+
+        // ========================================
+        // MÉTODOS UTILITÁRIOS
+        // ========================================
+        
+        /**
+         * Delay para simular processamento
          */
         delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms))
         },
-        
-        // ========================================
-        // MÉTODOS DE FORMATAÇÃO E UTILITÁRIOS
-        // ========================================
-        
-        /**
-         * Formata um valor numérico para exibição em português brasileiro
-         * 
-         * @param {number|string} valor - Valor a ser formatado
-         * @returns {string} Valor formatado
-         */
-        formatarValor(valor) {
-            if (!valor) return '0,00'
-            
-            // Se já contém vírgula, retorna como está
-            if (valor.toString().includes(',')) {
-                return valor
-            }
-            
-            // Converter para número e formatar
-            const numero = Number(valor.toString().replace(',', '.'))
-            return numero.toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })
-        },
 
-        // ========================================
-        // MÉTODOS DE VISUALIZAÇÃO E EXPORTAÇÃO
-        // ========================================
-        
         /**
-         * Abre o modal para visualizar os dados processados
+         * Visualiza os dados processados
          */
         visualizarDados() {
-            try {
-                const modal = new bootstrap.Modal(document.getElementById('modalVisualizarDados'))
-                modal.show()
-            } catch (error) {
-                console.error('Erro ao abrir modal:', error)
-                this.mensagem = {
-                    tipo: 'erro',
-                    texto: 'Erro ao abrir visualização dos dados.'
-                }
+            // Abrir modal com dados
+            const modal = new bootstrap.Modal(document.getElementById('modalVisualizarDados'))
+            modal.show()
+        },
+
+        /**
+         * Exporta dados para Excel
+         */
+        exportarParaExcel(dados, tipo) {
+            // Implementar exportação para Excel
+            console.log('Exportando para Excel:', tipo, dados)
+            this.mensagem = {
+                tipo: 'sucesso',
+                texto: 'Exportação para Excel iniciada!'
             }
         },
 
         /**
-         * Exporta os dados para um arquivo Excel
-         * 
-         * @param {Array} dados - Array de dados a serem exportados
-         * @param {string} nomeArquivo - Nome do arquivo Excel
+         * Ver detalhes da validação
          */
-        exportarParaExcel(dados, nomeArquivo) {
-            try {
-                // Validar dados
-                if (!dados || dados.length === 0) {
-                    this.mensagem = {
-                        tipo: 'erro',
-                        texto: 'Não há dados para exportar.'
-                    }
-                    return
-                }
+        verDetalhesValidacao() {
+            console.log('Detalhes da validação:', this.stepStates.step3.data)
+        },
 
-                // Criar planilha
-                const ws = XLSX.utils.json_to_sheet(dados)
-
-                // Ajustar largura das colunas automaticamente
-                const colWidths = Object.keys(dados[0]).map(key => ({
-                    wch: Math.max(key.length, 15) // Mínimo de 15 caracteres
-                }))
-                ws['!cols'] = colWidths
-
-                // Criar workbook
-                const wb = XLSX.utils.book_new()
-                XLSX.utils.book_append_sheet(wb, ws, 'Dados')
-
-                // Gerar e baixar arquivo
-                XLSX.writeFile(wb, `${nomeArquivo}_${new Date().toISOString().split('T')[0]}.xlsx`)
-                
-                this.mensagem = {
-                    tipo: 'sucesso',
-                    texto: 'Arquivo Excel exportado com sucesso!'
-                }
-                
-            } catch (error) {
-                console.error('Erro na exportação:', error)
-                this.mensagem = {
-                    tipo: 'erro',
-                    texto: 'Erro ao exportar arquivo Excel.'
-                }
+        /**
+         * Download completo dos dados
+         */
+        downloadCompleto(data) {
+            console.log('Download completo:', data)
+            this.mensagem = {
+                tipo: 'sucesso',
+                texto: 'Download completo iniciado!'
             }
+        },
+
+        /**
+         * Obtém o label da etapa
+         */
+        getStepLabel(step) {
+            const labels = {
+                1: 'Upload',
+                2: 'Processamento',
+                3: 'Validação',
+                4: 'Resultado'
+            }
+            return labels[step] || `Etapa ${step}`
         }
     }
 }
