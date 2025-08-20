@@ -2,43 +2,43 @@
     <div>
         <!-- Cabeçalho Integrado com Seletor -->
         <div class="header-integrado">
-            <div class="header-content">
-                <div class="titulo-container">
+            <div class="header-content d-flex align-items-center justify-content-between">
+                <!-- Título à esquerda -->
+                <div class="titulo-esquerda">
                     <h5 class="text-custom mb-0">
                         <i class="fas fa-eye me-2"></i>Visualização da Estrutura
                     </h5>
-                    <p class="text-muted mt-2 mb-0">Visualize a estrutura de orçamento de forma clara e organizada</p>
                 </div>
                 
-                <div class="seletor-container">
-                    <div class="d-flex align-items-end gap-3">
-                        <div class="tipo-orcamento-selector">
-                            <div class="form-floating">
-                                <select class="form-control" 
-                                        id="tipoOrcamentoSelector" 
-                                        v-model="tipoOrcamentoSelecionado"
-                                        @change="onTipoOrcamentoChange"
-                                        :class="{ 'is-invalid': !tipoOrcamentoSelecionado }">
-                                    <option value="">Selecione o tipo de orçamento...</option>
-                                    <option v-for="tipo in tiposOrcamento" 
-                                            :key="tipo.id" 
-                                            :value="tipo.id">
-                                        {{ tipo.descricao }} - Versão {{ tipo.versao }}
-                                    </option>
-                                </select>
-                                <label for="tipoOrcamentoSelector">
-                                    <i class="fas fa-chart-pie me-2"></i>Tipo de Orçamento
-                                </label>
-                            </div>
+                <!-- Seletor e Controles à direita -->
+                <div class="controles-direita d-flex align-items-center gap-3">
+                    <!-- Seletor de Tipo de Orçamento -->
+                    <div class="tipo-orcamento-selector">
+                        <div class="form-floating">
+                            <select class="form-control" 
+                                    id="tipoOrcamentoSelector" 
+                                    v-model="tipoOrcamentoSelecionado"
+                                    @change="onTipoOrcamentoChange"
+                                    :class="{ 'is-invalid': !tipoOrcamentoSelecionado }">
+                                <option value="">Selecione o tipo de orçamento...</option>
+                                <option v-for="tipo in tiposOrcamento" 
+                                        :key="tipo.id" 
+                                        :value="tipo.id">
+                                    {{ tipo.descricao }} - Versão {{ tipo.versao }}
+                                </option>
+                            </select>
+                            <label for="tipoOrcamentoSelector">
+                                <i class="fas fa-chart-pie me-2"></i>Tipo de Orçamento
+                            </label>
                         </div>
-                        
-                        <!-- Botão Toggle de Visualização -->
-                        <div class="toggle-container" v-if="tipoOrcamentoSelecionado && grandesItens.length > 0">
-                            <button class="btn btn-outline-secondary" @click="toggleVisualizacao" :disabled="loading">
-                                <i class="fas" :class="mostrarArvoreCompleta ? 'fa-compress-alt' : 'fa-expand-alt'"></i>
-                                {{ mostrarArvoreCompleta ? 'Apenas Grandes Itens' : 'Árvore Completa' }}
-                            </button>
-                        </div>
+                    </div>
+                    
+                    <!-- Botão Toggle de Visualização -->
+                    <div class="toggle-container" v-if="tipoOrcamentoSelecionado && grandesItens.length > 0">
+                        <button class="btn btn-outline-secondary" @click="toggleVisualizacao" :disabled="loading">
+                            <i class="fas" :class="mostrarArvoreCompleta ? 'fa-compress-alt' : 'fa-expand-alt'"></i>
+                            {{ mostrarArvoreCompleta ? 'Apenas Grandes Itens' : 'Árvore Completa' }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -70,10 +70,7 @@
                              <i class="fas fa-sitemap text-custom me-2"></i>
                              {{ tipoOrcamentoAtual?.descricao }} - Versão {{ tipoOrcamentoAtual?.versao }}
                          </h4>
-                        <div class="estrutura-info">
-                            <span class="badge badge-status badge-ativo me-2">{{ grandesItens.length }} Grande(s) Item(ns)</span>
-                            <span class="badge badge-tipo badge-local">{{ totalSubgrupos }} Subgrupo(s)</span>
-                        </div>
+                        <!-- Badge removido - não é necessário na visualização -->
                     </div>
                     
                                          <!-- Árvore da Estrutura -->
@@ -136,17 +133,12 @@ export default {
             loading: false,
             
             // Estado da visualização
-            mostrarArvoreCompleta: false
+            mostrarArvoreCompleta: true
         }
     },
     
     computed: {
-        // Calcula o total de subgrupos
-        totalSubgrupos() {
-            return this.grandesItens.reduce((total, item) => {
-                return total + (item.sub_grupos ? item.sub_grupos.length : 0);
-            }, 0);
-        }
+        // Computed properties removidas - não são mais necessárias
     },
     
     mounted() {
@@ -173,7 +165,7 @@ export default {
         // Mudança no tipo de orçamento
         onTipoOrcamentoChange() {
             this.grandesItens = [];
-            this.mostrarArvoreCompleta = false;
+            this.mostrarArvoreCompleta = true; // Mantém árvore completa como padrão
             
             if (this.tipoOrcamentoSelecionado) {
                 this.tipoOrcamentoAtual = this.tiposOrcamento.find(t => t.id === this.tipoOrcamentoSelecionado);

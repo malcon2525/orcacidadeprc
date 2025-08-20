@@ -23,7 +23,7 @@ class EstruturaOrcamentoController extends Controller
         $user = Auth::user();
         
         // Verifica se é super admin ou tem papel específico
-        if ($user->isSuperAdmin() || $user->hasRole('gerenciar_estrutura_orcamento')) {
+        if ($user->isSuperAdmin() || $user->hasRole('gerenciar_estrutura_orcamento') || $user->hasRole('visualizar_estrutura_orcamento')) {
             $permissoes = [
                 'crud' => $user->isSuperAdmin() || $user->hasPermission('estrutura_orcamento_crud'),
                 'consultar' => $user->isSuperAdmin() || $user->hasPermission('estrutura_orcamento_consultar'),

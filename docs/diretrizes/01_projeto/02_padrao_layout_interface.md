@@ -59,6 +59,65 @@ Estabelecer padrões visuais UNIVERSAIS para interface do sistema, garantindo UX
 - **Warning (Amarelo):** `#ffc107` (bg) + `#000` (text)
 - **Danger (Vermelho):** `#dc3545` (bg) + `white` (text)
 
+#### **Padrão de Botões de Importação (OBRIGATÓRIO)**
+> **IMPORTANTE**: Todos os botões de importação devem seguir este padrão visual para manter consistência.
+
+**Classes CSS Obrigatórias:**
+```css
+/* Botão de importação padrão */
+.btn-importar-padrao {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Botão de importação compacto */
+.btn-importar-compacto {
+    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+```
+
+**HTML Obrigatório:**
+```html
+<!-- Botão padrão -->
+<button class="btn-importar-padrao" @click="importarRecurso">
+    <i class="fas fa-arrow-right me-2"></i>
+    Importar [Nome do Recurso]
+</button>
+
+<!-- Botão compacto -->
+<button class="btn-importar-compacto" @click="importarRecurso">
+    <i class="fas fa-arrow-right me-2"></i>
+    Importar
+</button>
+```
+
+**Características Visuais:**
+- **Degradê**: Azul secundário (#18578A) → Verde principal (#5EA853)
+- **Ícone**: Sempre `fas fa-arrow-right` (seta para direita)
+- **Texto**: "Importar [Nome do Recurso]" ou "Importar" para versão compacta
+- **Hover**: Elevação com `transform: translateY(-2px)` e sombra aumentada
+- **Disabled**: Opacidade reduzida e sem transformação
+
 ### 🚫 **Proibições de Cores**
 - **NÃO** usar cores fora da paleta definida
 - **NÃO** usar `style="color: #374151;"` para cabeçalhos de tabela
@@ -118,6 +177,32 @@ Estabelecer padrões visuais UNIVERSAIS para interface do sistema, garantindo UX
 
 /* Interação */
 .cursor-pointer { cursor: pointer !important; }
+```
+
+#### **Botões de Importação Padrão (OBRIGATÓRIO usar)**
+> **IMPORTANTE**: Para manter consistência visual, use sempre estas classes para botões de importação.
+
+```css
+/* Botão de importação padrão - para botões principais */
+.btn-importar-padrao
+
+/* Botão de importação compacto - para botões secundários */
+.btn-importar-compacto
+```
+
+**Exemplo de uso:**
+```html
+<!-- Botão principal de importação -->
+<button class="btn-importar-padrao" @click="importarExcel">
+    <i class="fas fa-arrow-right me-2"></i>
+    Importar Excel
+</button>
+
+<!-- Botão compacto de importação -->
+<button class="btn-importar-compacto" @click="importarDados">
+    <i class="fas fa-arrow-right me-2"></i>
+    Importar
+</button>
 ```
 
 #### **Container de Badges com Rolagem**

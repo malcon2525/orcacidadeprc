@@ -279,6 +279,63 @@ body {
     color: var(--color-branco);
 }
 
+/* ===== PADRÃO DE BOTÕES DE IMPORTAÇÃO ===== */
+.btn-importar-padrao {
+    background: linear-gradient(135deg, var(--color-azul-secundario) 0%, var(--color-verde-principal) 100%);
+    color: var(--color-branco);
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-normal);
+    border: none;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-importar-padrao:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: var(--color-branco);
+    background: linear-gradient(135deg, var(--color-azul-secundario) 0%, var(--color-verde-principal) 100%);
+}
+
+.btn-importar-padrao:disabled {
+    opacity: 0.6;
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== PADRÃO DE BOTÕES DE IMPORTAÇÃO COMPACTO ===== */
+.btn-importar-compacto {
+    background: linear-gradient(135deg, var(--color-azul-secundario) 0%, var(--color-verde-principal) 100%);
+    color: var(--color-branco);
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    transition: var(--transition-normal);
+    border: none;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-importar-compacto:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: var(--color-branco);
+    background: linear-gradient(135deg, var(--color-azul-secundario) 0%, var(--color-verde-principal) 100%);
+}
+
+.btn-importar-compacto:disabled {
+    opacity: 0.6;
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
 /* ===== SISTEMA DE VALIDAÇÃO ===== */
 .form-control.is-valid {
     border-color: var(--color-verde-principal) !important;

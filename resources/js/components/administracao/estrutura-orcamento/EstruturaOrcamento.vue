@@ -2,19 +2,20 @@
     <div>
         <!-- Cabeçalho Integrado com Seletor -->
         <div class="header-integrado">
-            <div class="header-content">
-                <div class="titulo-container">
+            <div class="header-content d-flex align-items-center justify-content-between">
+                <!-- Título à esquerda -->
+                <div class="titulo-esquerda">
                     <h5 class="text-custom mb-0">
                         <i class="fas fa-sitemap me-2"></i>Estrutura de Orçamento
                     </h5>
-                    <p class="text-muted mt-2 mb-0">Selecione um tipo de orçamento para começar</p>
                 </div>
                 
-                <div class="seletor-container">
-                    <div class="d-flex align-items-end gap-3">
+                <!-- Seletor e Botões à direita -->
+                <div class="controles-direita d-flex align-items-center gap-3">
+                    <!-- Seletor de Tipo de Orçamento -->
                     <div class="tipo-orcamento-selector">
                         <div class="form-floating">
-                            <select class="form-control" 
+                            <select class="form-control mb-3" 
                                     id="tipoOrcamentoSelector" 
                                     v-model="tipoOrcamentoSelecionado"
                                     @change="onTipoOrcamentoChange"
@@ -31,17 +32,19 @@
                             </label>
                         </div>
                     </div>
-                        
+                    
+                    <!-- Botões de Ação -->
+                    <div v-if="tipoOrcamentoSelecionado" class="d-flex align-items-center gap-2">
                         <!-- Botão de Importação Excel -->
-                        <div class="importacao-container" v-if="tipoOrcamentoSelecionado && permissoes.importar">
-                            <button class="btn btn-success" @click="abrirModalImportacao" :disabled="loading">
-                                <i class="fas fa-file-excel me-2"></i>
+                        <div class="importacao-container" v-if="permissoes.importar">
+                            <button class="btn btn-moderno btn-primary-moderno d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalImportacao" :disabled="loading">
+                                <i class="fas fa-arrow-right me-2"></i>
                                 Importar Excel
                             </button>
                         </div>
                         
                         <!-- Botão de Limpar Estrutura -->
-                        <div class="limpar-container" v-if="tipoOrcamentoSelecionado && grandesItens.length > 0 && permissoes.crud">
+                        <div class="limpar-container" v-if="grandesItens.length > 0 && permissoes.crud">
                             <button class="btn btn-outline-danger" @click="abrirModalLimparEstrutura" :disabled="loading">
                                 <i class="fas fa-trash-alt me-2"></i>
                                 Limpar Estrutura
