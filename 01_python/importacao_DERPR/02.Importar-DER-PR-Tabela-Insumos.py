@@ -382,6 +382,40 @@ def main():
         log_to_file(f'Total de serviços: {len(resultado["servicos"])}', origem='INSUMOS')
         log_to_file(f'Total de transportes: {len(resultado["transportes"])}', origem='INSUMOS')
 
+        # VALIDAÇÃO: Verificar se foram extraídos dados suficientes
+        total_dados = sum([
+            len(resultado["equipamentos"]),
+            len(resultado["mao_de_obra"]),
+            len(resultado["itens_incidencia"]),
+            len(resultado["materiais"]),
+            len(resultado["servicos"]),
+            len(resultado["transportes"])
+        ])
+        
+        # Se menos de 5 itens foram extraídos, provavelmente é PDF errado
+        if total_dados < 5:
+            erro_msg = f"PDF inválido: apenas {total_dados} itens foram extraídos. Este PDF não parece ser de insumos ou está em formato incorreto. Aba 2 espera um PDF de insumos (materiais, equipamentos, mão de obra)."
+            log_to_file(f'VALIDAÇÃO FALHOU: {erro_msg}', origem='INSUMOS')
+            print(json.dumps({"error": erro_msg}))
+            sys.exit(1)
+        
+        # Verificar se pelo menos 2 tipos de dados foram extraídos
+        tipos_com_dados = sum([
+            len(resultado["equipamentos"]) > 0,
+            len(resultado["mao_de_obra"]) > 0,
+            len(resultado["itens_incidencia"]) > 0,
+            len(resultado["materiais"]) > 0,
+            len(resultado["servicos"]) > 0,
+            len(resultado["transportes"]) > 0
+        ])
+        
+        if tipos_com_dados < 2:
+            erro_msg = f"PDF inválido: dados extraídos de apenas {tipos_com_dados} tipo(s). Este PDF não parece ser de insumos. Aba 2 espera um PDF com múltiplas seções (equipamentos, materiais, mão de obra, etc.)."
+            log_to_file(f'VALIDAÇÃO FALHOU: {erro_msg}', origem='INSUMOS')
+            print(json.dumps({"error": erro_msg}))
+            sys.exit(1)
+        
+        log_to_file(f'VALIDAÇÃO PASSOU: {total_dados} itens extraídos de {tipos_com_dados} tipos diferentes', origem='INSUMOS')
         print(json.dumps(resultado))
 
     except Exception as e:

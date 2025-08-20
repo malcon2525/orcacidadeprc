@@ -96,7 +96,9 @@ def processar_pdf(caminho_arquivo):
                     continue
 
         if not todos_dados:
-            return {"error": "Nenhum dado foi extraído do PDF"}
+            erro_msg = "PDF inválido: nenhum dado foi extraído. Este PDF não parece ser de fórmulas de transporte ou está em formato incorreto. Aba 3 espera um PDF de fórmulas de transporte com códigos, descrições, unidades e fórmulas matemáticas (ex: x1 + x2)."
+            log_to_file(f'VALIDAÇÃO FALHOU: {erro_msg}', origem='FORMULAS_TRANSPORTE')
+            return {"error": erro_msg}
         
         log_to_file(f'Total de {len(todos_dados)} fórmulas extraídas', origem='FORMULAS_TRANSPORTE')
         
