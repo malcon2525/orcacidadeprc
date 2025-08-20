@@ -80,6 +80,29 @@ Route::middleware(['auth'])->group(function () {
         });
     });
     
+    // ===== ROTAS TABELAS OFICIAIS =====
+    
+    // DER-PR
+    Route::prefix('tabela_oficial/importar_derpr')->name('derpr.importar.')->middleware(['auth'])->group(function () {
+        // Página principal da importação DER-PR (renderiza a view com as abas)
+        Route::get('/', [\App\Http\Controllers\Web\TabelaOficial\ImportarDerprController::class, 'index'])->name('index');
+        
+        // Rotas para processamento de arquivos PDF (API)
+        Route::post('/servicos-gerais', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'processarServicosGerais'])->name('servicos-gerais');
+        Route::post('/insumos', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'processarInsumos'])->name('insumos');
+        Route::post('/formulas-transporte', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'processarFormulasTransporte'])->name('formulas-transporte');
+        Route::post('/lote', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'importarLote'])->name('lote');
+    });
+    
+    // ===================================================================
+    // ROTAS API PARA ABA 4 (IMPORTAR LOTE) - DETECÇÃO AUTOMÁTICA
+    // ===================================================================
+    Route::prefix('api/tabela_oficial/importar_derpr')->middleware(['auth'])->group(function () {
+        Route::get('/verificar_arquivos', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'verificarArquivosDisponiveis'])->name('api.derpr.verificar_arquivos');
+        Route::post('/gravar', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'importarLote'])->name('api.derpr.gravar');
+        Route::get('/testar-logs', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'testarLogs'])->name('api.derpr.testar_logs');
+    });
+    
     // ===== ROTAS API - DADOS =====
     
     // API para dados do usuário (session-based) - compatibilidade com componentes Vue

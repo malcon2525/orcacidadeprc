@@ -28,6 +28,13 @@ import ListaTipoOrcamento from './components/administracao/estrutura-orcamento/L
 import EstruturaOrcamento from './components/administracao/estrutura-orcamento/EstruturaOrcamento.vue';
 import VisualizacaoIntegrada from './components/administracao/estrutura-orcamento/VisualizacaoIntegrada.vue';
 
+// DER-PR Components
+import ImportarDerpr from './components/tabela_oficial/importar_derpr/Index.vue';
+import ServicosGerais from './components/tabela_oficial/importar_derpr/components/ServicosGerais.vue';
+import Insumos from './components/tabela_oficial/importar_derpr/components/Insumos.vue';
+import FormulasTransporte from './components/tabela_oficial/importar_derpr/components/FormulasTransporte.vue';
+import ImportarLoteDerpr from './components/tabela_oficial/importar_derpr/components/ImportarLoteDerpr.vue';
+
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
 app.component('header-component', HeaderComponent);
@@ -40,6 +47,13 @@ app.component('gestao-estrutura-orcamento', GestaoEstruturaOrcamento);
 app.component('lista-tipo-orcamento', ListaTipoOrcamento);
 app.component('estrutura-orcamento', EstruturaOrcamento);
 app.component('visualizacao-integrada', VisualizacaoIntegrada);
+
+// DER-PR Components
+app.component('importar-derpr', ImportarDerpr);
+app.component('servicos-gerais', ServicosGerais);
+app.component('insumos', Insumos);
+app.component('formulas-transporte', FormulasTransporte);
+app.component('importar-lote-derpr', ImportarLoteDerpr);
 
 /**
  * The following block of code may be used to automatically register your

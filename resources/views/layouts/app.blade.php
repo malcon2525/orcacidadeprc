@@ -128,7 +128,7 @@
         </div>
 
         <!-- TABELAS OFICIAIS -->
-        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('importar_derpr') || Auth::user()->hasRole('importar_sinapi') || Auth::user()->hasRole('consultar_derpr') || Auth::user()->hasRole('consultar_sinapi'))
+        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr') || Auth::user()->hasRole('gerenciar_sinapi') || Auth::user()->hasRole('consultar_derpr') || Auth::user()->hasRole('consultar_sinapi'))
         <div class="menu-group">
             <div class="menu-header myBox">
                 <div class="menu-icon">
@@ -137,13 +137,13 @@
                 <span>TABELAS OFICIAIS</span>
             </div>
             <div class="menu-items">
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('importar_derpr'))
-                <a href="#" class="menu-link">
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr'))
+                <a href="{{ route('derpr.importar.index') }}" class="menu-link">
                     <i class="fas fa-download"></i>
                     <span>Importar DER-PR</span>
                 </a>
                 @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('importar_sinapi'))
+                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_sinapi'))
                 <a href="#" class="menu-link">
                     <i class="fas fa-download"></i>
                     <span>Importar SINAPI</span>
