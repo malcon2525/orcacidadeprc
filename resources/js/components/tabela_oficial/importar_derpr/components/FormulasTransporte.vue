@@ -373,8 +373,14 @@ export default {
                 if (response.ok && resultado.success) {
                     this.dadosProcessados = true;
                     this.tempoProcessamento = this.calcularTempoProcessamento(tempoInicio);
+                    
+                    // Log de debug para verificar os dados
+                    console.log('Resposta do servidor:', resultado);
                 } else {
-                    throw new Error(resultado.message || 'Erro desconhecido no processamento');
+                    // Se não tem success, verificar se tem message específica
+                    const mensagemErro = resultado.message || 
+                                       (resultado.error ? resultado.error : 'Erro desconhecido no processamento');
+                    throw new Error(mensagemErro);
                 }
 
             } catch (error) {

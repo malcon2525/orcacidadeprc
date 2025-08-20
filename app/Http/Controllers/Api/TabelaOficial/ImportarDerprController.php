@@ -142,7 +142,11 @@ class ImportarDerprController extends Controller
                 'diretorio_processamento' => $nomeSaidaDir
             ]);
             
-            return response()->json($dados);
+            return response()->json([
+                'success' => true,
+                'data' => $dados,
+                'message' => 'Arquivo processado com sucesso'
+            ]);
             
         } catch (\Exception $e) {
             $this->logErroCritico('PROCESSAMENTO_SERVICOS_GERAIS', $e->getMessage(), [
@@ -264,7 +268,11 @@ class ImportarDerprController extends Controller
                 'diretorio_processamento' => $nomeDiretorio
             ]);
             
-            return response()->json($dados);
+            return response()->json([
+                'success' => true,
+                'data' => $dados,
+                'message' => 'Arquivo processado com sucesso'
+            ]);
             
         } catch (\Exception $e) {
             $this->logErroCritico('PROCESSAMENTO_INSUMOS', $e->getMessage(), [
@@ -363,15 +371,22 @@ class ImportarDerprController extends Controller
                 'diretorio_processamento' => session('derpr_processamento_dir')
             ]);
             
-            return response()->json($dados);
+            return response()->json([
+                'success' => true,
+                'data' => $dados,
+                'message' => 'Arquivo processado com sucesso'
+            ]);
             
         } catch (\Exception $e) {
             $this->logErroCritico('PROCESSAMENTO_FORMULAS_TRANSPORTE', $e->getMessage(), [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName() ?? 'N/A'
+                'arquivo' => $request->file('arquivo')->getClientOriginalName() ?? 'N/A',
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
-                'message' => 'Ocorreu um erro ao processar o arquivo: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Ocorreu um erro ao processar o arquivo: ' . $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -461,9 +476,10 @@ class ImportarDerprController extends Controller
             $this->logErroValidacao('JSON_DECODE_ERROR', 'Erro ao decodificar JSON', [
                 'erro' => json_last_error_msg(),
                 'saida_python' => $saida,
-                'tipo' => $tipo
+                'tipo' => $tipo,
+                'tamanho_saida' => strlen($saida)
             ]);
-            throw new \Exception("Erro ao decodificar JSON: " . json_last_error_msg());
+            throw new \Exception("Erro ao decodificar JSON do script Python: " . json_last_error_msg() . ". Saída: " . substr($saida, 0, 200));
         }
 
         // Salvar dados em Excel se for serviços gerais
