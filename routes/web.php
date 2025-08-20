@@ -73,6 +73,11 @@ Route::middleware(['auth'])->group(function () {
         
         // Entidades Orçamentárias
         Route::resource('entidades-orcamentarias', \App\Http\Controllers\Web\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class);
+        
+        // Estrutura de Orçamento
+        Route::prefix('estrutura-orcamento')->name('estrutura-orcamento.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Web\Administracao\EstruturaOrcamento\EstruturaOrcamentoController::class, 'index'])->name('index');
+        });
     });
     
     // ===== ROTAS API - DADOS =====
@@ -148,6 +153,28 @@ Route::middleware(['auth'])->group(function () {
         Route::apiResource('entidades-orcamentarias', \App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class);
         Route::get('entidades-orcamentarias/listar-select', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'listarSelect'])->name('entidades-orcamentarias.listar-select');
         Route::post('entidades-orcamentarias/importar-municipios', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'importarMunicipios'])->name('entidades-orcamentarias.importar-municipios');
+        
+        // Estrutura de Orçamento
+        Route::prefix('estrutura-orcamento')->name('estrutura-orcamento.')->group(function () {
+            // Tipos de Orçamento
+            Route::apiResource('tipo-orcamento', \App\Http\Controllers\Api\Administracao\EstruturaOrcamento\TipoOrcamentoController::class);
+            
+            // Grandes Itens
+            Route::apiResource('grande-item', \App\Http\Controllers\Api\Administracao\EstruturaOrcamento\GrandeItemController::class);
+            Route::get('grande-item/{tipoOrcamentoId}/por-tipo', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\GrandeItemController::class, 'listarPorTipoOrcamento'])->name('grande-item.por-tipo');
+            Route::post('grande-item/reordenar', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\GrandeItemController::class, 'reordenar'])->name('grande-item.reordenar');
+            
+            // Subgrupos
+            Route::apiResource('subgrupo', \App\Http\Controllers\Api\Administracao\EstruturaOrcamento\SubGrupoController::class);
+            Route::get('subgrupo/{grandeItemId}/por-grande-item', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\SubGrupoController::class, 'listarPorGrandeItem'])->name('subgrupo.por-grande-item');
+            Route::post('subgrupo/reordenar', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\SubGrupoController::class, 'reordenar'])->name('subgrupo.reordenar');
+            
+            // Importação
+            Route::post('importar', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\ImportacaoController::class, 'importar'])->name('importar');
+            
+            // Limpar Estrutura
+            Route::delete('limpar/{tipoOrcamentoId}', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\LimparEstruturaController::class, 'limpar'])->name('limpar');
+        });
     });
 
 
