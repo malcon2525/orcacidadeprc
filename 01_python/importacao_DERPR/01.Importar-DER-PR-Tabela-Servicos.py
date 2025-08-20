@@ -25,6 +25,8 @@ def extrair_desoneracao(texto):
         return "Com desoneração"
     return "Sem desoneração"  # valor padrão
 
+
+
 def processar_pdf(caminho_arquivo):
     try:
         if not os.path.exists(caminho_arquivo):

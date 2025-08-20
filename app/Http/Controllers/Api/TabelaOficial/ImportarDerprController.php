@@ -17,7 +17,8 @@ use App\Models\TabelaOficial\Derpr\{
     DerprMaterial,
     DerprServico,
     DerprItemIncidencia,
-    DerprTransporte
+    DerprTransporte,
+    DerprFormulaTransporte
 };
 
 /**
@@ -87,7 +88,7 @@ class ImportarDerprController extends Controller
             $this->logProgresso('LIMPEZA_DIRETORIOS', 'Iniciando limpeza de diretórios anteriores');
             
             // Verificar e apagar diretórios anteriores de processamento DERPR
-            $tempDir = storage_path('app/temp');
+            $tempDir = storage_path('app/private/temp');
             if (is_dir($tempDir)) {
                 $subdirs = glob($tempDir . '/processado_derpr_*', GLOB_ONLYDIR);
                 foreach ($subdirs as $subdir) {
@@ -417,6 +418,8 @@ class ImportarDerprController extends Controller
             ];
         }
 
+        
+
         return ['sucesso' => true];
     }
 
@@ -431,6 +434,8 @@ class ImportarDerprController extends Controller
         $caminhoTemp = $arquivo->storeAs('temp', uniqid() . '.pdf');
         return Storage::path($caminhoTemp); // Cross-platform path
     }
+
+
 
 
 
@@ -482,6 +487,15 @@ class ImportarDerprController extends Controller
             throw new \Exception("Erro ao decodificar JSON do script Python: " . json_last_error_msg() . ". Saída: " . substr($saida, 0, 200));
         }
 
+        // VERIFICAR SE HÁ ERRO na resposta do Python
+        if (isset($dados['error'])) {
+            $this->logErroValidacao('PYTHON_ERROR', 'Script Python retornou erro', [
+                'erro' => $dados['error'],
+                'tipo' => $tipo
+            ]);
+            throw new \Exception("Erro no script Python: " . $dados['error']);
+        }
+        
         // Salvar dados em Excel se for serviços gerais
         if ($tipo === 'servicos' && !empty($dados)) {
             $this->salvarDadosEmExcel($dados, 'derpr_composicoes.xlsx');
@@ -767,25 +781,24 @@ class ImportarDerprController extends Controller
     {
         $resultados = [];
         
-        // Mapeamento dos arquivos gerados para os esperados pela configuração
-        $mapeamentoArquivos = [
-            'derpr_composicoes.xlsx' => 'composicoes.xlsx',
-            'derpr_equipamentos.xlsx' => 'equipamentos.xlsx',
-            'derpr_mao_de_obra.xlsx' => 'mao_de_obra.xlsx',
-            'derpr_itens_incidencia.xlsx' => 'itens_incidencia.xlsx',
-            'derpr_materiais.xlsx' => 'materiais.xlsx',
-            'derpr_servicos.xlsx' => 'servicos.xlsx',
-            'derpr_transportes.xlsx' => 'transportes.xlsx',
-            'derpr_formulas_transporte.xlsx' => 'formulas_transporte.xlsx'
+        // Listar todos os arquivos disponíveis no diretório
+        $arquivosDisponiveis = [
+            'derpr_composicoes.xlsx',
+            'derpr_equipamentos.xlsx',
+            'derpr_mao_de_obra.xlsx',
+            'derpr_itens_incidencia.xlsx',
+            'derpr_materiais.xlsx',
+            'derpr_servicos.xlsx',
+            'derpr_transportes.xlsx'
         ];
         
-        foreach ($mapeamentoArquivos as $arquivoGerado => $arquivoEsperado) {
-            $caminhoArquivo = $diretorioProcessamento . '/' . $arquivoGerado;
+        foreach ($arquivosDisponiveis as $nomeArquivo) {
+            $caminhoArquivo = $diretorioProcessamento . '/' . $nomeArquivo;
             
             if (file_exists($caminhoArquivo)) {
-                $config = $configuracao[$arquivoEsperado];
-                $resultado = $this->processarESalvarArquivo($caminhoArquivo, $arquivoEsperado, $config);
-                $resultados[$arquivoEsperado] = $resultado;
+                $config = $configuracao[$nomeArquivo];
+                $resultado = $this->processarESalvarArquivo($caminhoArquivo, $nomeArquivo, $config);
+                $resultados[$nomeArquivo] = $resultado;
             }
         }
         
@@ -813,7 +826,7 @@ class ImportarDerprController extends Controller
                     'status' => 'sem_diretorio',
                     'message' => 'Nenhum diretório de processamento encontrado',
                     'total_disponiveis' => 0,
-                    'total_esperados' => 8,
+                    'total_esperados' => 7,
                     'pode_gravar' => false,
                     'arquivos_disponiveis' => [],
                     'arquivos_faltantes' => [
@@ -823,8 +836,7 @@ class ImportarDerprController extends Controller
                         'derpr_itens_incidencia.xlsx',
                         'derpr_materiais.xlsx',
                         'derpr_servicos.xlsx',
-                        'derpr_transportes.xlsx',
-                        'derpr_formulas_transporte.xlsx'
+                        'derpr_transportes.xlsx'
                     ],
                     'diretorio' => null
                 ]);
@@ -839,7 +851,7 @@ class ImportarDerprController extends Controller
                     'status' => 'diretorio_inexistente',
                     'message' => 'Diretório de processamento não existe',
                     'total_disponiveis' => 0,
-                    'total_esperados' => 8,
+                    'total_esperados' => 7,
                     'pode_gravar' => false,
                     'arquivos_disponiveis' => [],
                     'arquivos_faltantes' => [
@@ -849,8 +861,7 @@ class ImportarDerprController extends Controller
                         'derpr_itens_incidencia.xlsx',
                         'derpr_materiais.xlsx',
                         'derpr_servicos.xlsx',
-                        'derpr_transportes.xlsx',
-                        'derpr_formulas_transporte.xlsx'
+                        'derpr_transportes.xlsx'
                     ],
                     'diretorio' => $nomeDiretorio
                 ]);
@@ -863,8 +874,7 @@ class ImportarDerprController extends Controller
                 'derpr_itens_incidencia.xlsx',
                 'derpr_materiais.xlsx',
                 'derpr_servicos.xlsx',
-                'derpr_transportes.xlsx',
-                'derpr_formulas_transporte.xlsx'
+                'derpr_transportes.xlsx'
             ];
             
             $arquivosDisponiveis = [];
@@ -1021,8 +1031,7 @@ class ImportarDerprController extends Controller
                 'derpr_itens_incidencia.xlsx',
                 'derpr_materiais.xlsx',
                 'derpr_servicos.xlsx',
-                'derpr_transportes.xlsx',
-                'derpr_formulas_transporte.xlsx'
+                'derpr_transportes.xlsx'
             ];
             
             $arquivosFaltantes = [];
@@ -1418,7 +1427,7 @@ class ImportarDerprController extends Controller
     private function getConfiguracaoArquivos()
     {
         return [
-            'composicoes.xlsx' => [
+            'derpr_composicoes.xlsx' => [
                 'colunas_obrigatorias' => [
                     'grupo', 'data_base', 'honerado', 'codigo', 'descricao', 
                     'unidade', 'custo_execucao', 'custo_material', 
@@ -1426,7 +1435,7 @@ class ImportarDerprController extends Controller
                 ],
                 'model' => DerprComposicao::class
             ],
-            'equipamentos.xlsx' => [
+            'derpr_equipamentos.xlsx' => [
                 'colunas_obrigatorias' => [
                     'codigo_servico', 'descricao_servico', 'unidade_servico', 
                     'data_base', 'honerado', 'descricao', 'codigo_equipamento', 
@@ -1435,7 +1444,7 @@ class ImportarDerprController extends Controller
                 ],
                 'model' => DerprEquipamento::class
             ],
-            'mao_de_obra.xlsx' => [
+            'derpr_mao_de_obra.xlsx' => [
                 'colunas_obrigatorias' => [
                     'codigo_servico', 'descricao_servico', 'unidade_servico', 
                     'data_base', 'honerado', 'descricao', 'codigo', 
@@ -1444,7 +1453,7 @@ class ImportarDerprController extends Controller
                 ],
                 'model' => DerprMaoDeObra::class
             ],
-            'itens_incidencia.xlsx' => [
+            'derpr_itens_incidencia.xlsx' => [
                 'colunas_obrigatorias' => [
                     'codigo_servico', 'descricao_servico', 'unidade_servico', 
                     'data_base', 'honerado', 'descricao', 'codigo', 
@@ -1452,7 +1461,7 @@ class ImportarDerprController extends Controller
                 ],
                 'model' => DerprItemIncidencia::class
             ],
-            'materiais.xlsx' => [
+            'derpr_materiais.xlsx' => [
                 'colunas_obrigatorias' => [
                     'codigo_servico', 'descricao_servico', 'unidade_servico', 
                     'data_base', 'honerado', 'descricao', 'codigo', 'unid', 
@@ -1460,7 +1469,7 @@ class ImportarDerprController extends Controller
                 ],
                 'model' => DerprMaterial::class
             ],
-            'servicos.xlsx' => [
+            'derpr_servicos.xlsx' => [
                 'colunas_obrigatorias' => [
                     'codigo_servico', 'descricao_servico', 'unidade_servico', 
                     'data_base', 'honerado', 'descricao', 'codigo', 'unid', 
@@ -1468,20 +1477,12 @@ class ImportarDerprController extends Controller
                 ],
                 'model' => DerprServico::class
             ],
-            'transportes.xlsx' => [
-                'colunas_obrigatorias' => [
-                    'codigo_servico', 'descricao_servico', 'unidade_servico', 
-                    'data_base', 'honerado', 'descricao', 'codigo', 'unid', 
-                    'formula1', 'formula2', 'custo', 'consumo', 'custo_unitario'
-                ],
-                'model' => DerprTransporte::class
-            ],
-            'formulas_transporte.xlsx' => [
+            'derpr_transportes.xlsx' => [
                 'colunas_obrigatorias' => [
                     'data_base', 'desoneracao', 'codigo', 'descricao', 
                     'unidade', 'formula_transporte'
                 ],
-                'model' => \App\Models\Importacao\Derpr\DerprFormulaTransporte::class
+                'model' => DerprFormulaTransporte::class
             ]
         ];
     }
@@ -1541,7 +1542,7 @@ class ImportarDerprController extends Controller
             }
 
             if (!empty($colunasFaltantes)) {
-                throw new \Exception('Colunas faltando: ' . implode(', ', $colunasFaltantes));
+                throw new \Exception('Colunas faltando: ' . implode(', ', $colunasFaltantes) . '. Colunas encontradas: ' . implode(', ', $cabecalho));
             }
 
             return true;
@@ -1556,6 +1557,11 @@ class ImportarDerprController extends Controller
     private function processarESalvarArquivo($arquivo, $nomeArquivo, $config)
     {
         try {
+            $this->logProgresso('PROCESSAMENTO_ARQUIVO', "Iniciando processamento do arquivo: {$nomeArquivo}", [
+                'config' => $config,
+                'tipo_arquivo' => is_string($arquivo) ? 'caminho' : 'upload'
+            ]);
+            
             // Verificar se é um caminho de arquivo ou objeto de upload
             $caminhoArquivo = is_string($arquivo) ? $arquivo : $arquivo->getRealPath();
             $spreadsheet = IOFactory::load($caminhoArquivo);
@@ -1572,7 +1578,11 @@ class ImportarDerprController extends Controller
             }
             
             // Log para debug
-            $this->logProgresso('PROCESSAMENTO_ARQUIVO', "Cabeçalhos mapeados para {$nomeArquivo}", ['colunas' => $colunas]);
+            $this->logProgresso('PROCESSAMENTO_ARQUIVO', "Cabeçalhos mapeados para {$nomeArquivo}", [
+                'colunas' => $colunas,
+                'cabecalho_original' => $cabecalho,
+                'total_linhas' => count($dados)
+            ]);
             
             $totalRegistros = 0;
             $registrosAtualizados = 0;
@@ -1586,7 +1596,7 @@ class ImportarDerprController extends Controller
                     
                     // Mapeia os dados de acordo com o tipo de arquivo
                     switch ($nomeArquivo) {
-                        case 'composicoes.xlsx':
+                        case 'derpr_composicoes.xlsx':
                             // Validação dos dados obrigatórios
                             if (empty($linha[$colunas['codigo']])) {
                                 throw new \Exception("Campo 'codigo' é obrigatório e não pode ser nulo");
@@ -1616,7 +1626,7 @@ class ImportarDerprController extends Controller
                             $model->transporte          = trim($linha[$colunas['transporte']]);
                             break;
 
-                        case 'equipamentos.xlsx':
+                        case 'derpr_equipamentos.xlsx':
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
@@ -1633,7 +1643,7 @@ class ImportarDerprController extends Controller
                             break;
                         
                                                 
-                        case 'mao_de_obra.xlsx':
+                        case 'derpr_mao_de_obra.xlsx':
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
@@ -1648,7 +1658,7 @@ class ImportarDerprController extends Controller
                             $model->custo_horario = $this->paraDecimal($linha[$colunas['custo_horario']]);
                             break;
 
-                        case 'itens_incidencia.xlsx':
+                        case 'derpr_itens_incidencia.xlsx':
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
@@ -1661,7 +1671,7 @@ class ImportarDerprController extends Controller
                             $model->custo = $this->paraDecimal($linha[$colunas['custo']]);
                             break;
 
-                        case 'materiais.xlsx':
+                        case 'derpr_materiais.xlsx':
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
@@ -1675,7 +1685,7 @@ class ImportarDerprController extends Controller
                             $model->custo_unitario_final = $this->paraDecimal($linha[$colunas['custo_unitario_final']]);
                             break;
 
-                        case 'servicos.xlsx':
+                        case 'derpr_servicos.xlsx':
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
@@ -1689,23 +1699,7 @@ class ImportarDerprController extends Controller
                             $model->custo_unitario_final = $this->paraDecimal($linha[$colunas['custo_unitario_final']]);
                             break;
                             
-                        case 'transportes.xlsx':
-                            $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
-                            $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
-                            $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
-                            $model->data_base = \Carbon\Carbon::createFromFormat('d/m/Y', trim($linha[$colunas['data_base']]))->format('Y-m-d');
-                            $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
-                            $model->descricao          = trim($linha[$colunas['descricao']]);
-                            $model->codigo = trim($linha[$colunas['codigo']]);
-                            $model->unidade = trim($linha[$colunas['unid']]);
-                            $model->formula1 = trim($linha[$colunas['formula1']]);
-                            $model->formula2 = trim($linha[$colunas['formula2']]);
-                            $model->custo = $this->paraDecimal($linha[$colunas['custo']]);
-                            $model->consumo = (float) str_replace(',', '.', $linha[$colunas['consumo']]);
-                            $model->custo_unitario = $this->paraDecimal($linha[$colunas['custo_unitario']]);
-                            break;
-                            
-                        case 'formulas_transporte.xlsx':
+                        case 'derpr_transportes.xlsx':
                             // A data já está no formato Y-m-d, não precisa converter
                             $model->data_base = trim($linha[$colunas['data_base']]);
                             $model->desoneracao = strtolower(trim($linha[$colunas['desoneracao']])) === 'com' ? 'com' : 'sem';
@@ -1719,48 +1713,41 @@ class ImportarDerprController extends Controller
                     // Verifica se o registro já existe
                     $registroExistente = null;
                     switch ($nomeArquivo) {
-                        case 'composicoes.xlsx':
+                        case 'derpr_composicoes.xlsx':
                             $registroExistente = $config['model']::where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
                                 ->first();
                             break;
-                        case 'equipamentos.xlsx':
+                        case 'derpr_equipamentos.xlsx':
                             $registroExistente = $config['model']::where('codigo_servico', $model->codigo_servico)
                                 ->where('codigo_equipamento', $model->codigo_equipamento)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
                                 ->first();
                             break;
-                        case 'mao_de_obra.xlsx':
+                        case 'derpr_mao_de_obra.xlsx':
                             $registroExistente = $config['model']::where('codigo_servico', $model->codigo_servico)
                                 ->where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
                                 ->first();
                             break;
-                        case 'itens_incidencia.xlsx':
+                        case 'derpr_itens_incidencia.xlsx':
                             $registroExistente = $config['model']::where('codigo_servico', $model->codigo_servico)
                                 ->where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
                                 ->first();
                             break;
-                        case 'materiais.xlsx':
+                        case 'derpr_materiais.xlsx':
                             $registroExistente = $config['model']::where('codigo_servico', $model->codigo_servico)
                                 ->where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
                                 ->first();
                             break;
-                        case 'servicos.xlsx':
-                            $registroExistente = $config['model']::where('codigo_servico', $model->codigo_servico)
-                                ->where('codigo', $model->codigo)
-                                ->where('data_base', $model->data_base)
-                                ->where('desoneracao', $model->desoneracao)
-                                ->first();
-                            break;
-                        case 'transportes.xlsx':
+                        case 'derpr_servicos.xlsx':
                             $registroExistente = $config['model']::where('codigo_servico', $model->codigo_servico)
                                 ->where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
@@ -1768,7 +1755,7 @@ class ImportarDerprController extends Controller
                                 ->first();
                             break;
                             
-                        case 'formulas_transporte.xlsx':
+                        case 'derpr_transportes.xlsx':
                             $registroExistente = $config['model']::where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
@@ -1790,10 +1777,19 @@ class ImportarDerprController extends Controller
 
                 } catch (\Exception $e) {
                     $erros[] = [
-                        'linha' => $index + 2, // +2 porque removemos o cabeçalho e o índice começa em 0
+                        'linha' => $index + 2,
                         'erro' => $e->getMessage(),
-                        'dados' => $linha
+                        'dados' => $linha,
+                        'colunas_mapeadas' => $colunas
                     ];
+                    
+                    // Log do erro para debug
+                    $this->logErroValidacao('ERRO_LINHA', 'Erro na linha ' . ($index + 2) . ': ' . $e->getMessage(), [
+                        'arquivo' => $nomeArquivo,
+                        'linha' => $index + 2,
+                        'erro' => $e->getMessage(),
+                        'dados_linha' => $linha
+                    ]);
                 }
             }
 
@@ -1867,7 +1863,7 @@ class ImportarDerprController extends Controller
             }
 
             // Salvar arquivo
-            $caminhoArquivo = $diretorioProcessamento . '/derpr_formulas_transporte.xlsx';
+            $caminhoArquivo = $diretorioProcessamento . '/derpr_transportes.xlsx';
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save($caminhoArquivo);
 
@@ -1880,19 +1876,19 @@ class ImportarDerprController extends Controller
                 'ip' => request()->ip()
             ];
 
-            $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata_formulas_transporte.json';
+            $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata_transportes.json';
             file_put_contents($arquivoMetadata, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
             $this->logSucesso('EXCEL_FORMULAS_TRANSPORTE', [
-                'arquivo_excel' => 'derpr_formulas_transporte.xlsx',
-                'arquivo_metadata' => 'derpr_metadata_formulas_transporte.json',
+                'arquivo_excel' => 'derpr_transportes.xlsx',
+                'arquivo_metadata' => 'derpr_metadata_transportes.json',
                 'total_registros' => count($dados),
                 'diretorio' => $nomeDiretorio
             ]);
 
         } catch (\Exception $e) {
             $this->logErroCritico('EXCEL_FORMULAS_TRANSPORTE', $e->getMessage(), [
-                'arquivo' => 'derpr_formulas_transporte.xlsx',
+                'arquivo' => 'derpr_transportes.xlsx',
                 'diretorio' => $nomeDiretorio ?? 'N/A'
             ]);
         }
