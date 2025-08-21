@@ -62,9 +62,9 @@
                   <i class="fas fa-search me-2"></i>
                   Verificar Arquivos
                 </button>
-              </div>
             </div>
-            
+          </div>
+          
             <div v-else-if="status === 'processing'">
               <ResultDisplay
                 type="processing"
@@ -82,11 +82,11 @@
                 :data="stepStates.step1.data"
                 @action="handleAction"
               />
-            </div>
+              </div>
           </template>
         </WorkflowCard>
-      </div>
-
+              </div>
+              
       <!-- Card 2: Validação de Estrutura -->
       <div class="col-md-6 col-lg-3">
         <WorkflowCard
@@ -160,16 +160,16 @@
                    <i class="fas fa-database me-2"></i>
                    Gravar no Banco
                  </button>
-              </div>
             </div>
-            
+          </div>
+          
                          <div v-else-if="status === 'processing'">
                <ResultDisplay
                  type="processing"
                  title="Gravando..."
                  description="Gravando dados no banco de dados..."
                />
-             </div>
+            </div>
             
                          <div v-else-if="status === 'completed'">
                <ResultDisplay
@@ -180,11 +180,11 @@
                  :data="stepStates.step3.data"
                  @action="handleAction"
                />
-             </div>
+              </div>
           </template>
         </WorkflowCard>
-      </div>
-
+            </div>
+            
       <!-- Card 4: Resultado Final -->
       <div class="col-md-6 col-lg-3">
         <WorkflowCard
@@ -230,14 +230,14 @@
           <h6 class="mb-1 fw-semibold">Importando Dados no Banco</h6>
           <p class="mb-0 text-muted small">{{ progressoEtapa }}</p>
         </div>
-      </div>
-      
+              </div>
+              
       <div class="progress-container">
         <div class="progress-bar-custom">
           <div class="progress-fill-custom" :style="{ width: progresso + '%' }"></div>
         </div>
         <div class="progress-text">{{ progresso }}%</div>
-      </div>
+            </div>
 
       <div class="processing-steps">
         <div v-for="(etapa, index) in etapas" :key="index" 
@@ -275,7 +275,7 @@ import ResultDisplay from './base/ResultDisplay.vue'
 import { useWorkflowState } from '../composables/useWorkflowState.js'
 
 export default {
-    name: 'ImportarLoteDerpr',
+  name: 'ImportarLoteDerpr',
     
     components: {
         WorkflowCard,
@@ -306,8 +306,8 @@ export default {
         }
     },
     
-    data() {
-        return {
+  data() {
+    return {
             // Sistema de progresso
             progresso: 0,
             progressoEtapa: '',
@@ -333,14 +333,14 @@ export default {
         }
     },
 
-    computed: {
+  computed: {
         // Progresso geral baseado no workflow state
-        progressoGeral() {
+    progressoGeral() {
             return this.overallProgress
-        }
-    },
+    }
+  },
 
-    methods: {
+  methods: {
         // ========================================
         // MÉTODOS DE VERIFICAÇÃO
         // ========================================
@@ -350,11 +350,11 @@ export default {
          */
         async verificarArquivos() {
             this.setStepProcessing('step1')
-            
-            try {
-                const response = await axios.get('/api/tabela_oficial/importar_derpr/verificar_arquivos')
-                
-                if (response.data.success) {
+      
+      try {
+        const response = await axios.get('/api/tabela_oficial/importar_derpr/verificar_arquivos')
+        
+        if (response.data.success) {
                     const arquivosInfo = response.data
                     this.setStepCompleted('step1', arquivosInfo)
                     
@@ -362,11 +362,11 @@ export default {
                         tipo: 'sucesso',
                         texto: `${arquivosInfo.total_disponiveis} arquivos detectados com sucesso!`
                     }
-                } else {
+        } else {
                     throw new Error(response.data.message || 'Erro ao verificar arquivos')
-                }
-                
-            } catch (error) {
+        }
+        
+      } catch (error) {
                 this.setStepAvailable('step1')
                 this.mensagem = {
                     tipo: 'erro',
@@ -388,8 +388,8 @@ export default {
                     tipo: 'erro',
                     texto: 'Verifique os arquivos primeiro.'
                 }
-                return
-            }
+        return
+      }
 
             this.setStepProcessing('step2')
             
@@ -412,9 +412,9 @@ export default {
                 this.mensagem = {
                     tipo: 'sucesso',
                     texto: `Estrutura validada! ${arquivosValidados} arquivos com estrutura válida.`
-                }
-                
-            } catch (error) {
+        }
+
+      } catch (error) {
                 this.setStepAvailable('step2')
                 this.mensagem = {
                     tipo: 'erro',
@@ -551,7 +551,7 @@ export default {
                     tipo: 'erro',
                     texto: errorMessage
                 }
-            } finally {
+      } finally {
                 if (this.intervaloTempo) {
                     clearInterval(this.intervaloTempo)
                     this.intervaloTempo = null
@@ -668,32 +668,32 @@ export default {
                  4: 'Resultado'
              }
              return labels[step] || `Etapa ${step}`
-         }
     }
+  }
 }
 </script>
 
 <style>
 /* Barra de Progresso Horizontal */
 .progress-tracker {
-    position: relative;
+  position: relative;
     padding: 15px 0;
 }
 
 .progress-line {
-    position: absolute;
+  position: absolute;
     top: 50%;
-    left: 0;
-    right: 0;
+  left: 0;
+  right: 0;
     height: 3px;
-    background: #e9ecef;
+  background: #e9ecef;
     border-radius: 2px;
     transform: translateY(-50%);
-    z-index: 1;
+  z-index: 1;
 }
 
 .progress-fill {
-    height: 100%;
+  height: 100%;
     background: linear-gradient(90deg, #18578A 0%, #5EA853 100%);
     border-radius: 2px;
     transition: width 0.5s ease;
@@ -701,33 +701,33 @@ export default {
 
 .progress-steps {
     position: relative;
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
     align-items: center;
-    z-index: 2;
+  z-index: 2;
 }
 
 .progress-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
     text-align: center;
 }
 
 .step-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
     background: #f8f9fa;
-    border: 2px solid #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
+  border: 2px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
     font-size: 16px;
-    color: #6c757d;
+  color: #6c757d;
     margin-bottom: 8px;
-    transition: all 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .progress-step.current .step-circle {
@@ -738,22 +738,22 @@ export default {
 }
 
 .progress-step.completed .step-circle {
-    background: #18578A;
-    border-color: #18578A;
-    color: white;
+  background: #18578A;
+  border-color: #18578A;
+  color: white;
 }
 
 .progress-step.processing .step-circle {
-    background: #18578A;
-    border-color: #18578A;
-    color: white;
+  background: #18578A;
+  border-color: #18578A;
+  color: white;
     animation: pulse 2s infinite;
 }
 
 .step-label {
-    font-size: 12px;
+  font-size: 12px;
     font-weight: 600;
-    color: #6c757d;
+  color: #6c757d;
 }
 
 .progress-step.current .step-label {
@@ -766,7 +766,7 @@ export default {
 
 /* Seção de Verificação */
 .verification-section {
-    text-align: center;
+  text-align: center;
 }
 
 .verification-info p {
@@ -835,7 +835,7 @@ export default {
     justify-content: center;
     margin: 0 auto;
     font-size: 24px;
-    color: #6c757d;
+  color: #6c757d;
 }
 
 .waiting-icon.disabled {
@@ -851,7 +851,7 @@ export default {
     border-radius: 15px;
     border: 2px solid #e9ecef;
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    padding: 20px;
+  padding: 20px;
 }
 
 .processing-header {
@@ -876,7 +876,7 @@ export default {
 .progress-container {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+  margin-bottom: 15px;
 }
 
 .progress-bar-custom {
@@ -909,12 +909,12 @@ export default {
 }
 
 .processing-step {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
     padding: 10px 12px;
-    background: #f8f9fa;
+  background: #f8f9fa;
     border-radius: 10px;
-    border: 1px solid #e9ecef;
+  border: 1px solid #e9ecef;
 }
 
 .processing-step.completed {
@@ -935,7 +935,7 @@ export default {
 .step-icon {
     width: 25px;
     margin-right: 12px;
-    text-align: center;
+  text-align: center;
 }
 
 .processing-step.completed .step-icon {

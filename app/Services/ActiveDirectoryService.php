@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
+use App\Services\Logging\ActiveDirectoryLogService;
 
 class ActiveDirectoryService
 {
@@ -12,9 +12,12 @@ class ActiveDirectoryService
     private $baseDn;
     private $username;
     private $password;
+    protected $logger;
 
-    public function __construct()
+    public function __construct(ActiveDirectoryLogService $logger)
     {
+        $this->logger = $logger;
+        
         // Carregar configurações (não falhar se não estiverem configuradas)
         $this->host = config('adldap.connections.default.settings.hosts.0', 'localhost');
         $this->port = config('adldap.connections.default.settings.port', 389);
@@ -39,13 +42,6 @@ class ActiveDirectoryService
                 throw new \Exception('Configurações do AD incompletas');
             }
 
-            Log::info('Tentando conectar ao AD', [
-                'host' => $this->host,
-                'port' => $this->port,
-                'base_dn' => $this->baseDn,
-                'username' => $this->username
-            ]);
-
             // Conectar ao LDAP
             $this->connection = ldap_connect($this->host, $this->port);
             
@@ -64,13 +60,16 @@ class ActiveDirectoryService
                 throw new \Exception('Falha na autenticação LDAP: ' . ldap_error($this->connection));
             }
 
-            Log::info('Conexão com AD estabelecida com sucesso');
+            // Log apenas se for uma operação crítica ou se falhar
             return true;
 
         } catch (\Exception $e) {
-            Log::error('Erro ao conectar com AD', [
-                'error' => $e->getMessage()
+            // Log de falha na conexão (apenas erros)
+            $this->logger->falhaConexao($this->host, $this->port, $e->getMessage(), [
+                'base_dn' => $this->baseDn,
+                'username' => $this->username
             ]);
+            
             throw $e;
         }
     }
@@ -85,9 +84,9 @@ class ActiveDirectoryService
                 $this->connect();
             }
 
-            // Buscar usuários
-            $filter = '(&(objectClass=user)(sAMAccountName=*))';
-            $search = ldap_search($this->connection, $this->baseDn, $filter);
+            // Buscar usuários (sem log de início)
+            $filtro = '(&(objectClass=user)(sAMAccountName=*))';
+            $search = ldap_search($this->connection, $this->baseDn, $filtro);
             
             if (!$search) {
                 throw new \Exception('Erro na busca LDAP: ' . ldap_error($this->connection));
@@ -99,29 +98,20 @@ class ActiveDirectoryService
             for ($i = 0; $i < $entries['count']; $i++) {
                 $entry = $entries[$i];
                 
-                try {
-                    $adUsers[] = [
-                        'id' => $entry['dn'],
-                        'name' => $entry['displayname'][0] ?? $entry['name'][0] ?? 'Usuário sem nome',
-                        'email' => $entry['mail'][0] ?? '',
-                        'username' => $entry['samaccountname'][0] ?? ''
-                    ];
-                } catch (\Exception $userError) {
-                    Log::warning('Erro ao processar usuário individual', [
-                        'user_dn' => $entry['dn'],
-                        'error' => $userError->getMessage()
-                    ]);
-                    continue;
-                }
+                // Processar entrada do usuário
+                $adUsers[] = $this->processUserEntry($entry);
             }
 
-            Log::info('Usuários encontrados no AD', ['count' => count($adUsers)]);
+            // Log apenas se for uma operação crítica ou se falhar
             return $adUsers;
 
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar usuários do AD', [
-                'error' => $e->getMessage()
+            // Log apenas em caso de erro
+            $this->logger->erroCritico('BUSCA_USUARIOS_AD', $e->getMessage(), [
+                'base_dn' => $this->baseDn,
+                'filtro' => $filtro ?? 'N/A'
             ]);
+            
             throw $e;
         }
     }
@@ -189,9 +179,8 @@ class ActiveDirectoryService
             ];
 
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar usuário por email no AD', [
-                'email' => $email,
-                'error' => $e->getMessage()
+            $this->logger->erroCritico('BUSCA_USUARIO_POR_EMAIL', $e->getMessage(), [
+                'email' => $email
             ]);
             return null;
         }
@@ -214,15 +203,11 @@ class ActiveDirectoryService
                 $username . '@' . 'paranacidade.org.br'
             ];
             
-            Log::info('Testando formatos de autenticação AD', [
-                'username' => $username,
-                'domain' => $domain,
-                'formats' => $formats
-            ]);
+            $this->logger->tentativaAutenticacaoAD($username, $formats);
             
             foreach ($formats as $index => $userDn) {
                 try {
-                    Log::info("Tentativa " . ($index + 1) . ": " . $userDn);
+                    $this->logger->tentativaAutenticacaoAD($username, $formats, $index + 1);
                     
                     $testConnection = ldap_connect($this->host, $this->port);
                     
@@ -239,27 +224,23 @@ class ActiveDirectoryService
                     ldap_close($testConnection);
                     
                     if ($bind) {
-                        Log::info("Autenticação bem-sucedida com formato: " . $userDn);
+                        $this->logger->sucessoAutenticacaoAD($username, $userDn);
                         return true;
                     }
                     
                 } catch (\Exception $e) {
-                    Log::warning("Falha na tentativa " . ($index + 1) . " com " . $userDn . ": " . $e->getMessage());
+                    $this->logger->falhaAutenticacaoAD($username, $userDn, $e->getMessage());
                     continue;
                 }
             }
             
-            Log::error('Todas as tentativas de autenticação falharam', [
-                'username' => $username,
-                'formats_tested' => $formats
-            ]);
+            $this->logger->falhaAutenticacaoAD($username, $formats, 'Todas as tentativas falharam');
             
             return false;
 
         } catch (\Exception $e) {
-            Log::error('Erro na autenticação de usuário no AD', [
-                'username' => $username,
-                'error' => $e->getMessage()
+            $this->logger->erroCritico('AUTENTICACAO_USUARIO_AD', $e->getMessage(), [
+                'username' => $username
             ]);
             return false;
         }
@@ -282,12 +263,27 @@ class ActiveDirectoryService
         
         $domain = implode('.', $domainParts);
         
-        Log::info('Domínio extraído do base_dn', [
-            'base_dn' => $baseDn,
-            'domain' => $domain
-        ]);
-        
         return $domain;
+    }
+
+    /**
+     * Processar entrada do usuário do AD
+     */
+    private function processUserEntry($entry)
+    {
+        try {
+            return [
+                'id' => $entry['dn'],
+                'name' => $entry['displayname'][0] ?? $entry['name'][0] ?? 'Usuário sem nome',
+                'email' => $entry['mail'][0] ?? '',
+                'username' => $entry['samaccountname'][0] ?? ''
+            ];
+        } catch (\Exception $userError) {
+            $this->logger->erroCritico('PROCESSAMENTO_USUARIO_INDIVIDUAL', $userError->getMessage(), [
+                'user_dn' => $entry['dn']
+            ]);
+            return null; // Retorna null para indicar que o usuário não pôde ser processado
+        }
     }
 
     /**

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\Administracao\ActiveDirectory;
 
 use App\Http\Controllers\Controller;
+use App\Services\Logging\ActiveDirectoryLogService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use App\Services\ActiveDirectorySyncService;
 use App\Jobs\SyncActiveDirectoryJob;
 use Illuminate\Support\Facades\Auth;
@@ -12,11 +12,13 @@ use Illuminate\Support\Facades\Auth;
 class SyncController extends Controller
 {
     private $syncService;
+    protected $logger;
 
-    public function __construct()
+    public function __construct(ActiveDirectoryLogService $logger)
     {
         $this->middleware('auth');
-        $this->syncService = new ActiveDirectorySyncService();
+        $this->logger = $logger;
+        $this->syncService = new ActiveDirectorySyncService($logger);
     }
 
     /**
@@ -49,6 +51,7 @@ class SyncController extends Controller
         
         try {
             $force = $request->get('force', false);
+            $tipo = $force ? 'COMPLETA' : 'MANUAL';
             
             // Capturar usuário que executou a sincronização
             $usuario = auth()->user();
@@ -58,14 +61,18 @@ class SyncController extends Controller
                 'email' => $usuario->email
             ] : null;
             
+            // Log de início da sincronização
+            $this->logger->inicioSincronizacao($tipo, [
+                'executado_por' => $usuarioInfo,
+                'forcada' => $force
+            ]);
+            
             // Executar sincronização e obter resultados
             $resultados = $this->syncService->sync($force, $usuarioInfo);
             
-            // Registrar log
-            Log::channel('ad')->info('Sincronização AD concluída', [
-                'tipo' => $force ? 'completa' : 'manual',
+            // Log de sucesso
+            $this->logger->sucessoSincronizacao($tipo, $resultados, [
                 'executado_por' => $usuarioInfo,
-                'resultados' => $resultados,
                 'executado_em' => now()->toISOString()
             ]);
 
@@ -82,9 +89,9 @@ class SyncController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro na sincronização AD', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            $this->logger->erroCritico("SINCRONIZACAO_{$tipo}", $e->getMessage(), [
+                'executado_por' => $usuarioInfo ?? null,
+                'forcada' => $force
             ]);
 
             return response()->json([
@@ -104,6 +111,7 @@ class SyncController extends Controller
         try {
             $stats = $this->syncService->getStats();
 
+            // Retornar dados sem log desnecessário
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -112,8 +120,9 @@ class SyncController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao verificar status AD', [
-                'error' => $e->getMessage()
+            // Log apenas em caso de erro
+            $this->logger->erroCritico('VERIFICAR_STATUS_SINCRONIZACAO', $e->getMessage(), [
+                'verificado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -133,12 +142,18 @@ class SyncController extends Controller
         try {
             $result = $this->syncService->testConnection();
 
+            // Retornar dados sem log desnecessário
             return response()->json([
                 'success' => true,
                 'data' => $result
             ]);
 
         } catch (\Exception $e) {
+            // Log apenas em caso de erro
+            $this->logger->erroCritico('TESTE_CONEXAO', $e->getMessage(), [
+                'testado_por' => Auth::id()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erro no teste de conexão: ' . $e->getMessage()

@@ -8,11 +8,11 @@
 
 ### 🎯 **Instrução para IA:**
 ```
-"Baseado na funcionalidade X, seguindo a orientação do arquivo '00_padroes_projeto.md' e '02_padrao_documentacao.md', crie a documentação completa"
+"Baseado na funcionalidade X, seguindo a orientação do arquivo '05_padrao_documentacao.md', crie a documentação completa"
 ```
 
 ### 📝 **Como Funciona:**
-1. **Leia** as diretrizes do projeto em `00_padroes_projeto.md`
+1. **Leia** as diretrizes do projeto nos arquivos da pasta `docs/diretrizes/01_projeto`
 2. **Analise** a funcionalidade para entender sua estrutura
 3. **Aplique** os padrões definidos neste documento
 4. **Gere** documentação completa e funcional
@@ -33,7 +33,7 @@
 
 **Para o desenvolvimento, utilize as diretrizes do projeto que podem ser compreendidas pela análise do arquivo:**
 ```
-docs/diretrizes/01_projeto/00_padroes_projeto.md
+docs/diretrizes/01_projeto/*.*
 ```
 
 **Este arquivo orienta sobre:**

@@ -3,19 +3,22 @@
 namespace App\Http\Controllers\Api\Administracao\ActiveDirectory;
 
 use App\Http\Controllers\Controller;
+use App\Services\Logging\ActiveDirectoryLogService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 
 class ConfigController extends Controller
 {
+    protected $logger;
+
     /**
      * Construtor com middleware de autenticação
      */
-    public function __construct()
+    public function __construct(ActiveDirectoryLogService $logger)
     {
         $this->middleware('auth');
+        $this->logger = $logger;
     }
 
     /**
@@ -54,14 +57,16 @@ class ConfigController extends Controller
                 'updated_at' => Cache::get('ad_sync_updated_at', null)
             ];
 
+            // Retornar dados sem log desnecessário
             return response()->json([
                 'success' => true,
                 'data' => $config
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao obter configurações AD', [
-                'error' => $e->getMessage()
+            // Log apenas em caso de erro
+            $this->logger->erroCritico('CONSULTA_CONFIGURACOES', $e->getMessage(), [
+                'consultado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -122,6 +127,7 @@ class ConfigController extends Controller
                 $message = 'Configurações com problemas';
             }
 
+            // Retornar dados sem log desnecessário
             return response()->json([
                 'success' => true,
                 'status' => $status,
@@ -138,8 +144,9 @@ class ConfigController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao testar configurações AD', [
-                'error' => $e->getMessage()
+            // Log apenas em caso de erro
+            $this->logger->erroCritico('TESTE_CONFIGURACOES', $e->getMessage(), [
+                'testado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -168,6 +175,13 @@ class ConfigController extends Controller
                 'sync_time.date_format' => 'Formato de horário inválido (HH:MM)'
             ]);
 
+            // Obter configurações atuais para o log
+            $configAnteriores = [
+                'sync_frequency' => Cache::get('ad_sync_frequency', 'daily'),
+                'sync_time' => Cache::get('ad_sync_time', '02:00'),
+                'sync_enabled' => Cache::get('ad_sync_enabled', true)
+            ];
+
             // Salvar configurações no cache com expiração longa
             $now = now();
             Cache::put('ad_sync_frequency', $request->sync_frequency, now()->addYears(10));
@@ -175,12 +189,23 @@ class ConfigController extends Controller
             Cache::put('ad_sync_enabled', $request->get('sync_enabled', true), now()->addYears(10));
             Cache::put('ad_sync_updated_at', $now->toISOString(), now()->addYears(10));
 
-            Log::info('Configurações AD atualizadas', [
-                'frequencia' => $request->sync_frequency,
-                'horario' => $request->sync_time,
-                'habilitado' => $request->get('sync_enabled', true),
-                'atualizado_em' => $now->toISOString(),
-                'atualizado_por' => auth()->id()
+            // Configurações novas para o log
+            $configNovas = [
+                'sync_frequency' => $request->sync_frequency,
+                'sync_time' => $request->sync_time,
+                'sync_enabled' => $request->get('sync_enabled', true)
+            ];
+
+            // Log de alteração de configurações
+            $this->logger->alteracaoConfiguracoes($configAnteriores, $configNovas, [
+                'alterado_por' => Auth::id(),
+                'alterado_em' => $now->toISOString()
+            ]);
+
+            // Log de sucesso
+            $this->logger->sucessoAlteracaoConfiguracoes($configAnteriores, $configNovas, [
+                'alterado_por' => Auth::id(),
+                'alterado_em' => $now->toISOString()
             ]);
 
             return response()->json([
@@ -195,9 +220,9 @@ class ConfigController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao salvar configurações AD', [
-                'error' => $e->getMessage(),
-                'data' => $request->all()
+            $this->logger->erroCritico('ALTERACAO_CONFIGURACOES', $e->getMessage(), [
+                'alterado_por' => Auth::id(),
+                'dados' => $request->all()
             ]);
 
             return response()->json([
@@ -264,11 +289,10 @@ class ConfigController extends Controller
             return $nextExecution->format('d/m/Y \à\s H:i');
             
         } catch (\Exception $e) {
-            Log::error('Erro ao calcular próxima execução', [
+            $this->logger->erroCritico('CALCULO_PROXIMA_EXECUCAO', $e->getMessage(), [
                 'frequency' => $frequency,
                 'time' => $time,
-                'enabled' => $enabled,
-                'error' => $e->getMessage()
+                'enabled' => $enabled
             ]);
             
             return 'Erro no cálculo';

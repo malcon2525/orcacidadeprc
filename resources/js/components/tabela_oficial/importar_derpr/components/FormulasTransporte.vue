@@ -1,21 +1,21 @@
 <template>
-  <div>
-    <!-- Cabeçalho Elegante -->
+    <div>
+        <!-- Cabeçalho Elegante -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h5 class="mb-1 fw-bold text-custom">
-          <i class="fas fa-truck me-2"></i>Conversão para Excel da Tabela de Fórmulas de Transporte do DER-PR
-        </h5>
-        <p class="text-muted mb-0 small">Processe arquivos PDF e converta para formato Excel estruturado</p>
-      </div>
-    </div>
+            <div>
+                <h5 class="mb-1 fw-bold text-custom">
+                    <i class="fas fa-truck me-2"></i>Conversão para Excel da Tabela de Fórmulas de Transporte do DER-PR
+                </h5>
+                <p class="text-muted mb-0 small">Processe arquivos PDF e converta para formato Excel estruturado</p>
+            </div>
+        </div>
 
-    <!-- Barra de Progresso Horizontal -->
+        <!-- Barra de Progresso Horizontal -->
     <div class="progress-tracker mb-4">
-      <div class="progress-line">
+            <div class="progress-line">
         <div class="progress-fill" :style="{ width: overallProgress + '%' }"></div>
-      </div>
-      <div class="progress-steps">
+            </div>
+            <div class="progress-steps">
         <div 
           v-for="step in 4" 
           :key="step"
@@ -26,19 +26,19 @@
             'processing': computedStepStates[`step${step}`]?.status === 'processing'
           }"
         >
-          <div class="step-circle">
+                    <div class="step-circle">
             <i v-if="computedStepStates[`step${step}`]?.status === 'completed'" class="fas fa-check"></i>
             <i v-else-if="computedStepStates[`step${step}`]?.status === 'processing'" class="fas fa-spinner fa-spin"></i>
             <span v-else>{{ step }}</span>
-          </div>
+                    </div>
           <span class="step-label">{{ getStepLabel(step) }}</span>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
     <!-- Sistema de Cards com WorkflowCard -->
     <div class="row g-4 mb-4">
-      <!-- Card 1: Upload -->
+            <!-- Card 1: Upload -->
       <div class="col-md-6 col-lg-3">
         <WorkflowCard
           :step="1"
@@ -51,43 +51,43 @@
           <template #default="{ status }">
             <!-- Conteúdo do Card 1 -->
             <div v-if="status === 'available' || status === 'completed'">
-              <div class="upload-zone" :class="{ 'has-file': arquivoValido }">
+                        <div class="upload-zone" :class="{ 'has-file': arquivoValido }">
                 <input 
                   type="file" 
-                  class="file-input" 
-                  id="arquivo" 
-                  ref="arquivoInput"
-                  accept=".pdf" 
-                  required
+                                   class="file-input" 
+                                   id="arquivo" 
+                                   ref="arquivoInput"
+                                   accept=".pdf" 
+                                   required
                   @change="validarArquivo"
                 >
-                
-                <div v-if="!nomeArquivo" class="upload-placeholder">
-                  <div class="upload-icon">
-                    <i class="fas fa-file-pdf"></i>
-                  </div>
-                  <h6 class="mt-2 mb-1">Selecione um arquivo PDF</h6>
-                  <p class="text-muted mb-0 small">Clique ou arraste o arquivo aqui</p>
-                </div>
-                
-                <div v-else class="file-info">
-                  <div class="file-icon">
-                    <i class="fas fa-file-pdf"></i>
-                  </div>
-                  <div class="file-details">
-                    <h6 class="mb-1">{{ nomeArquivo }}</h6>
+                            
+                            <div v-if="!nomeArquivo" class="upload-placeholder">
+                                <div class="upload-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <h6 class="mt-2 mb-1">Selecione um arquivo PDF</h6>
+                                <p class="text-muted mb-0 small">Clique ou arraste o arquivo aqui</p>
+                            </div>
+                            
+                            <div v-else class="file-info">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="file-details">
+                                    <h6 class="mb-1">{{ nomeArquivo }}</h6>
                     <p class="text-success mb-0 small">
                       <i class="fas fa-check-circle me-1"></i>Arquivo carregado com sucesso!
                     </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
           </template>
         </WorkflowCard>
-      </div>
+            </div>
 
-      <!-- Card 2: Processamento -->
+            <!-- Card 2: Processamento -->
       <div class="col-md-6 col-lg-3">
         <WorkflowCard
           :step="2"
@@ -103,7 +103,7 @@
               <div class="processing-section">
                 <div class="processing-info">
                   <p class="mb-3 small">Inicie o processamento da tabela de fórmulas de transporte. Este processo pode levar alguns minutos.</p>
-                </div>
+                            </div>
                 <button 
                   class="btn btn-primary btn-lg w-100 fw-semibold" 
                   @click="processarArquivo"
@@ -111,17 +111,17 @@
                   <i class="fas fa-play me-2"></i>
                   Iniciar Processamento
                 </button>
-              </div>
-            </div>
-            
+                        </div>
+                    </div>
+                    
             <div v-else-if="status === 'processing'">
               <ResultDisplay
                 type="processing"
                 title="Processando..."
                 description="Executando script Python e extraindo fórmulas..."
               />
-            </div>
-            
+                        </div>
+                        
             <div v-else-if="status === 'completed'">
               <ResultDisplay
                 type="success"
@@ -133,11 +133,11 @@
                 :data="stepStates.step2.data"
                 @action="handleAction"
               />
-            </div>
+                            </div>
           </template>
         </WorkflowCard>
-      </div>
-
+                        </div>
+                        
       <!-- Card 3: Validação -->
       <div class="col-md-6 col-lg-3">
         <WorkflowCard
@@ -154,16 +154,16 @@
               <div class="validation-section">
                 <div class="validation-info">
                   <p class="mb-3 small">Valide a estrutura e qualidade das fórmulas extraídas antes de prosseguir.</p>
-                </div>
+                        </div>
                 <button 
                   class="btn btn-info btn-lg w-100 fw-semibold" 
                   @click="validarDados"
                 >
                   <i class="fas fa-check me-2"></i>
                   Validar Dados
-                </button>
-              </div>
-            </div>
+                            </button>
+                        </div>
+                    </div>
             
             <div v-else-if="status === 'processing'">
               <ResultDisplay
@@ -172,7 +172,7 @@
                 description="Verificando estrutura e qualidade das fórmulas..."
               />
             </div>
-            
+
             <div v-else-if="status === 'completed'">
               <ResultDisplay
                 type="success"
@@ -182,10 +182,10 @@
                 :data="stepStates.step3.data"
                 @action="handleAction"
               />
-            </div>
+                            </div>
           </template>
         </WorkflowCard>
-      </div>
+                        </div>
 
       <!-- Card 4: Resultado Final -->
       <div class="col-md-6 col-lg-3">
@@ -203,10 +203,10 @@
               <div class="final-section">
                 <div class="final-info">
                   <p class="mb-3 small">Todos os passos foram concluídos. Visualize e exporte as fórmulas finais.</p>
-                </div>
-              </div>
-            </div>
-            
+                        </div>
+                        </div>
+                    </div>
+                    
             <div v-else-if="status === 'completed'">
               <ResultDisplay
                 type="success"
@@ -223,26 +223,26 @@
           </template>
         </WorkflowCard>
       </div>
-    </div>
-
+                        </div>
+                        
     <!-- Sistema de Progresso Detalhado -->
     <div v-if="currentProcessingStep" class="processing-details mb-4">
       <div class="processing-header">
         <div class="processing-icon">
           <i class="fas fa-cogs fa-spin"></i>
-        </div>
+                                    </div>
         <div class="processing-info">
           <h6 class="mb-1 fw-semibold">Processando Arquivo PDF</h6>
           <p class="mb-0 text-muted small">{{ progressoEtapa }}</p>
-        </div>
-      </div>
+                                    </div>
+                                </div>
       
       <div class="progress-container">
         <div class="progress-bar-custom">
           <div class="progress-fill-custom" :style="{ width: progresso + '%' }"></div>
-        </div>
+                            </div>
         <div class="progress-text">{{ progresso }}%</div>
-      </div>
+                        </div>
 
       <div class="processing-steps">
         <div v-for="(etapa, index) in etapas" :key="index" 
@@ -254,11 +254,11 @@
                       etapa.completa ? 'fa-check-circle' : 
                       etapa.ativa ? 'fa-spinner fa-spin' : 
                       'fa-circle']"></i>
-          </div>
+                    </div>
           <span class="step-text small">{{ etapa.nome }}</span>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
     <!-- Mensagens de Alerta -->
     <div v-if="mensagem" 
@@ -267,8 +267,8 @@
       <div class="d-flex align-items-center">
         <i :class="['fas', 'me-2', mensagem.tipo === 'erro' ? 'fa-exclamation-triangle' : 'fa-check-circle']"></i>
         <span class="small">{{ mensagem.texto }}</span>
-      </div>
-    </div>
+                </div>
+                        </div>
 
     <!-- Modal para Visualizar Dados -->
     <div class="modal fade" id="modalVisualizarDados" tabindex="-1" aria-labelledby="modalVisualizarDadosLabel" aria-hidden="true">
@@ -279,7 +279,7 @@
               <i class="fas fa-table me-2"></i>Fórmulas Processadas - {{ stepStates.step2.data?.totalRegistros || 0 }} registros
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
+                            </div>
           <div class="modal-body p-0">
             <div class="table-responsive">
               <table class="table table-hover mb-0 formulas-table">
@@ -312,12 +312,12 @@
                   </tr>
                 </tbody>
               </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script>
@@ -636,7 +636,7 @@ export default {
                 this.$nextTick(() => {
             
                 })
-                
+
             } catch (error) {
                 // Tratar erros de processamento
                 console.error('Erro no processamento:', error)

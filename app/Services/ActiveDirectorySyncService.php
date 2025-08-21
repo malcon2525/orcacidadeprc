@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Logging\ActiveDirectoryLogService;
 use Illuminate\Support\Facades\Log;
 use App\Models\Administracao\User;
 use Illuminate\Support\Str;
@@ -10,10 +11,12 @@ class ActiveDirectorySyncService
 {
     private $adService;
     private $result;
+    protected $logger;
 
-    public function __construct()
+    public function __construct(ActiveDirectoryLogService $logger)
     {
-        $this->adService = new ActiveDirectoryService();
+        $this->logger = $logger;
+        $this->adService = new ActiveDirectoryService($logger);
         $this->result = [
             'usuarios_processados' => 0,
             'usuarios_criados' => 0,
