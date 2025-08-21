@@ -62,6 +62,13 @@ export function useWorkflowState() {
   const overallProgress = computed(() => {
     const totalSteps = 4
     const completedSteps = Object.values(stepStates.value).filter(step => step.completed).length
+    
+    // Se todos os 4 passos estiverem concluídos, retorna 100%
+    if (completedSteps === totalSteps) {
+      return 100
+    }
+    
+    // Caso contrário, calcula o progresso normal
     return Math.round((completedSteps / totalSteps) * 100)
   })
 

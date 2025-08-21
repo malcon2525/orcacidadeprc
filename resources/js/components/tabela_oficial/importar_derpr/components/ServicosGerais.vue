@@ -600,6 +600,14 @@ export default {
                 }
                 this.setStepCompleted('step3', validationResult)
                 
+                // Marcar automaticamente o step4 como completed também
+                const finalResult = {
+                    ...dados,
+                    validation: validationResult,
+                    finalizationDate: new Date().toISOString()
+                }
+                this.setStepCompleted('step4', finalResult)
+                
                 console.log('Estado depois:', this.stepStates.step2)
                 console.log('Computed states:', this.computedStepStates)
                 
