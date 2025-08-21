@@ -4,14 +4,22 @@ namespace App\Http\Controllers\Api\Administracao\Municipios;
 
 use App\Http\Controllers\Controller;
 use App\Models\Administracao\Municipio;
+use App\Services\Logging\MunicipiosLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class MunicipioController extends Controller
 {
+    protected $logger;
+    
+    public function __construct(MunicipiosLogService $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * Método index que chama listar (para compatibilidade com apiResource)
      */
@@ -39,14 +47,29 @@ class MunicipioController extends Controller
 
             $registros = $query->paginate(15);
             
-            Log::info('Listagem de municípios realizada', [
-                'filtros' => $request->only(['nome', 'prefeito']),
-                'total' => $registros->total()
-            ]);
-
+            // Retornar dados sem log desnecessário
             return response()->json($registros);
         } catch (\Exception $e) {
-            Log::error('Erro ao listar municípios', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('LISTAGEM_MUNICIPIOS', $e->getMessage(), [
+                'filtros' => $request->only(['nome', 'prefeito'])
+            ]);
+            
+            return response()->json(['error' => 'Erro interno do servidor'], 500);
+        }
+    }
+
+    /**
+     * Lista simples para selects (sem paginação)
+     */
+    public function listarSimples()
+    {
+        try {
+            $municipios = Municipio::select(['id', 'nome'])->get();
+            
+            return response()->json($municipios);
+        } catch (\Exception $e) {
+            $this->logger->erroCritico('LISTAGEM_SIMPLES_MUNICIPIOS', $e->getMessage());
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -84,21 +107,25 @@ class MunicipioController extends Controller
             ]);
 
             if ($validator->fails()) {
-                Log::warning('Validação falhou ao criar município', ['errors' => $validator->errors()]);
+                $this->logger->erroValidacao('CRIACAO_MUNICIPIO', $validator->errors()->toArray(), [
+                    'dados' => $request->only(['nome', 'codigo_ibge'])
+                ]);
+                
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
             $registro = Municipio::create($request->all());
             
-            Log::info('Município criado com sucesso', [
-                'id' => $registro->id,
-                'nome' => $registro->nome,
-                'codigo_ibge' => $registro->codigo_ibge
+            $this->logger->sucessoCriacao($registro->id, $request->all(), [
+                'criado_por' => Auth::id()
             ]);
 
             return response()->json($registro, 201);
         } catch (\Exception $e) {
-            Log::error('Erro ao criar município', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('CRIACAO_MUNICIPIO', $e->getMessage(), [
+                'dados' => $request->all()
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -109,6 +136,8 @@ class MunicipioController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            $registro = Municipio::findOrFail($id);
+
             $validator = Validator::make($request->all(), [
                 'nome' => 'required|string|max:255',
                 'prefeito' => 'required|string|max:255',
@@ -116,14 +145,14 @@ class MunicipioController extends Controller
                     'nullable',
                     'email',
                     'max:255',
-                    Rule::unique('municipios')->ignore($id)
+                    Rule::unique('municipios')->ignore($registro->id)
                 ],
                 'endereco_prefeitura' => 'required|string|max:255',
                 'codigo_ibge' => [
                     'required',
                     'string',
                     'max:20',
-                    Rule::unique('municipios')->ignore($id)
+                    Rule::unique('municipios')->ignore($registro->id)
                 ],
                 'populacao' => 'required|integer|min:0',
                 'cep' => 'required|string|max:20',
@@ -132,7 +161,7 @@ class MunicipioController extends Controller
                     'required',
                     'string',
                     'max:20',
-                    Rule::unique('municipios')->ignore($id)
+                    Rule::unique('municipios')->ignore($registro->id)
                 ],
             ], [
                 'nome.required' => 'O nome do município é obrigatório',
@@ -151,21 +180,29 @@ class MunicipioController extends Controller
             ]);
 
             if ($validator->fails()) {
-                Log::warning('Validação falhou ao atualizar município', ['errors' => $validator->errors()]);
+                $this->logger->erroValidacao('EDICAO_MUNICIPIO', $validator->errors()->toArray(), [
+                    'municipio_id' => $id,
+                    'dados' => $request->only(['nome', 'codigo_ibge'])
+                ]);
+                
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $registro = Municipio::findOrFail($id);
+            $dadosAnteriores = $registro->toArray();
             $registro->update($request->all());
             
-            Log::info('Município atualizado com sucesso', [
-                'id' => $registro->id,
-                'nome' => $registro->nome
+            $this->logger->sucessoEdicao($id, $request->all(), [
+                'dados_anteriores' => $dadosAnteriores,
+                'editado_por' => Auth::id()
             ]);
 
             return response()->json($registro);
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar município', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('EDICAO_MUNICIPIO', $e->getMessage(), [
+                'municipio_id' => $id,
+                'dados' => $request->all()
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -177,15 +214,20 @@ class MunicipioController extends Controller
     {
         try {
             $registro = Municipio::findOrFail($id);
+            $dadosExcluidos = $registro->toArray();
             $registro->delete();
             
-            Log::info('Município removido com sucesso', [
-                'id' => $id
+            $this->logger->sucessoExclusao($id, [
+                'dados_excluidos' => $dadosExcluidos,
+                'excluido_por' => Auth::id()
             ]);
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error('Erro ao remover município', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('EXCLUSAO_MUNICIPIO', $e->getMessage(), [
+                'municipio_id' => $id
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -257,9 +299,8 @@ class MunicipioController extends Controller
 
             DB::commit();
 
-            Log::info('Importação de municípios concluída', [
-                'novos' => $importados,
-                'atualizados' => $atualizados
+            $this->logger->sucessoImportacao($importados, $atualizados, [
+                'importado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -272,7 +313,9 @@ class MunicipioController extends Controller
                 DB::rollBack();
             }
             
-            Log::error('Erro ao importar municípios', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('IMPORTACAO_MUNICIPIOS', $e->getMessage(), [
+                'importado_por' => Auth::id()
+            ]);
             
             // Verificar se é erro de conexão
             if (str_contains($e->getMessage(), 'SSL negotiation') || str_contains($e->getMessage(), 'Connection refused')) {

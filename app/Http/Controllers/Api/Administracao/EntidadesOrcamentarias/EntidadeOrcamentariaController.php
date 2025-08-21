@@ -4,14 +4,22 @@ namespace App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias;
 
 use App\Http\Controllers\Controller;
 use App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria;
+use App\Services\Logging\EntidadesOrcamentariasLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class EntidadeOrcamentariaController extends Controller
 {
+    protected $logger;
+    
+    public function __construct(EntidadesOrcamentariasLogService $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * Método index que chama listar (para compatibilidade com apiResource)
      */
@@ -46,14 +54,13 @@ class EntidadeOrcamentariaController extends Controller
 
             $registros = $query->paginate(15);
             
-            Log::info('Listagem de entidades orçamentárias realizada', [
-                'filtros' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao']),
-                'total' => $registros->total()
-            ]);
-
+            // Log apenas se for uma operação crítica ou se falhar
             return response()->json($registros);
         } catch (\Exception $e) {
-            Log::error('Erro ao listar entidades orçamentárias', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('LISTAGEM_ENTIDADES', $e->getMessage(), [
+                'filtros' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -68,13 +75,11 @@ class EntidadeOrcamentariaController extends Controller
                 ->orderBy('nome_fantasia', 'asc')
                 ->get();
                 
-            Log::info('Listagem de entidades orçamentárias para select realizada', [
-                'total' => $result->count()
-            ]);
-            
+            // Retornar dados sem log desnecessário
             return response()->json(['data' => $result]);
         } catch (\Exception $e) {
-            Log::error('Erro ao listar entidades orçamentárias para select', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('LISTAGEM_SELECT', $e->getMessage());
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -120,21 +125,25 @@ class EntidadeOrcamentariaController extends Controller
             ]);
 
             if ($validator->fails()) {
-                Log::warning('Validação falhou ao criar entidade orçamentária', ['errors' => $validator->errors()]);
+                $this->logger->erroValidacao('CRIACAO_ENTIDADE', $validator->errors()->toArray(), [
+                    'dados' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
+                ]);
+                
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
             $registro = EntidadeOrcamentaria::create($request->all());
             
-            Log::info('Entidade orçamentária criada com sucesso', [
-                'id' => $registro->id,
-                'razao_social' => $registro->razao_social,
-                'nome_fantasia' => $registro->nome_fantasia
+            $this->logger->sucessoCriacao($registro->id, $request->all(), [
+                'criado_por' => Auth::id()
             ]);
 
             return response()->json($registro, 201);
         } catch (\Exception $e) {
-            Log::error('Erro ao criar entidade orçamentária', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('CRIACAO_ENTIDADE', $e->getMessage(), [
+                'dados' => $request->all()
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -207,20 +216,29 @@ class EntidadeOrcamentariaController extends Controller
             ]);
 
             if ($validator->fails()) {
-                Log::warning('Validação falhou ao atualizar entidade orçamentária', ['errors' => $validator->errors()]);
+                $this->logger->erroValidacao('EDICAO_ENTIDADE', $validator->errors()->toArray(), [
+                    'entidade_id' => $id,
+                    'dados' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
+                ]);
+                
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
+            $dadosAnteriores = $registro->toArray();
             $registro->update($request->all());
             
-            Log::info('Entidade orçamentária atualizada com sucesso', [
-                'id' => $registro->id,
-                'razao_social' => $registro->razao_social
+            $this->logger->sucessoEdicao($id, $request->all(), [
+                'dados_anteriores' => $dadosAnteriores,
+                'editado_por' => Auth::id()
             ]);
 
             return response()->json($registro);
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar entidade orçamentária', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('EDICAO_ENTIDADE', $e->getMessage(), [
+                'entidade_id' => $id,
+                'dados' => $request->all()
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -232,15 +250,20 @@ class EntidadeOrcamentariaController extends Controller
     {
         try {
             $registro = EntidadeOrcamentaria::findOrFail($id);
+            $dadosExcluidos = $registro->toArray();
             $registro->delete();
             
-            Log::info('Entidade orçamentária removida com sucesso', [
-                'id' => $id
+            $this->logger->sucessoExclusao($id, [
+                'dados_excluidos' => $dadosExcluidos,
+                'excluido_por' => Auth::id()
             ]);
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error('Erro ao remover entidade orçamentária', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('EXCLUSAO_ENTIDADE', $e->getMessage(), [
+                'entidade_id' => $id
+            ]);
+            
             return response()->json(['error' => 'Erro interno do servidor'], 500);
         }
     }
@@ -325,9 +348,8 @@ class EntidadeOrcamentariaController extends Controller
 
             DB::commit();
 
-            Log::info('Importação de municípios como entidades orçamentárias concluída', [
-                'novos' => $importados,
-                'atualizados' => $atualizados
+            $this->logger->sucessoImportacao($importados, $atualizados, [
+                'importado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -340,7 +362,9 @@ class EntidadeOrcamentariaController extends Controller
                 DB::rollBack();
             }
             
-            Log::error('Erro ao importar municípios como entidades orçamentárias', ['error' => $e->getMessage()]);
+            $this->logger->erroCritico('IMPORTACAO_MUNICIPIOS', $e->getMessage(), [
+                'importado_por' => Auth::id()
+            ]);
             
             // Verificar se é erro de conexão
             if (str_contains($e->getMessage(), 'SSL negotiation') || str_contains($e->getMessage(), 'Connection refused')) {

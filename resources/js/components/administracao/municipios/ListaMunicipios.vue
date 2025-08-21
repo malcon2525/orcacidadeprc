@@ -60,7 +60,7 @@
                     </div>
                 </div>
 
-                <div class="table-responsive" v-if="municipios.data.length > 0">
+                <div class="table-responsive" v-if="municipiosOrdenados.length > 0">
                     <table class="table table-hover align-middle admin-table">
                         <thead>
                             <tr>
@@ -74,7 +74,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="municipio in municipios.data" :key="municipio.id" class="admin-row">
+                            <tr v-for="municipio in municipiosOrdenados" :key="municipio.id" class="admin-row">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="fw-medium">{{ municipio.nome }}</div>
@@ -130,7 +130,7 @@
                 </div>
 
                 <!-- Estado Vazio -->
-                <div v-if="!loading && municipios.data.length === 0" class="text-center py-5">
+                <div v-if="!loading && municipiosOrdenados.length === 0" class="text-center py-5">
                     <i class="fas fa-city text-muted mb-3" style="font-size: 3rem;"></i>
                     <h6 class="text-muted mb-2">Nenhum município encontrado</h6>
                     <p class="text-muted small mb-0">Tente ajustar os filtros ou criar um novo município.</p>
@@ -139,7 +139,7 @@
         </div>
 
         <!-- Paginação (Fora do Card - Padrão) -->
-        <div v-if="municipios.data.length > 0" class="paginacao-container mt-4">
+        <div v-if="municipiosOrdenados.length > 0" class="paginacao-container mt-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="text-muted fw-medium">
                     Mostrando {{ municipios.from }} até {{ municipios.to }} de {{ municipios.total }} registros
@@ -212,7 +212,9 @@
                                                v-model="form.nome" 
                                                required>
                                         <label for="nome">Nome</label>
-                                        <div class="invalid-feedback">{{ errors.nome }}</div>
+                                        <div class="invalid-feedback" v-if="errors.nome">
+                                            {{ Array.isArray(errors.nome) ? errors.nome[0] : errors.nome }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -224,7 +226,9 @@
                                                v-model="form.prefeito" 
                                                required>
                                         <label for="prefeito">Prefeito</label>
-                                        <div class="invalid-feedback">{{ errors.prefeito }}</div>
+                                        <div class="invalid-feedback" v-if="errors.prefeito">
+                                            {{ Array.isArray(errors.prefeito) ? errors.prefeito[0] : errors.prefeito }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -235,7 +239,9 @@
                                                id="email" 
                                                v-model="form.email">
                                         <label for="email">Email</label>
-                                        <div class="invalid-feedback">{{ errors.email }}</div>
+                                        <div class="invalid-feedback" v-if="errors.email">
+                                            {{ Array.isArray(errors.email) ? errors.email[0] : errors.email }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -247,7 +253,9 @@
                                                v-model="form.codigo_ibge" 
                                                required>
                                         <label for="codigo_ibge">Código IBGE</label>
-                                        <div class="invalid-feedback">{{ errors.codigo_ibge }}</div>
+                                        <div class="invalid-feedback" v-if="errors.codigo_ibge">
+                                            {{ Array.isArray(errors.codigo_ibge) ? errors.codigo_ibge[0] : errors.codigo_ibge }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -259,7 +267,9 @@
                                                v-model="form.endereco_prefeitura" 
                                                required>
                                         <label for="endereco_prefeitura">Endereço da Prefeitura</label>
-                                        <div class="invalid-feedback">{{ errors.endereco_prefeitura }}</div>
+                                        <div class="invalid-feedback" v-if="errors.endereco_prefeitura">
+                                            {{ Array.isArray(errors.endereco_prefeitura) ? errors.endereco_prefeitura[0] : errors.endereco_prefeitura }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -271,7 +281,9 @@
                                                v-model="form.cep" 
                                                required>
                                         <label for="cep">CEP</label>
-                                        <div class="invalid-feedback">{{ errors.cep }}</div>
+                                        <div class="invalid-feedback" v-if="errors.cep">
+                                            {{ Array.isArray(errors.cep) ? errors.cep[0] : errors.cep }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -283,7 +295,9 @@
                                                v-model="form.telefone" 
                                                required>
                                         <label for="telefone">Telefone</label>
-                                        <div class="invalid-feedback">{{ errors.telefone }}</div>
+                                        <div class="invalid-feedback" v-if="errors.telefone">
+                                            {{ Array.isArray(errors.telefone) ? errors.telefone[0] : errors.telefone }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -295,7 +309,9 @@
                                                v-model="form.cnpj" 
                                                required>
                                         <label for="cnpj">CNPJ</label>
-                                        <div class="invalid-feedback">{{ errors.cnpj }}</div>
+                                        <div class="invalid-feedback" v-if="errors.cnpj">
+                                            {{ Array.isArray(errors.cnpj) ? errors.cnpj[0] : errors.cnpj }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -307,7 +323,9 @@
                                                v-model="form.populacao" 
                                                required>
                                         <label for="populacao">População</label>
-                                        <div class="invalid-feedback">{{ errors.populacao }}</div>
+                                        <div class="invalid-feedback" v-if="errors.populacao">
+                                            {{ Array.isArray(errors.populacao) ? errors.populacao[0] : errors.populacao }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -446,6 +464,13 @@ export default {
             }
 
             return pages;
+        },
+        
+        // Municípios ordenados alfabeticamente
+        municipiosOrdenados() {
+            return [...this.municipios.data].sort((a, b) => {
+                return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+            });
         }
     },
     methods: {
@@ -536,9 +561,33 @@ export default {
                 const data = await response.json();
 
                 if (!response.ok) {
-                    if (response.status === 422) {
-                        // Erro de validação
+                    if (response.status === 422 && data.errors) {
+                        // Erro de validação - seguir padrão do gerenciamento de usuários
                         this.errors = data.errors;
+                        
+                        // Focar no primeiro campo inválido
+                        this.$nextTick(() => {
+                            if (this.errors.nome) {
+                                document.getElementById('nome')?.focus();
+                            } else if (this.errors.prefeito) {
+                                document.getElementById('prefeito')?.focus();
+                            } else if (this.errors.email) {
+                                document.getElementById('email')?.focus();
+                            } else if (this.errors.endereco_prefeitura) {
+                                document.getElementById('endereco_prefeitura')?.focus();
+                            } else if (this.errors.codigo_ibge) {
+                                document.getElementById('codigo_ibge')?.focus();
+                            } else if (this.errors.populacao) {
+                                document.getElementById('populacao')?.focus();
+                            } else if (this.errors.cep) {
+                                document.getElementById('cep')?.focus();
+                            } else if (this.errors.telefone) {
+                                document.getElementById('telefone')?.focus();
+                            } else if (this.errors.cnpj) {
+                                document.getElementById('cnpj')?.focus();
+                            }
+                        });
+                        
                         throw new Error('Por favor, corrija os erros no formulário');
                     }
                     throw new Error(data.message || 'Erro ao salvar município');

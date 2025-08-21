@@ -22,4 +22,17 @@ class Municipio extends Model
 
     protected $casts = [
     ];
+
+    /**
+     * Boot do model para aplicar ordenação global
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Ordenação global por nome (alfabética)
+        static::addGlobalScope('orderByNome', function ($query) {
+            $query->orderBy('nome', 'asc');
+        });
+    }
 }

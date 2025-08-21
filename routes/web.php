@@ -170,6 +170,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Municípios
         Route::apiResource('municipios', \App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class);
+        Route::get('municipios/listar-simples', [\App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class, 'listarSimples'])->name('municipios.listar-simples');
         Route::post('municipios/importar', [\App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class, 'importar'])->name('municipios.importar');
         
         // Entidades Orçamentárias
