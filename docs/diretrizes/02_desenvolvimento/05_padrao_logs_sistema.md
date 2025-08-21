@@ -22,8 +22,7 @@ storage/logs/
 │   ├── bdi.log                   # Funcionalidade: BDI
 │   └── orcamento_consolidado.log # Funcionalidade: Orçamento consolidado
 ├── administracao/
-│   ├── gerenciar_usuarios.log    # Funcionalidade: Gerenciar usuários
-│   ├── gerenciar_permissoes.log  # Funcionalidade: Gerenciar permissões
+│   ├── gerenciar_usuarios.log    # Funcionalidade: Gerenciar usuários (inclui papéis e permissões)
 │   └── gerenciar_municipios.log  # Funcionalidade: Gerenciar municípios
 └── sistema/
     └── sistema_master.log        # Log central consolidado para auditoria
@@ -33,7 +32,12 @@ storage/logs/
 - **✅ Logs Específicos:** Cada funcionalidade tem seu próprio arquivo `[modulo]/[funcionalidade].log`
 - **✅ Log Central:** Operações críticas vão para `sistema/sistema_master.log`
 - **✅ Performance:** Arquivos menores, busca mais rápida
-- **✅ Organização:** Separação clara por módulo e funcionalidade
+- **✅ Organização:** Separação clara por módulo, com UMA funcionalidade = UM arquivo de log
+
+### **📁 REGRA FUNDAMENTAL: UMA FUNCIONALIDADE = UM ARQUIVO**
+- **✅ CORRETO:** `gerenciar_usuarios.log` contém TODAS as operações de usuários (criar, editar, excluir, papéis, permissões)
+- **❌ INCORRETO:** Separar por subfuncionalidades (`gerenciar_permissoes.log`, `gerenciar_papeis.log`)
+- **✅ EXEMPLO:** `importar_derpr.log` contém todas as 4 abas + gravação no banco
 
 ---
 
@@ -366,7 +370,7 @@ class ImportarDerprController extends Controller
 - [ ] Confirmar rastreabilidade
 - [ ] Validar contexto das mensagens
 - [ ] Verificar log central
-- [ ] Validar arquivos separados
+- [ ] Validar arquivo específico da funcionalidade
 
 ---
 
@@ -508,9 +512,9 @@ Esta nova arquitetura de logs foi desenvolvida para ser:
 - **🎯 Objetivo:** Cada linha tem propósito claro
 - **🧹 Limpo:** Sem ruído ou informações redundantes
 - **📊 Rastreável:** Auditoria completa quando necessário
-- **⚡ Eficiente:** Performance otimizada com arquivos separados
+- **⚡ Eficiente:** Performance otimizada com arquivo único por funcionalidade
 - **🔄 Reutilizável:** Fácil de implementar em novas funcionalidades
-- **📁 Organizada:** Separação clara por módulo e funcionalidade
+- **📁 Organizada:** Separação clara por módulo, com UMA funcionalidade = UM arquivo de log
 - **🔍 Consolidada:** Log central para auditoria geral
 
 **Para implementar logs em uma nova funcionalidade:**
@@ -522,3 +526,38 @@ Esta nova arquitetura de logs foi desenvolvida para ser:
 **A arquitetura híbrida oferece o melhor dos dois mundos: logs específicos para debugging e log central para auditoria geral.**
 
 **Estrutura de arquivos: `[modulo]/[funcionalidade].log` + `sistema/sistema_master.log`**
+
+---
+
+## 📋 **EXEMPLOS PRÁTICOS DE ESTRUTURA CORRETA**
+
+### **✅ EXEMPLOS CORRETOS (UMA FUNCIONALIDADE = UM ARQUIVO):**
+
+#### **1. Gerenciamento de Usuários:**
+- **Arquivo:** `administracao/gerenciar_usuarios.log`
+- **Conteúdo:** Criar, editar, excluir usuários + alterar papéis + alterar permissões + reset senha + bloqueio
+
+#### **2. Importação DER-PR:**
+- **Arquivo:** `tabela_oficial/importar_derpr.log`
+- **Conteúdo:** Todas as 4 abas (serviços, insumos, fórmulas, gravação) + operações de banco
+
+#### **3. Gerenciamento de Municípios:**
+- **Arquivo:** `administracao/gerenciar_municipios.log`
+- **Conteúdo:** Criar, editar, excluir municípios + operações relacionadas
+
+### **❌ EXEMPLOS INCORRETOS (NÃO SEPARAR POR SUBFUNCIONALIDADES):**
+
+#### **1. Gerenciamento de Usuários (INCORRETO):**
+- ❌ `administracao/criar_usuarios.log`
+- ❌ `administracao/editar_usuarios.log`
+- ❌ `administracao/gerenciar_permissoes.log`
+- ❌ `administracao/gerenciar_papeis.log`
+
+#### **2. Importação DER-PR (INCORRETO):**
+- ❌ `tabela_oficial/aba1_servicos.log`
+- ❌ `tabela_oficial/aba2_insumos.log`
+- ❌ `tabela_oficial/aba3_formulas.log`
+- ❌ `tabela_oficial/aba4_banco.log`
+
+### **🎯 REGRA SIMPLES:**
+**Se todas as operações fazem parte da mesma funcionalidade de negócio → UM ARQUIVO DE LOG**
