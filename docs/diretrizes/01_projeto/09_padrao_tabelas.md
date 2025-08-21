@@ -33,29 +33,29 @@ Estabelecer padrões visuais para tabelas, garantindo consistência e funcionali
 ### 📋 **Tabela Base (Obrigatório)**
 ```html
 <div class="table-responsive" v-if="dados.length > 0">
-    <table class="table table-hover align-middle usuarios-table">
+    <table class="table table-hover align-middle">
         <thead>
             <tr>
-                <th class="fw-semibold text-custom">[Coluna 1]</th>
-                <th class="fw-semibold text-custom">[Coluna 2]</th>
-                <th class="fw-semibold text-custom">[Coluna 3]</th>
-                <th class="fw-semibold text-end text-custom" style="width: 150px;">Ações</th>
+                <th class="table-header">[Coluna 1]</th>
+                <th class="table-header">[Coluna 2]</th>
+                <th class="table-header">[Coluna 3]</th>
+                <th class="table-header text-end" style="width: 150px;">Ações</th>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="item in dados" :key="item.id" class="usuario-row">
-                <td class="align-middle">
+            <tr v-for="item in dados" :key="item.id" class="table-row">
+                <td class="table-cell">
                     <div class="fw-medium">{{ item.nome }}</div>
                 </td>
-                <td class="align-middle">
+                <td class="table-cell">
                     <div class="fw-medium">{{ item.descricao }}</div>
                 </td>
-                <td class="align-middle">
+                <td class="table-cell">
                     <span class="badge badge-status" :class="item.status === 'ativo' ? 'badge-ativo' : 'badge-inativo'">
                         {{ item.status }}
                     </span>
                 </td>
-                <td class="text-end">
+                <td class="table-cell text-end">
                     <div class="d-flex gap-1 justify-content-end">
                         <!-- Botão Editar: AMARELO SÓLIDO -->
                         <button class="btn btn-sm btn-warning" @click="editar(item)" title="Editar">
@@ -79,57 +79,39 @@ Estabelecer padrões visuais para tabelas, garantindo consistência e funcionali
 
 ### 🎨 **Classes da Tabela (Obrigatórias)**
 ```css
-/* Tabela padrão - REUTILIZAR SEMPRE */
-.usuarios-table {
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.5;
-    table-layout: fixed;
+/* Cabeçalho da tabela - CLASSE GENÉRICA */
+.table-header {
+    background-color: #f9fafb !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    color: #18578A !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    padding: 0.75rem 0.5rem !important;
+    vertical-align: middle !important;
 }
 
-/* Cabeçalhos da tabela */
-.usuarios-table th {
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: none;
-    letter-spacing: normal;
-    color: #18578A;
-    padding: 0.75rem 0.5rem;
-    border-bottom: 2px solid #e5e7eb;
-    background-color: #f9fafb;
-    vertical-align: middle;
-    position: relative;
-    transition: all 0.2s ease;
+/* Linha da tabela - CLASSE GENÉRICA */
+.table-row {
+    background-color: #ffffff !important;
+    transition: all 0.2s ease !important;
+    border-left: 3px solid transparent !important;
+    cursor: default !important;
 }
 
-/* Hover do cabeçalho */
-.usuarios-table th:hover {
-    background-color: #f3f4f6;
-    color: #18578A;
+/* Hover da linha - CLASSE GENÉRICA */
+.table-row:hover {
+    background-color: #f8f9fa !important;
+    border-left: 3px solid #5EA853 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Células da tabela */
-.usuarios-table td {
-    padding: 0.5rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #f1f3f4;
-    font-weight: 400;
-    font-size: 14px;
-}
-
-/* Linhas da tabela - REUTILIZAR SEMPRE */
-.usuario-row {
-    background-color: #ffffff;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-    cursor: default;
-}
-
-/* Hover da linha */
-.usuario-row:hover {
-    background-color: #f8f9fa;
-    border-left: 3px solid #5EA853;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+/* Célula da tabela - CLASSE GENÉRICA */
+.table-cell {
+    padding: 0.5rem !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f3f4 !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
 }
 ```
 

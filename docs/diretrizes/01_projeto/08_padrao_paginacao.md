@@ -56,7 +56,7 @@ Estabelecer padrões visuais para paginação, garantindo consistência e funcio
         
         <!-- Navegação -->
         <nav v-if="totalPaginas > 1">
-            <ul class="pagination admin-pagination mb-0">
+            <ul class="pagination pagination-generic mb-0">
                 <!-- Navegação aqui -->
             </ul>
         </nav>
@@ -80,7 +80,7 @@ Estabelecer padrões visuais para paginação, garantindo consistência e funcio
         
         <!-- Navegação -->
         <nav v-if="totalPaginas > 1">
-            <ul class="pagination admin-pagination mb-0">
+            <ul class="pagination pagination-generic mb-0">
                 <!-- Botão Anterior -->
                 <li class="page-item" :class="{ disabled: paginaAtual === 1 }">
                     <a class="page-link" href="#" @click.prevent="mudarPagina(paginaAtual - 1)" aria-label="Anterior">
@@ -182,7 +182,7 @@ export default {
         
         <!-- Navegação -->
         <nav v-if="paginacao.last_page > 1">
-            <ul class="pagination admin-pagination mb-0">
+            <ul class="pagination pagination-generic mb-0">
                 <!-- Botão Anterior -->
                 <li class="page-item" :class="{ disabled: paginacao.current_page === 1 }">
                     <a class="page-link" href="#" @click.prevent="mudarPagina(paginacao.current_page - 1)" aria-label="Anterior">
@@ -297,11 +297,11 @@ export default {
 ### 🎨 **Estilos da Paginação (Obrigatório)**
 ```css
 /* Paginação admin */
-.admin-pagination {
+.pagination-generic {
     margin: 0;
 }
 
-.admin-pagination .page-link {
+.pagination-generic .page-link {
     color: #18578A;
     border: 1px solid #e9ecef;
     padding: 0.375rem 0.75rem;
@@ -309,19 +309,19 @@ export default {
     transition: all 0.2s ease;
 }
 
-.admin-pagination .page-link:hover {
+.pagination-generic .page-link:hover {
     background-color: #e3f2fd;
     border-color: #bbdefb;
     color: #1976d2;
 }
 
-.admin-pagination .page-item.active .page-link {
+.pagination-generic .page-item.active .page-link {
     background-color: #18578A;
     border-color: #18578A;
     color: white;
 }
 
-.admin-pagination .page-item.disabled .page-link {
+.pagination-generic .page-item.disabled .page-link {
     color: #6c757d;
     background-color: #f8f9fa;
     border-color: #e9ecef;
@@ -367,7 +367,7 @@ export default {
 ### 📋 **Estrutura da Navegação (Obrigatória)**
 ```html
 <nav v-if="totalPaginas > 1">
-    <ul class="pagination admin-pagination mb-0">
+    <ul class="pagination pagination-generic mb-0">
         <!-- Botão Anterior -->
         <li class="page-item" :class="{ disabled: paginaAtual === 1 }">
             <a class="page-link" href="#" @click.prevent="mudarPagina(paginaAtual - 1)" aria-label="Anterior">
@@ -396,7 +396,7 @@ export default {
 ```
 
 **Regras para Navegação:**
-- ✅ **SEMPRE usar** `admin-pagination` para estilos
+- ✅ **SEMPRE usar** `pagination-generic` para estilos
 - ✅ **SEMPRE incluir** botões anterior e próximo
 - ✅ **SEMPRE usar** ícones Font Awesome para setas
 - ✅ **SEMPRE implementar** estados disabled
@@ -440,7 +440,7 @@ export default {
         align-items: center;
     }
     
-    .admin-pagination {
+    .pagination-generic {
         flex-wrap: wrap;
         justify-content: center;
     }
@@ -456,7 +456,7 @@ export default {
         font-size: 0.875rem;
     }
     
-    .admin-pagination .page-link {
+    .pagination-generic .page-link {
         padding: 0.25rem 0.5rem;
         font-size: 0.8rem;
     }
@@ -520,7 +520,7 @@ export default {
 - [ ] Cálculos corretos implementados
 
 ### 📋 **Navegação**
-- [ ] Classes `admin-pagination` aplicadas
+- [ ] Classes `pagination-generic` aplicadas
 - [ ] Botões anterior e próximo implementados
 - [ ] Ícones Font Awesome para setas
 - [ ] Estados disabled funcionais
@@ -618,7 +618,7 @@ export default {
                 
                 <!-- Navegação -->
                 <nav v-if="totalPaginas > 1">
-                    <ul class="pagination admin-pagination mb-0">
+                    <ul class="pagination pagination-generic mb-0">
                         <!-- Botão Anterior -->
                         <li class="page-item" :class="{ disabled: paginaAtual === 1 }">
                             <a class="page-link" href="#" @click.prevent="mudarPagina(paginaAtual - 1)" aria-label="Anterior">
@@ -726,11 +726,11 @@ export default {
 
 <style>
 /* Paginação */
-.admin-pagination {
+.pagination-generic {
     margin: 0;
 }
 
-.admin-pagination .page-link {
+.pagination-generic .page-link {
     color: #18578A;
     border: 1px solid #e9ecef;
     padding: 0.375rem 0.75rem;
@@ -738,19 +738,19 @@ export default {
     transition: all 0.2s ease;
 }
 
-.admin-pagination .page-link:hover {
+.pagination-generic .page-link:hover {
     background-color: #e3f2fd;
     border-color: #bbdefb;
     color: #1976d2;
 }
 
-.admin-pagination .page-item.active .page-link {
+.pagination-generic .page-item.active .page-link {
     background-color: #18578A;
     border-color: #18578A;
     color: white;
 }
 
-.admin-pagination .page-item.disabled .page-link {
+.pagination-generic .page-item.disabled .page-link {
     color: #6c757d;
     background-color: #f8f9fa;
     border-color: #e9ecef;
@@ -777,7 +777,7 @@ export default {
         align-items: center;
     }
     
-    .admin-pagination {
+    .pagination-generic {
         flex-wrap: wrap;
         justify-content: center;
     }
@@ -793,7 +793,7 @@ export default {
         font-size: 0.875rem;
     }
     
-    .admin-pagination .page-link {
+    .pagination-generic .page-link {
         padding: 0.25rem 0.5rem;
         font-size: 0.8rem;
     }
@@ -810,7 +810,7 @@ export default {
 2. **Tipos**: Simples (local) e Centralizada (compartilhada)
 3. **Informações**: Sempre mostrar registros visíveis
 4. **Navegação**: Botões anterior, páginas e próximo
-5. **Estilos**: Classes `admin-pagination` obrigatórias
+5. **Estilos**: Classes `pagination-generic` obrigatórias
 6. **Responsividade**: Breakpoints para todas as telas
 7. **Estados**: Loading, vazio e erro implementados
 

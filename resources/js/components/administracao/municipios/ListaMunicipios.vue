@@ -1,24 +1,28 @@
 <template>
     <div class="container-fluid px-4">
         <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <!-- Cabeçalho Compacto -->
             <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold" style="color: #5EA853; font-size: 1.2rem; padding: 5px 0;">
                     <i class="fas fa-city me-2"></i>Gerenciamento de Municípios 
                 </h5>
                 <div class="d-flex gap-2">
+                    <!-- Botão Filtros -->
                     <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" @click="toggleFilters">
                         <i class="fas fa-filter"></i>
                         <span>Filtros</span>
                         <i class="fas" :class="filtrosVisiveis ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                     </button>
-                    <button v-if="permissoes.crud" class="btn btn-moderno btn-success-moderno d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalCriar">
+                    <!-- Botão Novo Município -->
+                    <button class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2" @click="abrirModalCriar">
                         <i class="fas fa-plus"></i>
                         <span>Novo Município</span>
                     </button>
-                    <button v-if="permissoes.importar" class="btn btn-moderno btn-primary-moderno d-flex align-items-center gap-2 px-3 py-2" @click="importarMunicipios" :disabled="loading">
+                    <!-- Botão Importar -->
+                    <button class="btn-importar-padrao" @click="importarMunicipios" :disabled="loading">
                         <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
-                        <i v-else class="fas fa-file-import"></i>
-                        <span>Importar</span>
+                        <i v-else class="fas fa-arrow-right me-2"></i>
+                        <span>Importar Municípios</span>
                     </button>
                 </div>
             </div>
@@ -61,54 +65,52 @@
                 </div>
 
                 <div class="table-responsive" v-if="municipiosOrdenados.length > 0">
-                    <table class="table table-hover align-middle admin-table">
+                    <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th class="fw-semibold text-custom">Nome</th>
-                                <th class="fw-semibold text-custom">Prefeito</th>
-                                <th class="fw-semibold text-custom">Email</th>
-                                <th class="fw-semibold text-custom" style="width: 130px;">Código IBGE</th>
-                                <th class="fw-semibold text-custom" style="width: 130px;">População</th>
-                                <th class="fw-semibold text-custom" style="width: 130px;">Telefone</th>
-                                <th class="fw-semibold text-end text-custom" style="width: 150px;">Ações</th>
+                                <th class="table-header">Nome</th>
+                                <th class="table-header">Prefeito</th>
+                                <th class="table-header">Email</th>
+                                <th class="table-header" style="width: 130px;">Código IBGE</th>
+                                <th class="table-header" style="width: 130px;">População</th>
+                                <th class="table-header" style="width: 130px;">Telefone</th>
+                                <th class="table-header text-end" style="width: 150px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="municipio in municipiosOrdenados" :key="municipio.id" class="admin-row">
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="fw-medium">{{ municipio.nome }}</div>
-                                    </div>
+                            <tr v-for="municipio in municipiosOrdenados" :key="municipio.id" class="table-row">
+                                <td class="table-cell">
+                                    <div class="fw-medium">{{ municipio.nome }}</div>
                                 </td>
-                                <td>
+                                <td class="table-cell">
                                     <div class="fw-medium">{{ municipio.prefeito }}</div>
                                 </td>
-                                <td>
+                                <td class="table-cell">
                                     <div class="text-truncate" style="max-width: 200px;" :title="municipio.email">
                                         {{ municipio.email || 'N/A' }}
                                     </div>
                                 </td>
-                                <td>
+                                <td class="table-cell">
                                     <span class="">
                                         {{ municipio.codigo_ibge }}
                                     </span>
                                 </td>
-                                <td>
+                                <td class="table-cell">
                                     <span class="">
                                         {{ municipio.populacao.toLocaleString('pt-BR') }}
                                     </span>
                                 </td>
-                                <td>
+                                <td class="table-cell">
                                     <div class="text-truncate" style="max-width: 150px;" :title="municipio.telefone">
                                         {{ municipio.telefone || 'N/A' }}
                                     </div>
                                 </td>
-                                <td class="text-end">
-                                    <div class="btn-group-actions" v-if="permissoes.crud">
-                                        <button class="btn btn-action btn-warning me-1" @click="editarMunicipio(municipio)" title="Editar">
+                                <td class="table-cell text-end">
+                                    <div class="d-flex gap-1 justify-content-end" v-if="permissoes.crud">
+                                        <button class="btn btn-sm btn-warning" @click="editarMunicipio(municipio)" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-action btn-danger" @click="confirmarExclusao(municipio)" title="Excluir">
+                                        <button class="btn btn-sm btn-danger" @click="confirmarExclusao(municipio)" title="Excluir">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -145,7 +147,7 @@
                     Mostrando {{ municipios.from }} até {{ municipios.to }} de {{ municipios.total }} registros
                 </div>
                 <nav v-if="municipios.last_page > 1">
-                    <ul class="pagination admin-pagination mb-0">
+                    <ul class="pagination pagination-generic mb-0">
                         <!-- Botão Anterior -->
                         <li class="page-item" :class="{ disabled: municipios.current_page === 1 }">
                             <a class="page-link" href="#" @click.prevent="mudarPagina(municipios.current_page - 1)" aria-label="Anterior">
