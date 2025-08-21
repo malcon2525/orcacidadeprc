@@ -10,8 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Logging\GerenciarUsuariosLogService;
 
 /**
  * Controller API para gerenciamento de usuários
@@ -28,10 +28,16 @@ class UsuariosController extends Controller
     /**
      * Construtor com middleware de autenticação
      */
-    public function __construct()
+    public function __construct(GerenciarUsuariosLogService $logger)
     {
         $this->middleware('auth');
+        $this->logger = $logger;
     }
+    
+    /**
+     * Service de log para gerenciamento de usuários
+     */
+    protected GerenciarUsuariosLogService $logger;
 
     /**
      * Sistema unificado de verificação de permissões
@@ -169,10 +175,14 @@ class UsuariosController extends Controller
                 $usuario->roles()->attach($request->roles);
             }
 
-            Log::info('Usuário criado com sucesso', [
-                'user_id' => $usuario->id,
+            // Log de sucesso usando o service
+            $this->logger->sucessoCriacaoUsuario($usuario->id, [
                 'email' => $usuario->email,
-                'created_by' => Auth::id()
+                'name' => $usuario->name,
+                'login_type' => $usuario->login_type,
+                'roles' => $request->roles ?? []
+            ], [
+                'criado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -181,8 +191,7 @@ class UsuariosController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao criar usuário', [
-                'error' => $e->getMessage(),
+            $this->logger->erroCriticoUsuarios('CRIACAO_USUARIO', $e->getMessage(), [
                 'data' => $request->all()
             ]);
 
@@ -248,6 +257,15 @@ class UsuariosController extends Controller
         try {
             $usuario = User::findOrFail($id);
             
+            // Capturar dados anteriores para log
+            $dadosAnteriores = [
+                'name' => $usuario->name,
+                'email' => $usuario->email,
+                'is_active' => $usuario->is_active,
+                'login_type' => $usuario->login_type,
+                'roles' => $usuario->roles->pluck('id')->toArray()
+            ];
+            
             $dadosUpdate = [
                 'name' => $request->name,
                 'email' => $request->email,
@@ -267,9 +285,12 @@ class UsuariosController extends Controller
                 $usuario->roles()->sync($request->roles);
             }
 
-            Log::info('Usuário atualizado com sucesso', [
-                'user_id' => $usuario->id,
-                'updated_by' => Auth::id()
+            // Log de sucesso usando o service
+            $this->logger->sucessoEdicaoUsuario($usuario->id, [
+                'dados_alterados' => array_keys($dadosUpdate),
+                'roles_alterados' => $request->has('roles')
+            ], [
+                'atualizado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -278,9 +299,8 @@ class UsuariosController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar usuário', [
-                'user_id' => $id,
-                'error' => $e->getMessage()
+            $this->logger->erroCriticoUsuarios('EDICAO_USUARIO', $e->getMessage(), [
+                'user_id' => $id
             ]);
 
             return response()->json([
@@ -308,11 +328,18 @@ class UsuariosController extends Controller
                 ], 422);
             }
 
+            // Capturar dados do usuário para log
+            $dadosUsuario = [
+                'email' => $usuario->email,
+                'name' => $usuario->name,
+                'roles' => $usuario->roles->pluck('id')->toArray()
+            ];
+
             $usuario->delete();
 
-            Log::info('Usuário excluído com sucesso', [
-                'user_id' => $id,
-                'deleted_by' => Auth::id()
+            // Log de sucesso usando o service
+            $this->logger->sucessoExclusaoUsuario($id, $dadosUsuario, [
+                'excluido_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -320,9 +347,8 @@ class UsuariosController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao excluir usuário', [
-                'user_id' => $id,
-                'error' => $e->getMessage()
+            $this->logger->erroCriticoUsuarios('EXCLUSAO_USUARIO', $e->getMessage(), [
+                'user_id' => $id
             ]);
 
             return response()->json([
@@ -367,9 +393,9 @@ class UsuariosController extends Controller
                 'password' => Hash::make($request->password)
             ]);
 
-            Log::info('Senha do usuário atualizada', [
-                'user_id' => $id,
-                'updated_by' => Auth::id()
+            // Log de sucesso usando o service
+            $this->logger->sucessoAlteracaoSenha($id, [
+                'alterado_por' => Auth::id()
             ]);
 
             return response()->json([

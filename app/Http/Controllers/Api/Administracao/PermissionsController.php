@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Administracao\Permission;
 use App\Models\Administracao\Role;
 use App\Models\Administracao\User;
+use App\Services\Logging\GerenciarUsuariosLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -15,12 +16,15 @@ use Illuminate\Support\Facades\Auth;
  */
 class PermissionsController extends Controller
 {
+    protected $logger;
+
     /**
      * Construtor com middleware de autenticação
      */
-    public function __construct()
+    public function __construct(GerenciarUsuariosLogService $logger)
     {
         $this->middleware('auth');
+        $this->logger = $logger;
     }
 
     /**
@@ -157,14 +161,29 @@ class PermissionsController extends Controller
                 ], 409);
             }
 
+            // Log de início da operação
+            $this->logger->vinculacaoPermissaoPapel($permissionId, $roleId, [
+                'vinculado_por' => Auth::id()
+            ]);
+
             // Criar a vinculação
             $role->permissions()->attach($permissionId);
+
+            // Log de sucesso
+            $this->logger->sucessoVinculacaoPermissaoPapel($permissionId, $roleId, [
+                'vinculado_por' => Auth::id()
+            ]);
 
             return response()->json([
                 'message' => 'Permissão vinculada ao papel com sucesso!'
             ], 201);
 
         } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('VINCULACAO_PERMISSAO_PAPEL', $e->getMessage(), [
+                'permissao_id' => $permissionId,
+                'papel_id' => $roleId
+            ]);
+
             return response()->json([
                 'message' => 'Erro ao vincular permissão ao papel'
             ], 500);
@@ -183,14 +202,29 @@ class PermissionsController extends Controller
             $permission = Permission::findOrFail($permissionId);
             $role = Role::findOrFail($roleId);
 
+            // Log de início da operação
+            $this->logger->desvinculacaoPermissaoPapel($permissionId, $roleId, [
+                'desvinculado_por' => Auth::id()
+            ]);
+
             // Remover a vinculação
             $role->permissions()->detach($permissionId);
+
+            // Log de sucesso
+            $this->logger->sucessoDesvinculacaoPermissaoPapel($permissionId, $roleId, [
+                'desvinculado_por' => Auth::id()
+            ]);
 
             return response()->json([
                 'message' => 'Permissão desvinculada do papel com sucesso!'
             ]);
 
         } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('DESVINCULACAO_PERMISSAO_PAPEL', $e->getMessage(), [
+                'permissao_id' => $permissionId,
+                'papel_id' => $roleId
+            ]);
+
             return response()->json([
                 'message' => 'Erro ao desvincular permissão do papel'
             ], 500);
@@ -213,11 +247,21 @@ class PermissionsController extends Controller
                 'is_active' => 'boolean'
             ]);
 
+            // Log de início da operação
+            $this->logger->criacaoPermissao(0, $request->all(), [
+                'criado_por' => Auth::id()
+            ]);
+
             $permission = Permission::create([
                 'name' => $request->name,
                 'display_name' => $request->display_name,
                 'description' => $request->description,
                 'is_active' => $request->get('is_active', true)
+            ]);
+
+            // Log de sucesso
+            $this->logger->sucessoCriacaoPermissao($permission->id, $permission->toArray(), [
+                'criado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -226,6 +270,10 @@ class PermissionsController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('CRIACAO_PERMISSAO', $e->getMessage(), [
+                'dados' => $request->all()
+            ]);
+
             return response()->json([
                 'message' => 'Erro ao criar permissão'
             ], 500);
@@ -250,11 +298,24 @@ class PermissionsController extends Controller
                 'is_active' => 'boolean'
             ]);
 
+            // Dados anteriores para o log
+            $dadosAnteriores = $permission->toArray();
+            
+            // Log de início da operação
+            $this->logger->edicaoPermissao($permission->id, $dadosAnteriores, $request->all(), [
+                'editado_por' => Auth::id()
+            ]);
+
             $permission->update([
                 'name' => $request->name,
                 'display_name' => $request->display_name,
                 'description' => $request->description,
                 'is_active' => $request->get('is_active', true)
+            ]);
+
+            // Log de sucesso
+            $this->logger->sucessoEdicaoPermissao($permission->id, $dadosAnteriores, $permission->fresh()->toArray(), [
+                'editado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -263,6 +324,11 @@ class PermissionsController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('EDICAO_PERMISSAO', $e->getMessage(), [
+                'permissao_id' => $id,
+                'dados' => $request->all()
+            ]);
+
             return response()->json([
                 'message' => 'Erro ao atualizar permissão'
             ], 500);
@@ -287,13 +353,30 @@ class PermissionsController extends Controller
                 ], 422);
             }
 
+            // Dados da permissão para o log
+            $dadosPermissao = $permission->toArray();
+            
+            // Log de início da operação
+            $this->logger->exclusaoPermissao($permission->id, $dadosPermissao, [
+                'excluido_por' => Auth::id()
+            ]);
+
             $permission->delete();
+
+            // Log de sucesso
+            $this->logger->sucessoExclusaoPermissao($id, $dadosPermissao, [
+                'excluido_por' => Auth::id()
+            ]);
 
             return response()->json([
                 'message' => 'Permissão excluída com sucesso!'
             ]);
 
         } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('EXCLUSAO_PERMISSAO', $e->getMessage(), [
+                'permissao_id' => $id
+            ]);
+
             return response()->json([
                 'message' => 'Erro ao excluir permissão'
             ], 500);

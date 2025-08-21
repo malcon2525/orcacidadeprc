@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Administracao\Role;
 use App\Models\Administracao\User;
 use App\Models\Administracao\Permission;
+use App\Services\Logging\GerenciarUsuariosLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -25,12 +25,15 @@ use Illuminate\Support\Facades\Auth;
  */
 class RolesController extends Controller
 {
+    protected $logger;
+
     /**
      * Construtor com middleware de autenticação
      */
-    public function __construct()
+    public function __construct(GerenciarUsuariosLogService $logger)
     {
         $this->middleware('auth');
+        $this->logger = $logger;
     }
 
     /**
@@ -49,18 +52,8 @@ class RolesController extends Controller
         
         $user = Auth::user();
         
-        // Log para debug
-        Log::info('Verificando permissões', [
-            'user_id' => $user->id,
-            'user_email' => $user->email,
-            'user_roles' => $user->roles->pluck('name')->toArray(),
-            'permissions_required' => $permissions,
-            'require_all' => $requireAll
-        ]);
-        
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
-            Log::info('Usuário é super admin - acesso concedido');
             return true;
         }
         
@@ -73,32 +66,20 @@ class RolesController extends Controller
             // Todas as permissões são obrigatórias (AND)
             foreach ($permissions as $permission) {
                 if (!$user->hasPermission($permission)) {
-                    Log::warning('Usuário sem permissão obrigatória - acesso negado', [
-                        'user_id' => $user->id,
-                        'permission_required' => $permission
-                    ]);
                     abort(403, "Permissão obrigatória: {$permission}");
                 }
             }
-            Log::info('Usuário tem todas as permissões obrigatórias - acesso concedido');
         } else {
             // Pelo menos uma permissão é suficiente (OR)
             $hasAnyPermission = false;
             foreach ($permissions as $permission) {
                 if ($user->hasPermission($permission)) {
                     $hasAnyPermission = true;
-                    Log::info('Usuário tem permissão específica - acesso concedido', [
-                        'permission_used' => $permission
-                    ]);
                     break;
                 }
             }
             
             if (!$hasAnyPermission) {
-                Log::warning('Usuário sem permissão suficiente - acesso negado', [
-                    'user_id' => $user->id,
-                    'permissions_checked' => $permissions
-                ]);
                 abort(403, 'Acesso negado. Permissão insuficiente.');
             }
         }
@@ -137,20 +118,12 @@ class RolesController extends Controller
             $query->orderBy('display_name', 'asc');
 
             $papeis = $query->get();
-            
-            // Calcular contadores manualmente para garantir precisão
-            foreach ($papeis as $papel) {
-                $papel->users_count = $papel->users()->count();
-                $papel->permissions_count = $papel->permissions()->count();
-                $papel->active_permissions_count = $papel->permissions()->where('is_active', true)->count();
-            }
 
             return response()->json($papeis);
             
         } catch (\Exception $e) {
-            Log::error('Erro ao listar papéis', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            $this->logger->erroCriticoUsuarios('LISTAGEM_PAPEIS', $e->getMessage(), [
+                'filtros' => $request->all()
             ]);
             
             return response()->json([
@@ -184,10 +157,18 @@ class RolesController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $this->logger->erroValidacaoUsuarios('CRIACAO_PAPEL', $validator->errors()->toArray(), [
+                'dados_recebidos' => $request->all()
+            ]);
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
+            // Log de início da operação
+            $this->logger->criacaoPapel(0, $request->all(), [
+                'criado_por' => Auth::id()
+            ]);
+
             $papel = Role::create([
                 'name' => $request->name,
                 'display_name' => $request->display_name,
@@ -195,9 +176,16 @@ class RolesController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
+            // Log de sucesso
+            $this->logger->sucessoCriacaoPapel($papel->id, $papel->toArray(), [
+                'criado_por' => Auth::id()
+            ]);
+
             return response()->json($papel, 201);
         } catch (\Exception $e) {
-            Log::error('Erro ao criar papel: ' . $e->getMessage());
+            $this->logger->erroCriticoUsuarios('CRIACAO_PAPEL', $e->getMessage(), [
+                'dados' => $request->all()
+            ]);
             return response()->json(['message' => 'Erro interno do servidor'], 500);
         }
     }
@@ -236,11 +224,23 @@ class RolesController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $this->logger->erroValidacaoUsuarios('EDICAO_PAPEL', $validator->errors()->toArray(), [
+                'papel_id' => $id,
+                'dados_recebidos' => $request->all()
+            ]);
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
             $papel = Role::findOrFail($id);
+            
+            // Dados anteriores para o log
+            $dadosAnteriores = $papel->toArray();
+            
+            // Log de início da operação
+            $this->logger->edicaoPapel($papel->id, $dadosAnteriores, $request->all(), [
+                'editado_por' => Auth::id()
+            ]);
             
             $papel->update([
                 'name' => $request->name,
@@ -249,15 +249,20 @@ class RolesController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
+            // Log de sucesso
+            $this->logger->sucessoEdicaoPapel($papel->id, $dadosAnteriores, $papel->fresh()->toArray(), [
+                'editado_por' => Auth::id()
+            ]);
+
             return response()->json([
                 'message' => 'Papel atualizado com sucesso',
                 'role' => $papel
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar papel', [
-                'role_id' => $id,
-                'error' => $e->getMessage()
+            $this->logger->erroCriticoUsuarios('EDICAO_PAPEL', $e->getMessage(), [
+                'papel_id' => $id,
+                'dados' => $request->all()
             ]);
 
             return response()->json([
@@ -299,18 +304,22 @@ class RolesController extends Controller
             if ($permissionsCount > 0) {
                 // Remover todas as permissões antes de excluir
                 $papel->permissions()->detach();
-                Log::info('Permissões removidas do papel antes da exclusão', [
-                    'role_id' => $id,
-                    'permissions_removed' => $permissionsCount
-                ]);
             }
+
+            // Dados do papel para o log
+            $dadosPapel = $papel->toArray();
+            
+            // Log de início da operação
+            $this->logger->exclusaoPapel($papel->id, $dadosPapel, [
+                'excluido_por' => Auth::id(),
+                'permissoes_removidas' => $permissionsCount
+            ]);
 
             $papel->delete();
 
-            Log::info('Papel excluído com sucesso', [
-                'role_id' => $id,
-                'role_name' => $papel->display_name,
-                'deleted_by' => auth()->id()
+            // Log de sucesso
+            $this->logger->sucessoExclusaoPapel($id, $dadosPapel, [
+                'excluido_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -318,9 +327,8 @@ class RolesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao excluir papel', [
-                'role_id' => $id,
-                'error' => $e->getMessage()
+            $this->logger->erroCriticoUsuarios('EXCLUSAO_PAPEL', $e->getMessage(), [
+                'papel_id' => $id
             ]);
 
             return response()->json([
@@ -367,17 +375,30 @@ class RolesController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $this->logger->erroValidacaoUsuarios('SINCRONIZACAO_PERMISSOES_PAPEL', $validator->errors()->toArray(), [
+                'papel_id' => $id,
+                'dados_recebidos' => $request->all()
+            ]);
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
             $papel = Role::findOrFail($id);
-            $papel->syncPermissions($request->permissions ?? []);
+            
+            // Permissões anteriores para o log
+            $permissoesAnteriores = $papel->permissions()->pluck('permissions.id')->toArray();
+            $permissoesNovas = $request->permissions ?? [];
+            
+            // Log de início da operação
+            $this->logger->sincronizacaoPermissoesPapel($papel->id, $permissoesAnteriores, $permissoesNovas, [
+                'editado_por' => Auth::id()
+            ]);
+            
+            $papel->syncPermissions($permissoesNovas);
 
-            Log::info('Permissões do papel atualizadas', [
-                'role_id' => $id,
-                'permissions_count' => count($request->permissions ?? []),
-                'updated_by' => auth()->id()
+            // Log de sucesso
+            $this->logger->sucessoSincronizacaoPermissoesPapel($papel->id, $permissoesAnteriores, $permissoesNovas, [
+                'editado_por' => Auth::id()
             ]);
 
             return response()->json([
@@ -386,9 +407,9 @@ class RolesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar permissões do papel', [
-                'role_id' => $id,
-                'error' => $e->getMessage()
+            $this->logger->erroCriticoUsuarios('SINCRONIZACAO_PERMISSOES_PAPEL', $e->getMessage(), [
+                'papel_id' => $id,
+                'dados' => $request->all()
             ]);
 
             return response()->json([
@@ -430,23 +451,13 @@ class RolesController extends Controller
      */
     public function getUsers($id)
     {
-        Log::info('Método getUsers chamado', ['role_id' => $id]);
-        
         try {
             // Visualizar: papel_crud OU papel_consultar
             $this->checkAccess(['papel_crud', 'papel_consultar']);
-            Log::info('Permissões verificadas com sucesso');
             
-            Log::info('Buscando papel no banco', ['role_id' => $id]);
             $papel = Role::findOrFail($id);
-            Log::info('Papel encontrado', [
-                'role_id' => $papel->id,
-                'role_name' => $papel->name,
-                'role_display_name' => $papel->display_name
-            ]);
             
             // Retornar usuários ativos associados ao papel
-            Log::info('Buscando usuários associados ao papel');
             $usuarios = $papel->users()
                 ->where('users.is_active', true)
                 ->with(['roles' => function($query) {
@@ -454,18 +465,9 @@ class RolesController extends Controller
                 }])
                 ->get(['users.id', 'users.name', 'users.email', 'users.username', 'users.is_active', 'users.last_login_at']);
             
-            Log::info('Usuários encontrados', ['count' => $usuarios->count()]);
             return response()->json($usuarios);
             
         } catch (\Exception $e) {
-            Log::error('Erro no método getUsers', [
-                'role_id' => $id,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                 return response()->json([
                     'message' => 'Papel não encontrado',
@@ -493,6 +495,10 @@ class RolesController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $this->logger->erroValidacaoUsuarios('ADICAO_USUARIO_PAPEL', $validator->errors()->toArray(), [
+                'papel_id' => $id,
+                'dados_recebidos' => $request->all()
+            ]);
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
@@ -502,7 +508,17 @@ class RolesController extends Controller
 
             // Evitar duplicidade
             if (!$papel->users()->where('users.id', $usuario->id)->exists()) {
+                // Log de início da operação
+                $this->logger->adicaoUsuarioPapel($papel->id, $usuario->id, [
+                    'adicionado_por' => Auth::id()
+                ]);
+                
                 $papel->users()->attach($usuario->id);
+                
+                // Log de sucesso
+                $this->logger->sucessoAdicaoUsuarioPapel($papel->id, $usuario->id, [
+                    'adicionado_por' => Auth::id()
+                ]);
             }
 
             return response()->json([
@@ -511,10 +527,9 @@ class RolesController extends Controller
                 'user_id' => $usuario->id,
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Erro ao adicionar usuário ao papel', [
-                'role_id' => $id,
-                'user_id' => $request->user_id ?? null,
-                'error' => $e->getMessage(),
+            $this->logger->erroCriticoUsuarios('ADICAO_USUARIO_PAPEL', $e->getMessage(), [
+                'papel_id' => $id,
+                'usuario_id' => $request->user_id ?? null
             ]);
 
             return response()->json([
@@ -536,7 +551,17 @@ class RolesController extends Controller
             $papel = Role::findOrFail($id);
             $usuario = User::findOrFail($userId);
 
+            // Log de início da operação
+            $this->logger->remocaoUsuarioPapel($papel->id, $usuario->id, [
+                'removido_por' => Auth::id()
+            ]);
+
             $papel->users()->detach($usuario->id);
+
+            // Log de sucesso
+            $this->logger->sucessoRemocaoUsuarioPapel($papel->id, $usuario->id, [
+                'removido_por' => Auth::id()
+            ]);
 
             return response()->json([
                 'message' => 'Usuário removido do papel com sucesso',
@@ -544,10 +569,9 @@ class RolesController extends Controller
                 'user_id' => $usuario->id,
             ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao remover usuário do papel', [
-                'role_id' => $id,
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
+            $this->logger->erroCriticoUsuarios('REMOCAO_USUARIO_PAPEL', $e->getMessage(), [
+                'papel_id' => $id,
+                'usuario_id' => $userId
             ]);
 
             return response()->json([

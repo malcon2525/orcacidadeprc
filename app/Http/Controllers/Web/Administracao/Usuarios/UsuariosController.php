@@ -3,17 +3,21 @@
 namespace App\Http\Controllers\Web\Administracao\Usuarios;
 
 use App\Http\Controllers\Controller;
+use App\Services\Logging\GerenciarUsuariosLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class UsuariosController extends Controller
 {
+    protected $logger;
+
     /**
      * Construtor com middleware de autenticação
      */
-    public function __construct()
+    public function __construct(GerenciarUsuariosLogService $logger)
     {
         $this->middleware('auth');
+        $this->logger = $logger;
     }
 
     /**
@@ -68,25 +72,37 @@ class UsuariosController extends Controller
      */
     public function index()
     {
-        // MENU: verifica se tem papel gerenciar_usuarios (acesso ao menu)
         $user = Auth::user();
+        
+        // Log de acesso à funcionalidade
+        $this->logger->inicioOperacao('ACESSO_GERENCIAR_USUARIOS', [
+            'usuario_id' => $user->id,
+            'usuario_email' => $user->email,
+            'usuario_papeis' => $user->roles->pluck('name')->toArray()
+        ]);
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
+            $this->logger->sucesso('ACESSO_GERENCIAR_USUARIOS', [
+                'tipo_acesso' => 'super_admin'
+            ]);
             return view('administracao.usuarios.index');
         }
         
-        // 2. Tem o papel gerenciar_usuarios? → Acesso ao módulo
-        if ($user->hasRole('gerenciar_usuarios')) {
+        // 2. Tem permissão específica?
+        if ($user->hasPermission('gerenciar_usuarios')) {
+            $this->logger->sucesso('ACESSO_GERENCIAR_USUARIOS', [
+                'tipo_acesso' => 'permissao_especifica'
+            ]);
             return view('administracao.usuarios.index');
         }
         
-        // 3. Tem o papel visualizar_usuarios? → Acesso ao módulo (apenas consulta)
-        if ($user->hasRole('visualizar_usuarios')) {
-            return view('administracao.usuarios.index');
-        }
+        // 3. Nenhuma das opções → Acesso negado
+        $this->logger->erroCritico('ACESSO_GERENCIAR_USUARIOS', 'Acesso negado - permissão insuficiente', [
+            'usuario_id' => $user->id,
+            'papeis_usuario' => $user->roles->pluck('name')->toArray()
+        ]);
         
-        // 3. Acesso negado
-        abort(403, 'Acesso negado. Papel insuficiente.');
+        abort(403, 'Acesso negado. Permissão insuficiente.');
     }
 }
