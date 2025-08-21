@@ -595,7 +595,7 @@ export default {
                 
                 // Processar resposta do servidor
                 const dados = response.data.data || response.data
-                console.log('Dados recebidos:', dados)
+        
                 
                 // Atualizar contadores das categorias
                 this.categorias[0].contagem = dados.equipamentos?.length || 0
@@ -631,8 +631,8 @@ export default {
                 }
                 this.setStepCompleted('step4', finalResult)
                 
-                console.log('Estado depois:', this.stepStates.step2)
-                console.log('Computed states:', this.computedStepStates)
+        
+        
                 
                 this.mensagem = {
                     tipo: 'sucesso',
@@ -647,7 +647,7 @@ export default {
                 
                 // Forçar atualização do estado do workflow
                 this.$nextTick(() => {
-                    console.log('Estado final do workflow:', this.computedStepStates)
+            
                 })
                 
             } catch (error) {
@@ -751,7 +751,7 @@ export default {
                     this.categorias.forEach(cat => cat.contagem = 0)
                     break
                 default:
-                    console.log('Ação não implementada:', actionKey)
+            
             }
         },
 
@@ -862,7 +862,7 @@ export default {
          */
         exportarParaExcel(dados, nomeArquivo) {
             // Implementar exportação para Excel
-            console.log('Exportando para Excel:', nomeArquivo, dados)
+    
             this.mensagem = {
                 tipo: 'sucesso',
                 texto: `Exportação para Excel de ${nomeArquivo} iniciada!`
@@ -873,14 +873,14 @@ export default {
          * Ver detalhes da validação
          */
         verDetalhesValidacao() {
-            console.log('Detalhes da validação:', this.stepStates.step3.data)
+    
         },
 
         /**
          * Download completo dos dados
          */
         downloadCompleto(data) {
-            console.log('Download completo:', data)
+    
             this.mensagem = {
                 tipo: 'sucesso',
                 texto: 'Download completo iniciado!'

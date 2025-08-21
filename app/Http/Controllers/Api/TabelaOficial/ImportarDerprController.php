@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\TabelaOficial;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
+// Log facade removido - agora usando service de log
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +20,7 @@ use App\Models\TabelaOficial\Derpr\{
     DerprTransporte,
     DerprFormulaTransporte
 };
+use App\Services\Logging\ImportarDerprLogService;
 
 /**
  * Controller para importação de tabelas DER-PR
@@ -32,10 +33,16 @@ class ImportarDerprController extends Controller
     /**
      * Construtor com middleware de autenticação
      */
-    public function __construct()
+    public function __construct(ImportarDerprLogService $logger)
     {
         $this->middleware('auth');
+        $this->logger = $logger;
     }
+    
+    /**
+     * Service de log para DER-PR
+     */
+    protected ImportarDerprLogService $logger;
 
     /**
      * Verifica se o usuário tem permissão para acessar este controller
@@ -65,45 +72,23 @@ class ImportarDerprController extends Controller
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
             // ===================================================================
             
-            $this->logInicioOperacao('PROCESSAMENTO_SERVICOS_GERAIS', [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName(),
-                'tamanho' => $request->file('arquivo')->getSize()
-            ]);
+            $this->logger->inicioAba(1, 'SERVICOS_GERAIS');
             
             // Validar arquivo enviado
             $validacao = $this->validarArquivoPDF($request);
             if (!$validacao['sucesso']) {
-                $this->logErroValidacao('VALIDACAO_PDF', $validacao['mensagem'], [
-                    'arquivo' => $request->file('arquivo')->getClientOriginalName()
-                ]);
+                $this->logger->erroValidacaoDerpr('ABA_1_SERVICOS_GERAIS', $validacao['mensagem']);
                 return response()->json(['message' => $validacao['mensagem']], 400);
             }
-            
-            $this->logProgresso('VALIDACAO_PDF', 'Arquivo PDF validado com sucesso');
-            
-            // ===================================================================
-            // ETAPA 2: LIMPEZA DE DIRETÓRIOS ANTERIORES
-            // ===================================================================
-            
-            $this->logProgresso('LIMPEZA_DIRETORIOS', 'Iniciando limpeza de diretórios anteriores');
             
             // Verificar e apagar diretórios anteriores de processamento DERPR
             $tempDir = storage_path('app/private/temp');
             if (is_dir($tempDir)) {
                 $subdirs = glob($tempDir . '/processado_derpr_*', GLOB_ONLYDIR);
                 foreach ($subdirs as $subdir) {
-                    // Remover diretório e todo seu conteúdo
                     $this->removeDirectory($subdir);
                 }
             }
-            
-            $this->logProgresso('LIMPEZA_DIRETORIOS', 'Diretórios anteriores removidos com sucesso');
-            
-            // ===================================================================
-            // ETAPA 3: SALVAMENTO TEMPORÁRIO E CRIAÇÃO DE DIRETÓRIO ÚNICO
-            // ===================================================================
-            
-            $this->logProgresso('ARQUIVO_TEMPORARIO', 'Salvando arquivo temporariamente');
             
             $arquivo = $request->file('arquivo');
             
@@ -119,28 +104,14 @@ class ImportarDerprController extends Controller
             // Armazenar nome do diretório na session para uso nas outras abas
             session(['derpr_processamento_dir' => $nomeSaidaDir]);
             
-            $this->logProgresso('DIRETORIO_CRIADO', 'Diretório de processamento criado', ['diretorio' => $nomeSaidaDir]);
-            
-            // ===================================================================
-            // ETAPA 4: EXECUÇÃO DO SCRIPT PYTHON
-            // ===================================================================
-            
-            $this->logProgresso('SCRIPT_PYTHON', 'Executando script Python para extração de dados');
-            
             // Executar script Python
             $dados = $this->executarScriptPython($caminhoCompleto, 'servicos');
             
-            $this->logProgresso('SCRIPT_PYTHON', 'Script Python executado com sucesso', [
-                'total_composicoes' => count($dados)
-            ]);
-            
             // Limpar arquivo temporário
             Storage::delete($caminhoCompleto);
-            $this->logProgresso('LIMPEZA', 'Arquivo temporário removido');
             
-            $this->logSucesso('PROCESSAMENTO_SERVICOS_GERAIS', [
-                'total_composicoes_extraidas' => count($dados),
-                'diretorio_processamento' => $nomeSaidaDir
+            $this->logger->sucessoAba(1, 'SERVICOS_GERAIS', [
+                'total_composicoes' => count($dados)
             ]);
             
             return response()->json([
@@ -150,9 +121,7 @@ class ImportarDerprController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            $this->logErroCritico('PROCESSAMENTO_SERVICOS_GERAIS', $e->getMessage(), [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName() ?? 'N/A'
-            ]);
+            $this->logger->erroCriticoDerpr('ABA_1_SERVICOS_GERAIS', $e->getMessage());
             
             return response()->json([
                 'message' => 'Ocorreu um erro ao processar o arquivo: ' . $e->getMessage()
@@ -175,31 +144,18 @@ class ImportarDerprController extends Controller
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
             // ===================================================================
             
-            $this->logInicioOperacao('PROCESSAMENTO_INSUMOS', [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName(),
-                'tamanho' => $request->file('arquivo')->getSize()
-            ]);
+            $this->logger->inicioAba(2, 'INSUMOS');
             
             // Validar arquivo enviado
             $validacao = $this->validarArquivoPDF($request);
             if (!$validacao['sucesso']) {
-                $this->logErroValidacao('VALIDACAO_PDF', $validacao['mensagem'], [
-                    'arquivo' => $request->file('arquivo')->getClientOriginalName()
-                ]);
+                $this->logger->erroValidacaoDerpr('ABA_2_INSUMOS', $validacao['mensagem']);
                 return response()->json(['message' => $validacao['mensagem']], 400);
             }
             
-            $this->logProgresso('VALIDACAO_PDF', 'Arquivo PDF validado com sucesso');
-            
-            // ===================================================================
-            // ETAPA 2: VERIFICAR SE EXISTE DIRETÓRIO DA SESSÃO
-            // ===================================================================
-            
-            $this->logProgresso('VERIFICACAO_SESSAO', 'Verificando diretório de processamento da sessão');
-            
             $nomeDiretorio = session('derpr_processamento_dir');
             if (!$nomeDiretorio) {
-                $this->logErroValidacao('VERIFICACAO_SESSAO', 'Diretório de processamento não encontrado na sessão');
+                $this->logErroValidacao('ABA_2_INSUMOS', 'Diretório de processamento não encontrado na sessão');
                 return response()->json([
                     'message' => 'É necessário processar primeiro a Aba 1 (Serviços Gerais)'
                 ], 400);
@@ -207,66 +163,29 @@ class ImportarDerprController extends Controller
             
             $diretorioProcessamento = Storage::path('temp/' . $nomeDiretorio);
             if (!file_exists($diretorioProcessamento)) {
-                $this->logErroValidacao('VERIFICACAO_SESSAO', 'Diretório de processamento não existe no sistema');
+                $this->logErroValidacao('ABA_2_INSUMOS', 'Diretório de processamento não existe no sistema');
                 return response()->json([
                     'message' => 'Diretório de processamento não encontrado. Processe primeiro a Aba 1.'
                 ], 400);
             }
             
-            $this->logProgresso('VERIFICACAO_SESSAO', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
-            
-            // ===================================================================
-            // ETAPA 3: SALVAMENTO TEMPORÁRIO
-            // ===================================================================
-            
-            $this->logProgresso('ARQUIVO_TEMPORARIO', 'Salvando arquivo temporariamente');
-            
             $arquivo = $request->file('arquivo');
             $caminhoCompleto = $this->salvarArquivoTemporario($arquivo);
             
-            // ===================================================================
-            // ETAPA 4: EXECUÇÃO DO SCRIPT PYTHON
-            // ===================================================================
-            
-            $this->logProgresso('SCRIPT_PYTHON', 'Executando script Python para extração de dados');
-            
             // Executar script Python
-            $this->logProgresso('DEBUG_PYTHON', 'Chamando script Python para insumos', [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName(),
-                'caminho_temp' => $caminhoCompleto,
-                'tipo' => 'insumos'
-            ]);
-            
             $dados = $this->executarScriptPython($caminhoCompleto, 'insumos');
-            
-            // Log detalhado dos dados retornados
-            $this->logProgresso('DEBUG_DADOS_RETORNADOS', 'Dados retornados pelo Python', [
-                'tipo_dados' => gettype($dados),
-                'estrutura' => is_array($dados) ? array_keys($dados) : 'não é array',
-                'dados_completos' => $dados
-            ]);
-            
-            $this->logProgresso('SCRIPT_PYTHON', 'Script Python executado com sucesso', [
-                'total_equipamentos' => count($dados['equipamentos'] ?? []),
-                'total_mao_de_obra' => count($dados['mao_de_obra'] ?? []),
-                'total_materiais' => count($dados['materiais'] ?? []),
-                'total_servicos' => count($dados['servicos'] ?? []),
-                'total_transportes' => count($dados['transportes'] ?? [])
-            ]);
             
             // Limpar arquivo temporário
             Storage::delete($caminhoCompleto);
-            $this->logProgresso('LIMPEZA', 'Arquivo temporário removido');
             
-            $this->logSucesso('PROCESSAMENTO_INSUMOS', [
-                'total_insumos_extraidos' => array_sum([
+            $this->logger->sucessoAba(2, 'INSUMOS', [
+                'total_insumos' => array_sum([
                     count($dados['equipamentos'] ?? []),
                     count($dados['mao_de_obra'] ?? []),
                     count($dados['materiais'] ?? []),
                     count($dados['servicos'] ?? []),
                     count($dados['transportes'] ?? [])
-                ]),
-                'diretorio_processamento' => $nomeDiretorio
+                ])
             ]);
             
             return response()->json([
@@ -276,9 +195,7 @@ class ImportarDerprController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            $this->logErroCritico('PROCESSAMENTO_INSUMOS', $e->getMessage(), [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName() ?? 'N/A'
-            ]);
+            $this->logger->erroCriticoDerpr('ABA_2_INSUMOS', $e->getMessage());
             
             return response()->json([
                 'message' => 'Ocorreu um erro ao processar o arquivo: ' . $e->getMessage()
@@ -301,31 +218,18 @@ class ImportarDerprController extends Controller
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
             // ===================================================================
             
-            $this->logInicioOperacao('PROCESSAMENTO_FORMULAS_TRANSPORTE', [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName(),
-                'tamanho' => $request->file('arquivo')->getSize()
-            ]);
+            $this->logger->inicioAba(3, 'FORMULAS_TRANSPORTE');
             
             // Validar arquivo enviado
             $validacao = $this->validarArquivoPDF($request);
             if (!$validacao['sucesso']) {
-                $this->logErroValidacao('VALIDACAO_PDF', $validacao['mensagem'], [
-                    'arquivo' => $request->file('arquivo')->getClientOriginalName()
-                ]);
+                $this->logger->erroValidacaoDerpr('ABA_3_FORMULAS_TRANSPORTE', $validacao['mensagem']);
                 return response()->json(['message' => $validacao['mensagem']], 400);
             }
             
-            $this->logProgresso('VALIDACAO_PDF', 'Arquivo PDF validado com sucesso');
-            
-            // ===================================================================
-            // ETAPA 2: VERIFICAR SE EXISTE DIRETÓRIO DA SESSÃO
-            // ===================================================================
-            
-            $this->logProgresso('VERIFICACAO_SESSAO', 'Verificando diretório de processamento da sessão');
-            
             $nomeDiretorio = session('derpr_processamento_dir');
             if (!$nomeDiretorio) {
-                $this->logErroValidacao('VERIFICACAO_SESSAO', 'Diretório de processamento não encontrado na sessão');
+                $this->logErroValidacao('ABA_3_FORMULAS_TRANSPORTE', 'Diretório de processamento não encontrado na sessão');
                 return response()->json([
                     'message' => 'É necessário processar primeiro a Aba 1 (Serviços Gerais)'
                 ], 400);
@@ -333,43 +237,23 @@ class ImportarDerprController extends Controller
             
             $diretorioProcessamento = Storage::path('temp/' . $nomeDiretorio);
             if (!file_exists($diretorioProcessamento)) {
-                $this->logErroValidacao('VERIFICACAO_SESSAO', 'Diretório de processamento não existe no sistema');
+                $this->logErroValidacao('ABA_3_FORMULAS_TRANSPORTE', 'Diretório de processamento não existe no sistema');
                 return response()->json([
                     'message' => 'Diretório de processamento não encontrado. Processe primeiro a Aba 1.'
                 ], 400);
             }
             
-            $this->logProgresso('VERIFICACAO_SESSAO', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
-            
-            // ===================================================================
-            // ETAPA 3: SALVAMENTO TEMPORÁRIO
-            // ===================================================================
-            
-            $this->logProgresso('ARQUIVO_TEMPORARIO', 'Salvando arquivo temporariamente');
-            
             $arquivo = $request->file('arquivo');
             $caminhoCompleto = $this->salvarArquivoTemporario($arquivo);
-            
-            // ===================================================================
-            // ETAPA 4: EXECUÇÃO DO SCRIPT PYTHON
-            // ===================================================================
-            
-            $this->logProgresso('SCRIPT_PYTHON', 'Executando script Python para extração de dados');
             
             // Executar script Python
             $dados = $this->executarScriptPython($caminhoCompleto, 'formulas_transporte');
             
-            $this->logProgresso('SCRIPT_PYTHON', 'Script Python executado com sucesso', [
-                'total_formulas' => isset($dados['data']) ? count($dados['data']) : count($dados)
-            ]);
-            
             // Limpar arquivo temporário
             Storage::delete($caminhoCompleto);
-            $this->logProgresso('LIMPEZA', 'Arquivo temporário removido');
             
-            $this->logSucesso('PROCESSAMENTO_FORMULAS_TRANSPORTE', [
-                'total_formulas_extraidas' => isset($dados['data']) ? count($dados['data']) : count($dados),
-                'diretorio_processamento' => session('derpr_processamento_dir')
+            $this->logger->sucessoAba(3, 'FORMULAS_TRANSPORTE', [
+                'total_formulas' => isset($dados['data']) ? count($dados['data']) : count($dados)
             ]);
             
             return response()->json([
@@ -379,10 +263,7 @@ class ImportarDerprController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            $this->logErroCritico('PROCESSAMENTO_FORMULAS_TRANSPORTE', $e->getMessage(), [
-                'arquivo' => $request->file('arquivo')->getClientOriginalName() ?? 'N/A',
-                'trace' => $e->getTraceAsString()
-            ]);
+            $this->logger->erroCriticoDerpr('ABA_3_FORMULAS_TRANSPORTE', $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -465,13 +346,7 @@ class ImportarDerprController extends Controller
         
         $saida = shell_exec($comando);
 
-        // Log detalhado da saída do Python
-        $this->logProgresso('DEBUG_PYTHON_SAIDA', 'Saída do script Python', [
-            'tipo' => $tipo,
-            'saida_bruta' => $saida,
-            'tamanho_saida' => strlen($saida),
-            'primeiros_100_chars' => substr($saida, 0, 100)
-        ]);
+
 
         // Limpar a saída e decodificar o JSON
         $saida = trim($saida);
@@ -534,12 +409,9 @@ class ImportarDerprController extends Controller
     private function salvarDadosEmExcel(array $dados, string $nomeArquivo): void
     {
         try {
-            $this->logProgresso('EXCEL_COMPOSICOES', 'Iniciando salvamento do arquivo Excel');
-            
             // Obter diretório da sessão ou criar novo se não existir
             $nomeDiretorio = session('derpr_processamento_dir');
             if (!$nomeDiretorio) {
-                $this->logErroValidacao('EXCEL_COMPOSICOES', 'Diretório de processamento não encontrado na sessão');
                 throw new \Exception('Diretório de processamento não encontrado na sessão');
             }
             
@@ -548,7 +420,6 @@ class ImportarDerprController extends Controller
             // Criar diretório se não existir
             if (!file_exists($diretorioProcessamento)) {
                 mkdir($diretorioProcessamento, 0755, true);
-                $this->logProgresso('EXCEL_COMPOSICOES', 'Diretório criado com sucesso');
             }
 
             // Criar planilha
@@ -597,18 +468,10 @@ class ImportarDerprController extends Controller
             $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata.json';
             file_put_contents($arquivoMetadata, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-            $this->logSucesso('EXCEL_COMPOSICOES', [
-                'arquivo_excel' => $nomeArquivo,
-                'arquivo_metadata' => 'derpr_metadata.json',
-                'total_registros' => count($dados),
-                'diretorio' => $nomeDiretorio
-            ]);
+            // Arquivo Excel salvo com sucesso
 
         } catch (\Exception $e) {
-            $this->logErroCritico('EXCEL_COMPOSICOES', $e->getMessage(), [
-                'arquivo' => $nomeArquivo,
-                'diretorio' => $nomeDiretorio ?? 'N/A'
-            ]);
+            $this->logErroCritico('SALVAR_EXCEL', $e->getMessage());
         }
     }
 
@@ -621,12 +484,9 @@ class ImportarDerprController extends Controller
     private function salvarDadosInsumosEmExcel(array $dados): void
     {
         try {
-            $this->logProgresso('EXCEL_INSUMOS', 'Iniciando salvamento dos arquivos Excel de insumos');
-            
             // Obter diretório da sessão
             $nomeDiretorio = session('derpr_processamento_dir');
             if (!$nomeDiretorio) {
-                $this->logErroValidacao('EXCEL_INSUMOS', 'Diretório de processamento não encontrado na sessão');
                 throw new \Exception('Diretório de processamento não encontrado na sessão');
             }
             
@@ -635,7 +495,6 @@ class ImportarDerprController extends Controller
             // Criar diretório se não existir
             if (!file_exists($diretorioProcessamento)) {
                 mkdir($diretorioProcessamento, 0755, true);
-                $this->logProgresso('EXCEL_INSUMOS', 'Diretório criado com sucesso');
             }
 
             // Definir os 6 tipos de arquivos
@@ -653,7 +512,6 @@ class ImportarDerprController extends Controller
             // Salvar cada tipo de dados em um arquivo separado
             foreach ($tiposArquivos as $tipo => $nomeArquivo) {
                 if (!empty($dados[$tipo])) {
-                    $this->logProgresso('EXCEL_INSUMOS', "Processando arquivo {$tipo}", ['total_itens' => count($dados[$tipo])]);
                     $this->salvarTipoInsumoEmExcel($dados[$tipo], $diretorioProcessamento . '/' . $nomeArquivo, $tipo);
                     $arquivosProcessados[] = $nomeArquivo;
                 }
@@ -676,17 +534,10 @@ class ImportarDerprController extends Controller
             $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata_insumos.json';
             file_put_contents($arquivoMetadata, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-            $this->logSucesso('EXCEL_INSUMOS', [
-                'arquivos_processados' => $arquivosProcessados,
-                'arquivo_metadata' => 'derpr_metadata_insumos.json',
-                'total_arquivos' => count($arquivosProcessados),
-                'diretorio' => $nomeDiretorio
-            ]);
+            // Arquivos Excel de insumos salvos com sucesso
 
         } catch (\Exception $e) {
-            $this->logErroCritico('EXCEL_INSUMOS', $e->getMessage(), [
-                'diretorio' => $nomeDiretorio ?? 'N/A'
-            ]);
+            $this->logErroCritico('SALVAR_EXCEL_INSUMOS', $e->getMessage());
         }
     }
 
@@ -815,12 +666,9 @@ class ImportarDerprController extends Controller
         $this->verificarPermissao();
         
         try {
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Iniciando verificação de arquivos disponíveis');
-            
             $nomeDiretorio = session('derpr_processamento_dir');
             
             if (!$nomeDiretorio) {
-                $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Nenhum diretório de processamento encontrado na sessão');
                 return response()->json([
                     'success' => true,
                     'status' => 'sem_diretorio',
@@ -845,7 +693,6 @@ class ImportarDerprController extends Controller
             $diretorioProcessamento = Storage::path('temp/' . $nomeDiretorio);
             
             if (!file_exists($diretorioProcessamento)) {
-                $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Diretório de processamento não existe no sistema', ['diretorio' => $nomeDiretorio]);
                 return response()->json([
                     'success' => true,
                     'status' => 'diretorio_inexistente',
@@ -897,13 +744,7 @@ class ImportarDerprController extends Controller
             $podeGravar = $totalDisponiveis === count($arquivosEsperados);
             $status = $podeGravar ? 'completo' : ($totalDisponiveis > 0 ? 'incompleto' : 'sem_arquivos');
             
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Verificação concluída', [
-                'status' => $status,
-                'total_disponiveis' => $totalDisponiveis,
-                'total_esperados' => count($arquivosEsperados),
-                'pode_gravar' => $podeGravar,
-                'diretorio' => $nomeDiretorio
-            ]);
+            // Verificação de arquivos concluída
             
             return response()->json([
                 'success' => true,
@@ -918,7 +759,7 @@ class ImportarDerprController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            $this->logErroCritico('VERIFICACAO_ARQUIVOS', $e->getMessage());
+            $this->logErroCritico('VERIFICAR_ARQUIVOS', $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -934,20 +775,7 @@ class ImportarDerprController extends Controller
         }
     }
 
-    /**
-     * Log do início da gravação automática
-     * 
-     * @param Request $request
-     * @return void
-     */
-    private function logarInicioGravacaoAutomatica(Request $request): void
-    {
-        $diretorio = session('derpr_processamento_dir');
-        
-        $this->logInicioOperacao('GRAVACAO_AUTOMATICA', [
-            'diretorio_processamento' => $diretorio
-        ]);
-    }
+    // Método de log removido - agora usando service de log
 
     /**
      * Remove um diretório e todo seu conteúdo recursivamente
@@ -987,20 +815,11 @@ class ImportarDerprController extends Controller
         $tempoInicio = microtime(true);
         
         try {
-            $this->logInicioOperacao('IMPORTACAO_LOTE', [
-                'usuario' => auth()->user() ? auth()->user()->name : 'N/A',
-                'ip' => request()->ip()
-            ]);
-            
-            // ===================================================================
-            // ETAPA 1: VERIFICAR SE EXISTE DIRETÓRIO DA SESSÃO
-            // ===================================================================
-            
-            $this->logProgresso('VERIFICACAO_SESSAO', 'Verificando diretório de processamento da sessão');
+            $this->logger->gravacaoBanco();
             
             $nomeDiretorio = session('derpr_processamento_dir');
             if (!$nomeDiretorio) {
-                $this->logErroValidacao('VERIFICACAO_SESSAO', 'Diretório de processamento não encontrado na sessão');
+                $this->logErroValidacao('GRAVACAO_BANCO_DERPR', 'Diretório de processamento não encontrado na sessão');
                 return response()->json([
                     'success' => false,
                     'message' => 'É necessário processar primeiro as Abas 1, 2 e 3'
@@ -1009,20 +828,12 @@ class ImportarDerprController extends Controller
             
             $diretorioProcessamento = Storage::path('temp/' . $nomeDiretorio);
             if (!file_exists($diretorioProcessamento)) {
-                $this->logErroValidacao('VERIFICACAO_SESSAO', 'Diretório de processamento não existe no sistema');
+                $this->logErroValidacao('GRAVACAO_BANCO_DERPR', 'Diretório de processamento não existe no sistema');
                 return response()->json([
                     'success' => false,
                     'message' => 'Diretório de processamento não encontrado. Processe primeiro as Abas 1, 2, 3 e 4.'
                 ], 400);
             }
-            
-            $this->logProgresso('VERIFICACAO_SESSAO', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
-            
-            // ===================================================================
-            // ETAPA 2: VERIFICAR SE EXISTEM OS ARQUIVOS NECESSÁRIOS
-            // ===================================================================
-            
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Verificando arquivos necessários para importação');
             
             $arquivosEsperados = [
                 'derpr_composicoes.xlsx',
@@ -1042,25 +853,16 @@ class ImportarDerprController extends Controller
             }
             
             if (!empty($arquivosFaltantes)) {
-                $this->logErroValidacao('VERIFICACAO_ARQUIVOS', 'Arquivos faltando para importação', ['arquivos_faltantes' => $arquivosFaltantes]);
+                $this->logErroValidacao('GRAVACAO_BANCO_DERPR', 'Arquivos faltando para importação', ['arquivos_faltantes' => $arquivosFaltantes]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Arquivos faltando: ' . implode(', ', $arquivosFaltantes) . '. Processe primeiro as Abas 1, 2 e 3.'
                 ], 400);
             }
             
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Todos os arquivos necessários estão disponíveis');
-            
-            // ===================================================================
-            // ETAPA 3: PROCESSAR ARQUIVOS AUTOMATICAMENTE
-            // ===================================================================
-            
-            $this->logProgresso('PROCESSAMENTO_LOTE', 'Iniciando processamento automático dos arquivos');
-            
             $configuracao = $this->getConfiguracaoArquivos();
             
-            // Log do início da gravação no banco
-            $this->logarInicioGravacaoAutomatica($request);
+            // Início da gravação automática no banco
             
             try {
                 // Processar e salvar dados
@@ -1069,8 +871,7 @@ class ImportarDerprController extends Controller
                 // Calcular tempo de processamento
                 $tempoProcessamento = microtime(true) - $tempoInicio;
                 
-                // Log da conclusão da gravação
-                $this->logarConclusaoGravacao($resultados, $tempoProcessamento);
+                // Gravação concluída com sucesso
                 
                 // Gerar mensagem de resumo
                 $mensagem = $this->gerarMensagemResumo($resultados);
@@ -1078,10 +879,9 @@ class ImportarDerprController extends Controller
                 // Atualizar view de composições
                 $this->atualizarViewComposicoes();
                 
-                $this->logSucesso('IMPORTACAO_LOTE', [
-                    'tempo_processamento' => $tempoProcessamento,
-                    'total_arquivos_processados' => count($resultados),
-                    'diretorio' => $nomeDiretorio
+                $this->logger->sucesso('GRAVACAO_BANCO_DERPR', [
+                    'tempo_processamento' => round($tempoProcessamento, 2) . 's',
+                    'total_arquivos' => count($resultados)
                 ]);
                 
                 return response()->json([
@@ -1093,17 +893,13 @@ class ImportarDerprController extends Controller
             } catch (\Exception $e) {
                 $tempoProcessamento = microtime(true) - $tempoInicio;
                 
-                // Log do erro
-                $this->logarErroGravacao('ERRO_GERAL', $e->getMessage(), [
-                    'tempo_processamento' => $tempoProcessamento,
-                    'diretorio' => $nomeDiretorio
-                ]);
+                // Log do erro na gravação
                 
                 throw $e;
             }
             
         } catch (\Exception $e) {
-            $this->logErroCritico('IMPORTACAO_LOTE', $e->getMessage());
+            $this->logger->erroCriticoDerpr('GRAVACAO_BANCO_DERPR', $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao processar arquivos: ' . $e->getMessage()
@@ -1130,23 +926,7 @@ class ImportarDerprController extends Controller
         return ['sucesso' => true];
     }
 
-    /**
-     * Loga os arquivos recebidos para importação
-     * 
-     * @param array $arquivos
-     */
-    private function logarArquivosRecebidos($arquivos): void
-    {
-        $logPath = storage_path('logs/importacao_tabelas_oficiais.log');
-        $logMsg = "[" . now()->toDateTimeString() . "] [LOTE_DERPR] Arquivos recebidos:\n";
-        foreach ($arquivos as $arquivo) {
-            $logMsg .= sprintf("- %s (tamanho: %s bytes)\n", 
-                $arquivo->getClientOriginalName(),
-                $arquivo->getSize()
-            );
-        }
-        file_put_contents($logPath, $logMsg, FILE_APPEND);
-    }
+    // Método de log removido - verbosidade desnecessária
 
     /**
      * Salva os arquivos temporariamente
@@ -1285,18 +1065,7 @@ class ImportarDerprController extends Controller
         return $mensagem;
     }
 
-    /**
-     * Loga o resumo do processamento
-     * 
-     * @param string $mensagem
-     */
-    private function logarResumoProcessamento($mensagem): void
-    {
-        $logPath = storage_path('logs/importacao_tabelas_oficiais.log');
-        $logMsg = "[" . now()->toDateTimeString() . "] [LOTE_DERPR] Resumo do processamento:\n";
-        $logMsg .= $mensagem . "\n";
-        file_put_contents($logPath, $logMsg, FILE_APPEND);
-    }
+    // Método de log removido - agora usando service de log
 
     /**
      * Atualiza a view de composições
@@ -1352,74 +1121,7 @@ class ImportarDerprController extends Controller
         }
     }
 
-    // ========================================
-    // MÉTODOS DE LOG PARA GRAVAÇÃO NO BANCO
-    // ========================================
-
-    /**
-     * Loga o início da operação de gravação no banco
-     * 
-     * @param array $arquivos
-     * @param Request $request
-     */
-    private function logarInicioGravacao($arquivos, Request $request): void
-    {
-        $arquivosNomes = collect($arquivos)->map(fn($f) => $f->getClientOriginalName())->toArray();
-        
-        $this->logInicioOperacao('GRAVACAO_BANCO', [
-            'arquivos' => $arquivosNomes
-        ]);
-    }
-
-    /**
-     * Loga o processamento de um arquivo específico
-     * 
-     * @param string $nomeArquivo
-     * @param string $status
-     * @param array $detalhes
-     */
-    private function logarProcessamentoArquivo(string $nomeArquivo, string $status, array $detalhes = []): void
-    {
-        $this->logProgresso('GRAVACAO_BANCO', "Processando arquivo: {$nomeArquivo} - Status: {$status}", $detalhes);
-    }
-
-    /**
-     * Loga a conclusão da operação de gravação
-     * 
-     * @param array $resultados
-     * @param float $tempoProcessamento
-     */
-    private function logarConclusaoGravacao(array $resultados, float $tempoProcessamento): void
-    {
-        // Preparar resumo dos resultados
-        $resumo = [];
-        foreach ($resultados as $arquivo => $resultado) {
-            $resumo[$arquivo] = [
-                'inseridos' => $resultado['registros_inseridos'] ?? 0,
-                'atualizados' => $resultado['registros_atualizados'] ?? 0,
-                'total' => $resultado['total_registros'] ?? 0
-            ];
-        }
-        
-        $this->logSucesso('GRAVACAO_BANCO', [
-            'tempo_processamento' => $tempoProcessamento,
-            'resultados' => $resumo
-        ]);
-    }
-
-    /**
-     * Loga erros durante a gravação
-     * 
-     * @param string $arquivo
-     * @param string $erro
-     * @param array $contexto
-     */
-    private function logarErroGravacao(string $arquivo, string $erro, array $contexto = []): void
-    {
-        $this->logErroCritico('GRAVACAO_BANCO', $erro, array_merge([
-            'arquivo' => $arquivo
-        ], $contexto));
-    }
+    // Métodos de log removidos - agora usando service de log
 
     /**
      * Configuração dos arquivos esperados e suas colunas obrigatórias
@@ -1557,10 +1259,7 @@ class ImportarDerprController extends Controller
     private function processarESalvarArquivo($arquivo, $nomeArquivo, $config)
     {
         try {
-            $this->logProgresso('PROCESSAMENTO_ARQUIVO', "Iniciando processamento do arquivo: {$nomeArquivo}", [
-                'config' => $config,
-                'tipo_arquivo' => is_string($arquivo) ? 'caminho' : 'upload'
-            ]);
+            $this->logger->gravacaoArquivo($nomeArquivo);
             
             // Verificar se é um caminho de arquivo ou objeto de upload
             $caminhoArquivo = is_string($arquivo) ? $arquivo : $arquivo->getRealPath();
@@ -1577,12 +1276,7 @@ class ImportarDerprController extends Controller
                 $colunas[strtolower(trim($nome))] = $indice;
             }
             
-            // Log para debug
-            $this->logProgresso('PROCESSAMENTO_ARQUIVO', "Cabeçalhos mapeados para {$nomeArquivo}", [
-                'colunas' => $colunas,
-                'cabecalho_original' => $cabecalho,
-                'total_linhas' => count($dados)
-            ]);
+            // Cabeçalhos mapeados com sucesso
             
             $totalRegistros = 0;
             $registrosAtualizados = 0;
@@ -1783,13 +1477,7 @@ class ImportarDerprController extends Controller
                         'colunas_mapeadas' => $colunas
                     ];
                     
-                    // Log do erro para debug
-                    $this->logErroValidacao('ERRO_LINHA', 'Erro na linha ' . ($index + 2) . ': ' . $e->getMessage(), [
-                        'arquivo' => $nomeArquivo,
-                        'linha' => $index + 2,
-                        'erro' => $e->getMessage(),
-                        'dados_linha' => $linha
-                    ]);
+                    // Erro encontrado na linha
                 }
             }
 
@@ -1817,12 +1505,9 @@ class ImportarDerprController extends Controller
     private function salvarDadosFormulasTransporteEmExcel(array $dados): void
     {
         try {
-            $this->logProgresso('EXCEL_FORMULAS_TRANSPORTE', 'Iniciando salvamento do arquivo Excel');
-            
             // Obter diretório da sessão
             $nomeDiretorio = session('derpr_processamento_dir');
             if (!$nomeDiretorio) {
-                $this->logErroValidacao('EXCEL_FORMULAS_TRANSPORTE', 'Diretório de processamento não encontrado na sessão');
                 throw new \Exception('Diretório de processamento não encontrado na sessão');
             }
             
@@ -1831,7 +1516,6 @@ class ImportarDerprController extends Controller
             // Criar diretório se não existir
             if (!file_exists($diretorioProcessamento)) {
                 mkdir($diretorioProcessamento, 0755, true);
-                $this->logProgresso('EXCEL_FORMULAS_TRANSPORTE', 'Diretório criado com sucesso');
             }
 
             // Criar planilha
@@ -1879,107 +1563,14 @@ class ImportarDerprController extends Controller
             $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata_transportes.json';
             file_put_contents($arquivoMetadata, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-            $this->logSucesso('EXCEL_FORMULAS_TRANSPORTE', [
-                'arquivo_excel' => 'derpr_transportes.xlsx',
-                'arquivo_metadata' => 'derpr_metadata_transportes.json',
-                'total_registros' => count($dados),
-                'diretorio' => $nomeDiretorio
-            ]);
+            // Arquivo Excel de fórmulas de transporte salvo com sucesso
 
         } catch (\Exception $e) {
-            $this->logErroCritico('EXCEL_FORMULAS_TRANSPORTE', $e->getMessage(), [
-                'arquivo' => 'derpr_transportes.xlsx',
-                'diretorio' => $nomeDiretorio ?? 'N/A'
-            ]);
+            $this->logErroCritico('SALVAR_EXCEL_FORMULAS', $e->getMessage());
         }
     }
 
-    /**
-     * Log centralizado para importação DER-PR
-     * 
-     * @param string $level Nível do log (info, error, warning)
-     * @param string $origin Origem da operação
-     * @param string $message Mensagem descritiva
-     * @param array $context Contexto adicional
-     */
-    private function logImportacaoDERPR($level, $origin, $message, $context = [])
-    {
-        // Capturar usuário autenticado corretamente
-        $user = auth()->user();
-        
-        // Verificar se o usuário está autenticado
-        if ($user) {
-            $userInfo = "Usuario: {$user->id} ({$user->name})";
-        } else {
-            // Se não estiver autenticado, tentar capturar da sessão ou request
-            $userInfo = "Usuario: N/A (Não autenticado)";
-        }
-        
-        $ip = request()->ip();
-        $timestamp = now()->format('Y-m-d H:i:s');
-
-        $formattedMessage = "[{$timestamp}] [DERPR] [{$origin}] [{$userInfo}] [IP: {$ip}] - {$message}";
-
-        // Grava no log centralizado de importação de tabelas oficiais
-        $logPath = storage_path('logs/importacao_tabelas_oficiais.log');
-        $logDir = dirname($logPath);
-        
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-
-        $logEntry = $formattedMessage;
-        if (!empty($context)) {
-            $logEntry .= " | Contexto: " . json_encode($context, JSON_UNESCAPED_UNICODE);
-        }
-        $logEntry .= "\n";
-
-        file_put_contents($logPath, $logEntry, FILE_APPEND | LOCK_EX);
-    }
-
-    /**
-     * Log de início de operação DER-PR
-     */
-    private function logInicioOperacao($operation, $context = [])
-    {
-        $this->logImportacaoDERPR('info', 'INICIO_OPERACAO', "Iniciando: {$operation}", $context);
-    }
-
-    /**
-     * Log de progresso da operação DER-PR
-     */
-    private function logProgresso($operation, $status, $context = [])
-    {
-        $this->logImportacaoDERPR('info', 'PROGRESSO', "{$operation}: {$status}", $context);
-    }
-
-    /**
-     * Log de sucesso da operação DER-PR
-     */
-    private function logSucesso($operation, $resultados = [], $context = [])
-    {
-        $this->logImportacaoDERPR('info', 'SUCESSO', "Concluído com sucesso: {$operation}", array_merge($resultados, $context));
-    }
-
-    /**
-     * Log de erro de validação/dados DER-PR (não crítico)
-     */
-    private function logErroValidacao($operation, $error, $context = [])
-    {
-        $this->logImportacaoDERPR('error', 'VALIDACAO', "Erro de validação em {$operation}: {$error}", $context);
-    }
-
-    /**
-     * Log de erro crítico do sistema DER-PR
-     */
-    private function logErroCritico($operation, $error, $context = [])
-    {
-        // Erro crítico vai para ambos os logs
-        $this->logImportacaoDERPR('error', 'ERRO_CRITICO', "Erro crítico em {$operation}: {$error}", $context);
-        
-        // E também para o Laravel.log (erro crítico do sistema)
-        Log::error("Erro crítico na importação DER-PR: {$operation} - {$error}", $context);
-    }
+    // Métodos de log removidos - agora usando service de log
 
     public function paraDecimal(?string $valor): ?float
     {
@@ -2022,7 +1613,7 @@ class ImportarDerprController extends Controller
             $cookies = $request->cookies->all();
             
             // Log de teste
-            $this->logInicioOperacao('TESTE_LOGS', [
+            $this->logger->inicioOperacao('TESTE_LOGS', [
                 'usuario_id' => $user ? $user->id : 'N/A',
                 'usuario_nome' => $user ? $user->name : 'N/A',
                 'autenticado' => $authCheck ? 'Sim' : 'Não',

@@ -583,37 +583,24 @@ export default {
                 this.progresso = 100
                 await this.delay(500)
                 
-                // Processar resposta do servidor
-                const dados = response.data.data || response.data
-                console.log('Dados recebidos:', dados)
-                console.log('Estado antes:', this.stepStates.step2)
+                // Processar resposta
+                const dados = response.data
                 
+                // Atualizar estado do step2
                 this.setStepCompleted('step2', dados)
                 
-                // Como a validação já foi feita durante o processamento, marcar Card 3 como concluído
-                const validationResult = {
-                    validRecords: dados.length,
-                    totalRecords: dados.length,
-                    validationDate: new Date().toISOString(),
-                    issues: [],
-                    validatedDuringProcessing: true
-                }
-                this.setStepCompleted('step3', validationResult)
+                // Atualizar estado do step3
+                this.setStepCompleted('step3', dados)
                 
-                // Marcar automaticamente o step4 como completed também
-                const finalResult = {
-                    ...dados,
-                    validation: validationResult,
-                    finalizationDate: new Date().toISOString()
-                }
-                this.setStepCompleted('step4', finalResult)
+                // Atualizar estado do step4
+                this.setStepCompleted('step4', dados)
                 
-                console.log('Estado depois:', this.stepStates.step2)
-                console.log('Computed states:', this.computedStepStates)
+                // Armazenar resultados para exibição
+                this.resultadosProcessamento = dados.resultados || {}
                 
                 this.mensagem = {
-                    tipo: 'sucesso',
-                    texto: `PDF processado com sucesso! ${dados.length} registros extraídos e validados.`
+                  tipo: 'sucesso',
+                  texto: 'Arquivo processado com sucesso!'
                 }
                 
                 // Marcar todas as etapas como completas
@@ -624,7 +611,7 @@ export default {
                 
                 // Forçar atualização do estado do workflow
                 this.$nextTick(() => {
-                    console.log('Estado final do workflow:', this.computedStepStates)
+            
                 })
                 
             } catch (error) {
@@ -771,7 +758,7 @@ export default {
                     this.mensagem = null
                     break
                 default:
-                    console.log('Ação não implementada:', actionKey)
+            
             }
         },
 
@@ -800,7 +787,7 @@ export default {
          */
         exportarParaExcel(dados, tipo) {
             // Implementar exportação para Excel
-            console.log('Exportando para Excel:', tipo, dados)
+    
             this.mensagem = {
                 tipo: 'sucesso',
                 texto: 'Exportação para Excel iniciada!'
@@ -811,14 +798,14 @@ export default {
          * Ver detalhes da validação
          */
         verDetalhesValidacao() {
-            console.log('Detalhes da validação:', this.stepStates.step3.data)
+    
         },
 
         /**
          * Download completo dos dados
          */
         downloadCompleto(data) {
-            console.log('Download completo:', data)
+    
             this.mensagem = {
                 tipo: 'sucesso',
                 texto: 'Download completo iniciado!'
