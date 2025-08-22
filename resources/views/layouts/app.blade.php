@@ -144,7 +144,7 @@
                 </a>
                 @endif
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_sinapi'))
-                <a href="#" class="menu-link">
+                <a href="{{ route('sinapi.importar.index') }}" class="menu-link">
                     <i class="fas fa-download"></i>
                     <span>Importar SINAPI</span>
                 </a>

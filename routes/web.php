@@ -103,6 +103,39 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/testar-logs', [\App\Http\Controllers\Api\TabelaOficial\ImportarDerprController::class, 'testarLogs'])->name('api.derpr.testar_logs');
     });
     
+    // ===================================================================
+    // MÓDULO DE IMPORTAÇÃO DE TABELAS SINAPI
+    // Todas as rotas deste grupo são para importação de tabelas oficiais SINAPI
+    // ===================================================================
+    
+    // Rota Web para interface (sem prefixo api)
+    Route::prefix('tabela_oficial/importar_sinapi')->name('sinapi.importar.')->middleware(['auth'])->group(function () {
+        // Página principal da importação SINAPI (renderiza a view com as abas)
+        Route::get('/', [\App\Http\Controllers\Web\TabelaOficial\ImportarSinapiController::class, 'index'])->name('index');
+    });
+    
+    // Rotas API para processamento de dados (com prefixo api)
+    Route::prefix('api/tabela_oficial/importar_sinapi')->name('api.sinapi.importar.')->middleware(['auth'])->group(function () {
+        // Rotas para processamento de arquivos Excel (API)
+        Route::post('/composicoes_insumos', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'processarComposicoesInsumos'])->name('composicoes_insumos');
+        Route::post('/percentagens_mao_de_obra', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'processarPercentagensMaoDeObra'])->name('percentagens_mao_de_obra');
+        
+        // Download de arquivos processados (composições e insumos)
+        Route::get('/exportar_composicoes_insumos/{tipo}', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'downloadArquivoProcessado'])->name('download_arquivo');
+        
+        // Download de arquivos processados (percentagens de mão de obra)
+        Route::get('/download_arquivo_processado_mao_obra/{tipo}', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'downloadArquivoProcessadoMaoDeObra'])->name('download_arquivo_mao_obra');
+        
+        // Verificação de arquivos disponíveis para gravação
+        Route::get('/verificar_arquivos', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'verificarArquivosDisponiveis'])->name('verificar_arquivos');
+        
+        // Gravação no banco de dados
+        Route::post('/gravar', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'gravar'])->name('gravar');
+        
+        // Rota de teste para verificar o sistema de logs
+        Route::get('/testar-logs', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'testarLogs'])->name('testar_logs');
+    });
+    
     // ===== ROTAS API - DADOS =====
     
     // API para dados do usuário (session-based) - compatibilidade com componentes Vue

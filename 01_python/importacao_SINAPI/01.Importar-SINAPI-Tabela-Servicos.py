@@ -24,12 +24,69 @@ def log_importacao(msg, origem, usuario=None, ip=None):
     """
     Registra mensagem no log centralizado de importação SINAPI, incluindo data/hora, origem, usuário e IP.
     """
-    log_path = os.path.join('storage', 'logs', 'importacao_tabelas_oficiais.log')
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    user_info = f" | Usuario: {usuario}" if usuario else ""
-    ip_info = f" | IP: {ip}" if ip else ""
-    with open(log_path, 'a', encoding='utf-8') as f:
-        f.write(f"[{now}] [{origem}]{user_info}{ip_info} {msg}\n")
+    # Tentar diferentes estratégias para encontrar o arquivo de log
+    log_paths = []
+    
+    # Estratégia 1: Caminho relativo ao diretório atual
+    log_paths.append(os.path.join('storage', 'logs', 'importacao_tabelas_oficiais.log'))
+    
+    # Estratégia 2: Caminho absoluto a partir do script Python
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))
+    log_paths.append(os.path.join(project_root, 'storage', 'logs', 'importacao_tabelas_oficiais.log'))
+    
+    # Estratégia 3: Caminho absoluto a partir do diretório de trabalho atual
+    current_dir = os.getcwd()
+    log_paths.append(os.path.join(current_dir, 'storage', 'logs', 'importacao_tabelas_oficiais.log'))
+    
+    # Estratégia 4: Caminho no diretório temporário do sistema
+    import tempfile
+    temp_dir = tempfile.gettempdir()
+    log_paths.append(os.path.join(temp_dir, 'orcacidade_sinapi.log'))
+    
+    # Estratégia 5: Caminho local como último recurso
+    log_paths.append('sinapi_importacao.log')
+    
+    log_path = None
+    for path in log_paths:
+        try:
+            # Verificar se o diretório existe e criar se necessário
+            log_dir = os.path.dirname(path)
+            if log_dir and not os.path.exists(log_dir):
+                try:
+                    # Usar permissões mais permissivas para produção
+                    os.makedirs(log_dir, mode=0o755, exist_ok=True)
+                except (OSError, PermissionError):
+                    continue  # Tentar próximo caminho se não conseguir criar diretório
+            
+            # Tentar abrir o arquivo para escrita (teste de permissão)
+            try:
+                with open(path, 'a', encoding='utf-8') as f:
+                    pass
+                log_path = path
+                break
+            except (OSError, PermissionError, IOError):
+                continue
+                
+        except Exception:
+            continue
+    
+    # Se encontrou um caminho válido, tentar escrever o log
+    if log_path:
+        try:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            user_info = f" | Usuario: {usuario}" if usuario else ""
+            ip_info = f" | IP: {ip}" if ip else ""
+            
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"[{now}] [{origem}]{user_info}{ip_info} {msg}\n")
+                f.flush()  # Força escrita imediata
+                os.fsync(f.fileno())  # Sincroniza com disco (importante em produção)
+                
+        except Exception as e:
+            # Se falhar o log, apenas ignorar (não quebrar o processamento)
+            # Em produção, isso é crítico para não interromper o fluxo
+            pass
 
 def norm(s:str)->str:
     """

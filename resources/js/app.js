@@ -35,6 +35,12 @@ import Insumos from './components/tabela_oficial/importar_derpr/components/Insum
 import FormulasTransporte from './components/tabela_oficial/importar_derpr/components/FormulasTransporte.vue';
 import ImportarLoteDerpr from './components/tabela_oficial/importar_derpr/components/ImportarLoteDerpr.vue';
 
+// SINAPI Components
+import ImportarSinapi from './components/tabela_oficial/importar_sinapi/Index.vue';
+import ComposicoesInsumos from './components/tabela_oficial/importar_sinapi/components/ComposicoesInsumos.vue';
+import PercentagensMaoDeObra from './components/tabela_oficial/importar_sinapi/components/PercentagensMaoDeObra.vue';
+import GravarSinapi from './components/tabela_oficial/importar_sinapi/components/GravarSinapi.vue';
+
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
 app.component('header-component', HeaderComponent);
@@ -54,6 +60,12 @@ app.component('servicos-gerais', ServicosGerais);
 app.component('insumos', Insumos);
 app.component('formulas-transporte', FormulasTransporte);
 app.component('importar-lote-derpr', ImportarLoteDerpr);
+
+// SINAPI Components
+app.component('importar-sinapi', ImportarSinapi);
+app.component('composicoes-insumos', ComposicoesInsumos);
+app.component('percentagens-mao-de-obra', PercentagensMaoDeObra);
+app.component('gravar-sinapi', GravarSinapi);
 
 /**
  * The following block of code may be used to automatically register your

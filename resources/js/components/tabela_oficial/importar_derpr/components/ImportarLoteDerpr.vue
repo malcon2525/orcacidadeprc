@@ -54,7 +54,7 @@
               <div class="verification-section">
                 <div class="verification-info">
                   <p class="mb-3 small">Verifique se existem arquivos Excel das abas anteriores para importar no banco.</p>
-                </div>
+              </div>
                 <button 
                   class="btn btn-primary btn-lg w-100 fw-semibold" 
                   @click="verificarArquivos"
@@ -152,7 +152,7 @@
               <div class="import-section">
                                  <div class="import-info">
                    <p class="mb-3 small">Grava todos os dados processados nas abas anteriores no banco de dados.</p>
-                 </div>
+              </div>
                                  <button 
                    class="btn btn-success btn-lg w-100 fw-semibold" 
                    @click="iniciarImportacao"
