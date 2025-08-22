@@ -7,12 +7,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
 
 
 class ImportarSinapiController extends Controller
 {
+    /**
+     * Verifica se o usuário tem permissão para acessar este controller
+     */
+    private function verificarPermissao()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        
+        if (!$user->isSuperAdmin() && !$user->hasRole('gerenciar_importacao_sinapi')) {
+            abort(403, 'Acesso negado. Permissão insuficiente.');
+        }
+    }
+
     /**
      * Processa arquivo Excel de composições e insumos SINAPI
      * 
@@ -37,6 +51,8 @@ class ImportarSinapiController extends Controller
      */
     public function processarComposicoesInsumos(Request $request)
     {
+        $this->verificarPermissao();
+        
         try {
             // ===================================================================
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
@@ -194,6 +210,8 @@ class ImportarSinapiController extends Controller
      */
     public function processarPercentagensMaoDeObra(Request $request)
     {
+        $this->verificarPermissao();
+        
         try {
             // ===================================================================
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
@@ -453,6 +471,8 @@ class ImportarSinapiController extends Controller
      */
     public function downloadArquivoProcessado(string $tipo)
     {
+        $this->verificarPermissao();
+        
         try {
             // Validar tipo de arquivo
             $tiposValidos = ['isd', 'icd', 'csd', 'ccd', 'analitico'];
@@ -545,6 +565,8 @@ class ImportarSinapiController extends Controller
      */
     public function downloadArquivoProcessadoMaoDeObra(string $tipo)
     {
+        $this->verificarPermissao();
+        
         try {
             // Validar tipo de arquivo
             $tiposValidos = ['sem_desoneracao', 'com_desoneracao'];
@@ -637,6 +659,8 @@ class ImportarSinapiController extends Controller
      */
     public function gravar(Request $request)
     {
+        $this->verificarPermissao();
+        
         try {
             // ===================================================================
             // ETAPA 1: DETECÇÃO DO DIRETÓRIO DE PROCESSAMENTO
@@ -921,7 +945,7 @@ class ImportarSinapiController extends Controller
                         ];
 
                         // Verificar se já existe o registro
-                        $registroExistente = \App\Models\Importacao\Sinapi\SinapiMaoDeObra::where([
+                        $registroExistente = \App\Models\TabelaOficial\Sinapi\SinapiMaoDeObra::where([
                             'codigo_composicao' => $dados['codigo_composicao'],
                             'data_base'         => $dados['data_base'],
                             'desoneracao'       => $dados['desoneracao']
@@ -933,7 +957,7 @@ class ImportarSinapiController extends Controller
                             $stats['atualizados']++;
                         } else {
                             // Criar novo registro
-                            \App\Models\Importacao\Sinapi\SinapiMaoDeObra::create($dados);
+                            \App\Models\TabelaOficial\Sinapi\SinapiMaoDeObra::create($dados);
                             $stats['criados']++;
                         }
                         
@@ -1187,7 +1211,7 @@ class ImportarSinapiController extends Controller
                         ];
 
                         // Verificar se já existe o registro
-                        $registroExistente = \App\Models\Importacao\Sinapi\SinapiInsumo::where([
+                        $registroExistente = \App\Models\TabelaOficial\Sinapi\SinapiInsumo::where([
                             'codigo_insumo' => $dados['codigo_insumo'],
                             'data_base' => $dados['data_base'],
                             'desoneracao' => $dados['desoneracao']
@@ -1199,7 +1223,7 @@ class ImportarSinapiController extends Controller
                             $stats['atualizados']++;
                         } else {
                             // Criar novo registro
-                            \App\Models\Importacao\Sinapi\SinapiInsumo::create($dados);
+                            \App\Models\TabelaOficial\Sinapi\SinapiInsumo::create($dados);
                             $stats['criados']++;
                         }
                         
@@ -1514,6 +1538,8 @@ class ImportarSinapiController extends Controller
      */
     public function verificarArquivosDisponiveis()
     {
+        $this->verificarPermissao();
+        
         try {
             $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Iniciando verificação de arquivos disponíveis');
             
@@ -1879,6 +1905,8 @@ class ImportarSinapiController extends Controller
      */
     public function testarLogs()
     {
+        $this->verificarPermissao();
+        
         try {
             // Teste 1: Verificar se o usuário está autenticado
             $user = auth()->user();
