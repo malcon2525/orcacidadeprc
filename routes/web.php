@@ -165,6 +165,10 @@ Route::middleware(['auth'])->group(function () {
         
         // Usuários
         Route::apiResource('usuarios', \App\Http\Controllers\Api\Administracao\Usuarios\UsuariosController::class);
+        Route::get('usuarios/{id}/roles', [\App\Http\Controllers\Api\Administracao\Usuarios\UsuariosController::class, 'getRoles']);
+        Route::post('usuarios/{id}/roles', [\App\Http\Controllers\Api\Administracao\Usuarios\UsuariosController::class, 'addRole']);
+        Route::delete('usuarios/{id}/roles/{roleId}', [\App\Http\Controllers\Api\Administracao\Usuarios\UsuariosController::class, 'removeRole']);
+        Route::get('usuarios/roles/all', [\App\Http\Controllers\Api\Administracao\Usuarios\UsuariosController::class, 'getAllRoles']);
         
         // Papéis (Roles)
         Route::apiResource('papeis', \App\Http\Controllers\Api\Administracao\Roles\RolesController::class);

@@ -46,7 +46,7 @@
             </div>
         </div>
 
-        <!-- Resultados em Layout Discreto e Profissional -->
+        <!-- Resultados em Layout Melhorado com Ícones Discretos -->
         <div class="results-container">
             <!-- Estado de Carregamento -->
             <div v-if="loading" class="text-center py-4">
@@ -79,64 +79,79 @@
                         </div>
                     </div>
                 </div>
-                <table class="table table-hover align-middle table-admin">
-                    <thead>
-                        <tr>
-                            <th class="fw-semibold text-custom" style="width: 30%;">Usuário</th>
-                            <th class="fw-semibold text-custom" style="width: 70%;">Papéis e Permissões</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(grupo, usuarioIndex) in resultadosAgrupados" :key="usuarioIndex" class="table-admin-row">
-                            <td class="align-middle">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-admin me-3">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div>
-                                        <div class="fw-medium text-custom">{{ grupo.usuario }}</div>
-                                        <small class="text-muted">{{ Object.keys(grupo.papeis).length }} papel{{ Object.keys(grupo.papeis).length !== 1 ? 'éis' : 'el' }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="align-middle">
-                                <div v-for="(permissoes, papel) in grupo.papeis" :key="papel" class="mb-3">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div>
-                                            <span class="badge me-2" :class="papel === 'Nenhum papel' ? 'badge-secondary' : 'badge-info'">
-                                                <i class="fas me-1" :class="papel === 'Nenhum papel' ? 'fa-user-slash' : 'fa-shield-alt'"></i>
-                                                {{ papel }}
-                                            </span>
-                                            <small class="text-info d-block" v-if="papel !== 'Nenhum papel'">
-                                                <code>{{ getPapelName(papel) }}</code>
-                                            </small>
+                
+                <!-- Layout Melhorado com Grid Responsivo -->
+                <div class="row g-3">
+                    <div v-for="(grupo, usuarioIndex) in resultadosAgrupados" :key="usuarioIndex" class="col-12">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-3">
+                                <div class="row g-0">
+                                    <!-- Coluna Usuário -->
+                                    <div class="col-md-3 border-end pe-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="user-avatar me-3">
+                                                <i class="fas fa-user text-muted"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1 text-dark fw-semibold">{{ grupo.usuario }}</h6>
+                                                <div class="d-flex align-items-center text-muted small">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    <span>{{ Object.keys(grupo.papeis).length }} papel{{ Object.keys(grupo.papeis).length !== 1 ? 'éis' : 'el' }}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <!-- Permissões -->
-                                    <div class="scrollable-badges">
-                                        <span v-if="permissoes.length === 0 || (permissoes.length === 1 && permissoes[0] === null)" 
-                                              class="badge badge-warning me-1 mb-1 d-inline-block">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                            Sem permissões
-                                        </span>
-                                        <div v-else v-for="permissao in permissoes.filter(p => p !== null)" :key="permissao" class="d-inline-block me-2 mb-2">
-                                            <div class="text-center">
-                                                <span class="badge badge-success d-block">
-                                                    <i class="fas fa-key me-1"></i>
-                                                    {{ permissao }}
-                                                </span>
-                                                <small class="text-info d-block mt-1">
-                                                    <code>{{ getPermissaoName(permissao) }}</code>
-                                                </small>
+                                    <!-- Coluna Papéis e Permissões -->
+                                    <div class="col-md-9 ps-3">
+                                        <div class="row g-2">
+                                            <div v-for="(permissoes, papel) in grupo.papeis" :key="papel" class="col-12">
+                                                <div class="papel-container p-2 rounded border-start border-3" 
+                                                     :class="papel === 'Nenhum papel' ? 'border-secondary bg-light' : 'border-blue bg-white'">
+                                                    
+                                                    <!-- Cabeçalho do Papel -->
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <div class="papel-icon me-2">
+                                                            <i class="fas" :class="papel === 'Nenhum papel' ? 'fa-user-slash text-secondary' : 'fa-shield-alt cor-titulo-papel'"></i>
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <h6 class="mb-1 fw-semibold" :class="papel === 'Nenhum papel' ? 'text-secondary' : 'cor-titulo-papel'">
+                                                                {{ papel }}
+                                                            </h6>
+                                                            <small class="text-muted" v-if="papel !== 'Nenhum papel'">
+                                                                <code class="bg-light px-1 rounded">{{ getPapelName(papel) }}</code>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Permissões -->
+                                                    <div class="permissoes-container">
+                                                        <div v-if="permissoes.length === 0 || (permissoes.length === 1 && permissoes[0] === null)" 
+                                                              class="permissao-item warning">
+                                                            <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                                            <span class="text-warning">Sem permissões</span>
+                                                        </div>
+                                                        <div v-else class="row g-1">
+                                                            <div v-for="permissao in permissoes.filter(p => p !== null)" :key="permissao" class="col-auto">
+                                                                <div class="permissao-item success">
+                                                                    <i class="fas fa-key text-muted me-1"></i>
+                                                                    <span class="text-muted">{{ permissao }}</span>
+                                                                    <small class="text-muted d-block mt-1 ms-2">
+                                                                        <code class="bg-light px-1 rounded">{{ getPermissaoName(permissao) }}</code>
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Nenhum Resultado -->
@@ -214,11 +229,11 @@ export default {
         resultadosFiltrados() {
             return this.resultados.filter(item => {
                 const usuarioMatch = !this.filtros.usuario || 
-                    item.user_name.toLowerCase().includes(this.filtros.usuario.toLowerCase());
+                    (item.user_name && item.user_name.toLowerCase().includes(this.filtros.usuario.toLowerCase()));
                 const papelMatch = !this.filtros.papel || 
-                    item.role_name.toLowerCase().includes(this.filtros.papel.toLowerCase());
+                    (item.role_name && item.role_name.toLowerCase().includes(this.filtros.papel.toLowerCase()));
                 const permissaoMatch = !this.filtros.permissao || 
-                    item.permission_name.toLowerCase().includes(this.filtros.permissao.toLowerCase());
+                    (item.permission_name && item.permission_name.toLowerCase().includes(this.filtros.permissao.toLowerCase()));
                 
                 return usuarioMatch && papelMatch && permissaoMatch;
             });
@@ -435,5 +450,172 @@ export default {
 </script>
 
 <style scoped>
-/* Apenas regras verdadeiramente específicas deste componente devem ficar aqui. */
+/* Estilos específicos para o layout melhorado da Busca Global */
+
+/* Cards de usuário */
+.card {
+    transition: all 0.2s ease-in-out;
+    border-radius: 8px;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Avatar do usuário */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #dee2e6;
+}
+
+.user-avatar i {
+    font-size: 16px;
+    color: #6c757d;
+}
+
+/* Container de papel */
+.papel-container {
+    transition: all 0.2s ease-in-out;
+    border-left: 4px solid;
+}
+
+.papel-container:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Ícone do papel */
+.papel-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.papel-icon i {
+    font-size: 14px;
+}
+
+/* Container de permissões */
+.permissoes-container {
+    margin-top: 8px;
+}
+
+/* Item de permissão */
+.permissao-item {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    transition: all 0.2s ease-in-out;
+}
+
+.permissao-item:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.permissao-item.warning {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.permissao-item.success {
+    background: #f8f9fa79;
+    border-color: #fff;
+}
+
+.permissao-item i {
+    font-size: 12px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .col-md-3.border-end {
+        border-right: none !important;
+        border-bottom: 1px solid #dee2e6 !important;
+        padding-bottom: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .col-md-9.ps-3 {
+        padding-left: 0 !important;
+    }
+    
+    .papel-container {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animações suaves */
+.card, .papel-container, .permissao-item {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Melhorias nos códigos */
+code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #495057;
+}
+
+/* Cores harmoniosas para os ícones - Hierarquia Visual Correta */
+.text-primary {
+    color: #495057 !important; /* Cinza escuro mais neutro */
+}
+
+.text-success {
+    color: #6c757d !important; /* Cinza neutro para permissões (menos destaque) */
+}
+
+.text-warning {
+    color: #ffc107 !important; /* Mantém amarelo para avisos */
+}
+
+.text-secondary {
+    color: #6c757d !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.text-dark {
+    color: #212529 !important; /* Preto para papéis (mais destaque) */
+}
+
+.cor-titulo-papel {
+    color: #165891 !important;
+}
+
+.border-blue {
+    border-left: 3px solid #165891 !important;
+}
+
 </style>

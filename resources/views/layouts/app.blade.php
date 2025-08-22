@@ -128,7 +128,7 @@
         </div>
 
         <!-- TABELAS OFICIAIS -->
-        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr') || Auth::user()->hasRole('gerenciar_sinapi') || Auth::user()->hasRole('consultar_derpr') || Auth::user()->hasRole('consultar_sinapi'))
+        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr') || Auth::user()->hasRole('gerenciar_importacao_sinapi') || Auth::user()->hasRole('consultar_derpr') || Auth::user()->hasRole('consultar_sinapi'))
         <div class="menu-group">
             <div class="menu-header myBox">
                 <div class="menu-icon">

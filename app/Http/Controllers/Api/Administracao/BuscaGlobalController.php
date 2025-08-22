@@ -223,9 +223,8 @@ class BuscaGlobalController extends Controller
         $papeis = Role::where('display_name', 'like', "%{$nomePapel}%")
             ->where('is_active', true)
             ->with([
-                'users' => function($query) use ($perPage, $page) {
-                    $query->where('is_active', true)
-                          ->paginate($perPage, ['*'], 'page', $page);
+                'users' => function($query) {
+                    $query->where('is_active', true);
                 },
                 'permissions' => function($query) {
                     $query->where('is_active', true);
@@ -238,7 +237,7 @@ class BuscaGlobalController extends Controller
         
         foreach ($papeis as $papel) {
             if ($papel->users->count() > 0) {
-                foreach ($papel->users->items() as $usuario) {
+                foreach ($papel->users as $usuario) {
                     if ($papel->permissions->count() > 0) {
                         foreach ($papel->permissions as $permissao) {
                             $resultados[] = [
@@ -259,7 +258,7 @@ class BuscaGlobalController extends Controller
                         ];
                     }
                 }
-                $total = $papel->users->total();
+                $total += $papel->users->count();
             } else {
                 $resultados[] = [
                     'user_name' => null,
@@ -268,11 +267,15 @@ class BuscaGlobalController extends Controller
                     'permission_name' => null,
                     'has_relationships' => false
                 ];
-                $total = 1;
+                $total += 1;
             }
         }
         
-        return [$resultados, $total];
+        // Aplicar paginação manualmente
+        $offset = ($page - 1) * $perPage;
+        $resultadosPaginados = array_slice($resultados, $offset, $perPage);
+        
+        return [$resultadosPaginados, count($resultados)];
     }
 
     /**
@@ -291,9 +294,8 @@ class BuscaGlobalController extends Controller
             ->with([
                 'roles' => function($query) {
                     $query->where('is_active', true)
-                          ->with(['users' => function($q) use ($perPage, $page) {
-                              $q->where('is_active', true)
-                                ->paginate($perPage, ['*'], 'page', $page);
+                          ->with(['users' => function($q) {
+                              $q->where('is_active', true);
                           }]);
                 }
             ])
@@ -305,7 +307,7 @@ class BuscaGlobalController extends Controller
         foreach ($permissoes as $permissao) {
             foreach ($permissao->roles as $papel) {
                 if ($papel->users->count() > 0) {
-                    foreach ($papel->users->items() as $usuario) {
+                    foreach ($papel->users as $usuario) {
                         $resultados[] = [
                             'user_name' => $usuario->name,
                             'user_email' => $usuario->email,
@@ -314,12 +316,16 @@ class BuscaGlobalController extends Controller
                             'has_relationships' => true
                         ];
                     }
-                    $total = $papel->users->total();
+                    $total += $papel->users->count();
                 }
             }
         }
         
-        return [$resultados, $total];
+        // Aplicar paginação manualmente
+        $offset = ($page - 1) * $perPage;
+        $resultadosPaginados = array_slice($resultados, $offset, $perPage);
+        
+        return [$resultadosPaginados, count($resultados)];
     }
 
     /**

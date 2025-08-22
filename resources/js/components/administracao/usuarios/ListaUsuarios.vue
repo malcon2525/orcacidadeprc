@@ -154,7 +154,7 @@
                                             <th class="fw-semibold text-custom">Papéis</th>
                                             <th class="fw-semibold text-custom text-center w-100px">Status</th>
                                             <th class="fw-semibold text-custom text-center w-100px">Tipo</th>
-                                            <th class="fw-semibold text-end text-custom w-100px">Ações</th>
+                                            <th class="fw-semibold text-end text-custom w-120px">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -176,7 +176,7 @@
                                                 <div class="papeis-badges">
                                                     <span v-for="papel in (usuario.roles || [])" 
                                                           :key="papel.id" 
-                                                          class="badge badge-info">
+                                                          class="badge badge-info" style="margin-bottom: 1px;">
                                                         {{ papel.display_name }}
                                                     </span>
                                                     <span v-if="!usuario.roles || usuario.roles.length === 0" class="text-muted small">
@@ -197,6 +197,14 @@
                                             </td>
                                             <td class="text-end">
                                                 <div class="d-flex gap-1 justify-content-end">
+                                                    <button 
+                                                        v-if="canPerformActions"
+                                                        class="btn btn-sm btn-info" 
+                                                        @click="abrirModalGerenciarPapeis(usuario)" 
+                                                        title="Gerenciar Papéis"
+                                                    >
+                                                        <i class="fas fa-user-tag"></i>
+                                                    </button>
                                                     <button 
                                                         v-if="canPerformActions"
                                                         class="btn btn-sm btn-warning" 
@@ -1835,6 +1843,144 @@
             </div>
         </div>
     </div>
+    <!-- Modal Gerenciar Papéis do Usuário -->
+    <div class="modal fade" id="modalGerenciarPapeis" tabindex="-1" aria-labelledby="modalGerenciarPapeisLabel" aria-hidden="true" ref="modalGerenciarPapeis">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <!-- Cabeçalho do Modal -->
+                <div class="modal-header custom-modal-header">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon">
+                            <i class="fas fa-user-tag"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="modal-title mb-0" id="modalGerenciarPapeisLabel">
+                                Gerenciar Papéis do Usuário
+                            </h5>
+                            <p class="mb-0 text-white-50" v-if="usuarioSelecionado">
+                                {{ usuarioSelecionado.name }}
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <!-- Corpo do Modal -->
+                <div class="modal-body">
+                    <div v-if="loadingPapeisUsuario" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Carregando papéis...</p>
+                    </div>
+                    
+                    <div v-else>
+                        <!-- LAYOUT SIMPLES EM DUAS COLUNAS -->
+                        <div class="layout-two-columns">
+                            <!-- COLUNA 1: Papéis Atuais -->
+                            <div class="column-flexible">
+                                <div class="card card-border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-user-check me-2"></i>
+                                            Papéis Atuais ({{ papeisAtuaisFiltrados.length }})
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Filtro para Papéis Atuais -->
+                                        <div class="mb-3">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control" 
+                                                    placeholder="Filtrar papéis atuais..."
+                                                    v-model="filtroPapeisAtuais"
+                                                >
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="papeisAtuaisFiltrados.length === 0" class="text-center py-3">
+                                            <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
+                                            <p class="text-muted mb-0">Nenhum papel encontrado</p>
+                                        </div>
+                                        <div v-else>
+                                            <div v-for="papel in papeisAtuaisFiltrados" :key="papel.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                                <div>
+                                                    <div class="fw-medium">{{ papel.display_name }}</div>
+                                                    <small class="text-muted">{{ papel.description }}</small>
+                                                </div>
+                                                <button 
+                                                    v-if="canPerformActions"
+                                                    class="btn btn-sm btn-danger" 
+                                                    @click="removerPapelDoUsuario(papel)" 
+                                                    title="Remover"
+                                                >
+                                                    <i class="fas fa-user-minus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- COLUNA 2: Adicionar Papéis -->
+                            <div class="column-flexible" v-if="canPerformActions">
+                                <div class="card card-border-success">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-user-plus me-2"></i>
+                                            Adicionar Papéis ({{ papeisDisponiveisFiltrados.length }})
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Filtro para Papéis Disponíveis -->
+                                        <div class="mb-3">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control" 
+                                                    placeholder="Filtrar papéis disponíveis..."
+                                                    v-model="filtroPapeisDisponiveis"
+                                                >
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="papeisDisponiveisFiltrados.length === 0" class="text-center py-3">
+                                            <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
+                                            <p class="text-muted mb-0">Nenhum papel disponível</p>
+                                        </div>
+                                        <div v-else>
+                                            <div v-for="papel in papeisDisponiveisFiltrados" :key="papel.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                                <div>
+                                                    <div class="fw-medium">{{ papel.display_name }}</div>
+                                                    <small class="text-muted">{{ papel.description }}</small>
+                                                </div>
+                                                <button 
+                                                    class="btn btn-sm btn-success" 
+                                                    @click="adicionarPapelAoUsuario(papel)" 
+                                                    title="Adicionar"
+                                                    :disabled="salvandoPapeisUsuario"
+                                                >
+                                                    <i class="fas fa-user-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- fechamento do container principal da página -->
     </div>
 </template>
@@ -2023,7 +2169,18 @@ export default {
             
             // Filtros para modal Gerenciar Permissões
             filtroPermissoesAtuais: '',
-            filtroPermissoesDisponiveis: ''
+            filtroPermissoesDisponiveis: '',
+            
+            // Dados para gerenciar papéis do usuário
+            modalGerenciarPapeis: null,
+            usuarioSelecionado: null,
+            loadingPapeisUsuario: false,
+            salvandoPapeisUsuario: false,
+            papeisAtuais: [],
+            papeisDisponiveis: [],
+            todosPapeis: [],
+            filtroPapeisAtuais: '',
+            filtroPapeisDisponiveis: ''
         }
     },
     
@@ -2035,7 +2192,8 @@ export default {
         this.modalPermissao = new bootstrap.Modal(this.$refs.modalPermissao);
         this.modalGerenciarPermissoes = new bootstrap.Modal(this.$refs.modalGerenciarPermissoes);
                     this.modalGerenciarUsuarios = new bootstrap.Modal(this.$refs.modalGerenciarUsuarios);
-            this.modalVisualizarDetalhes = new bootstrap.Modal(this.$refs.modalVisualizarDetalhes);
+        this.modalVisualizarDetalhes = new bootstrap.Modal(this.$refs.modalVisualizarDetalhes);
+        this.modalGerenciarPapeis = new bootstrap.Modal(this.$refs.modalGerenciarPapeis);
         
         // Inicializar toast
         this.toast = new bootstrap.Toast(document.getElementById('toast'));
@@ -2239,10 +2397,7 @@ export default {
         
 
         
-        // Papéis disponíveis para seleção
-        papeisDisponiveis() {
-            return this.papeis.filter(papel => papel.is_active);
-        },
+
 
 
         
@@ -2326,6 +2481,32 @@ export default {
             const inicio = (this.paginaUsuarios - 1) * this.itensPorPaginaUsuarios;
             const fim = inicio + this.itensPorPaginaUsuarios;
             return this.usuariosPermissaoFiltrados.slice(inicio, fim);
+        },
+        
+        // Papéis atuais filtrados
+        papeisAtuaisFiltrados() {
+            if (!this.filtroPapeisAtuais) {
+                return this.papeisAtuais;
+            }
+            
+            const filtro = this.filtroPapeisAtuais.toLowerCase();
+            return this.papeisAtuais.filter(papel => 
+                papel.display_name.toLowerCase().includes(filtro) ||
+                (papel.description && papel.description.toLowerCase().includes(filtro))
+            );
+        },
+        
+        // Papéis disponíveis filtrados
+        papeisDisponiveisFiltrados() {
+            if (!this.filtroPapeisDisponiveis) {
+                return this.papeisDisponiveis;
+            }
+            
+            const filtro = this.filtroPapeisDisponiveis.toLowerCase();
+            return this.papeisDisponiveis.filter(papel => 
+                papel.display_name.toLowerCase().includes(filtro) ||
+                (papel.description && papel.description.toLowerCase().includes(filtro))
+            );
         },
         
         totalPaginasUsuarios() {
@@ -3033,15 +3214,8 @@ export default {
             try {
                 const response = await axios.get('/api/administracao/papeis');
                 
-
-                
                 // Garantir que sempre seja um array
                 this.papeis = Array.isArray(response.data) ? response.data : [];
-                
-                // Debug: mostrar contadores de cada papel
-                this.papeis.forEach(papel => {
-    
-                });
                 
             } catch (error) {
                 console.error('Erro ao carregar papéis:', error);
@@ -3522,6 +3696,8 @@ export default {
             }
         },
         
+
+        
         // Carregar dados do usuário logado
         async carregarDadosUsuario() {
             try {
@@ -3530,6 +3706,99 @@ export default {
     
             } catch (error) {
                 console.error('Erro ao carregar dados do usuário:', error);
+            }
+        },
+        
+        // ===== MÉTODOS PARA GERENCIAR PAPÉIS DO USUÁRIO =====
+        
+        // Abrir modal para gerenciar papéis de um usuário
+        async abrirModalGerenciarPapeis(usuario) {
+            this.usuarioSelecionado = usuario;
+            this.loadingPapeisUsuario = true;
+            
+            // Limpar filtros
+            this.filtroPapeisAtuais = '';
+            this.filtroPapeisDisponiveis = '';
+            
+            try {
+                // Carregar papéis atuais do usuário
+                const responseAtuais = await axios.get(`/api/administracao/usuarios/${usuario.id}/roles`);
+                this.papeisAtuais = responseAtuais.data;
+                
+                // Carregar todos os papéis para a lista de disponíveis
+                const responseTodos = await axios.get('/api/administracao/papeis');
+                this.todosPapeis = responseTodos.data;
+                
+                // Filtrar papéis disponíveis (não estão no usuário)
+                const idsPapeisAtuais = this.papeisAtuais.map(p => p.id);
+                this.papeisDisponiveis = this.todosPapeis.filter(papel => 
+                    !idsPapeisAtuais.includes(papel.id)
+                );
+                
+                this.modalGerenciarPapeis.show();
+                
+            } catch (error) {
+                this.mostrarToast('Erro', 'Erro ao carregar papéis do usuário', 'fa-exclamation-circle text-danger');
+            } finally {
+                this.loadingPapeisUsuario = false;
+            }
+        },
+        
+        // Adicionar papel ao usuário
+        async adicionarPapelAoUsuario(papel) {
+            try {
+                this.salvandoPapeisUsuario = true;
+                
+                const usuarioId = this.usuarioSelecionado.id;
+                const papelId = papel.id;
+                
+                // Adicionar papel ao usuário via API
+                await axios.post(`/api/administracao/usuarios/${usuarioId}/roles`, {
+                    role_id: papelId
+                });
+
+                // Atualizar listas locais
+                this.papeisAtuais.push(papel);
+                this.papeisDisponiveis = this.papeisDisponiveis.filter(p => p.id !== papelId);
+                
+                this.mostrarToast('Sucesso', `Papel '${papel.display_name}' adicionado ao usuário com sucesso!`, 'fa-check-circle text-success');
+                
+                // Recarregar usuários para sincronizar dados entre abas
+                this.carregarUsuarios();
+                
+            } catch (error) {
+                console.error('Erro ao adicionar papel ao usuário:', error);
+                this.mostrarToast('Erro', 'Erro ao adicionar papel ao usuário: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
+            } finally {
+                this.salvandoPapeisUsuario = false;
+            }
+        },
+        
+        // Remover papel do usuário
+        async removerPapelDoUsuario(papel) {
+            try {
+                this.salvandoPapeisUsuario = true;
+                
+                const usuarioId = this.usuarioSelecionado.id;
+                const papelId = papel.id;
+                
+                // Remover papel do usuário via API
+                await axios.delete(`/api/administracao/usuarios/${usuarioId}/roles/${papelId}`);
+
+                // Atualizar listas locais
+                this.papeisDisponiveis.push(papel);
+                this.papeisAtuais = this.papeisAtuais.filter(p => p.id !== papelId);
+                
+                this.mostrarToast('Sucesso', `Papel '${papel.display_name}' removido do usuário com sucesso!`, 'fa-check-circle text-success');
+                
+                // Recarregar usuários para sincronizar dados entre abas
+                this.carregarUsuarios();
+                
+            } catch (error) {
+                console.error('Erro ao remover papel do usuário:', error);
+                this.mostrarToast('Erro', 'Erro ao remover papel do usuário: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
+            } finally {
+                this.salvandoPapeisUsuario = false;
             }
         },
     }

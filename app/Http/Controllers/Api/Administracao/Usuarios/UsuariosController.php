@@ -361,7 +361,7 @@ class UsuariosController extends Controller
     /**
      * Lista todos os papéis disponíveis
      */
-    public function getRoles()
+    public function getAllRoles()
     {
         // Visualizar: usuario_crud OU usuario_consultar
         $this->checkAccess(['usuario_crud', 'usuario_consultar']);
@@ -370,6 +370,122 @@ class UsuariosController extends Controller
         return response()->json($roles);
     }
 
+    /**
+     * Obtém os papéis de um usuário específico
+     */
+    public function getRoles($id)
+    {
+        // Visualizar: usuario_crud OU usuario_consultar
+        $this->checkAccess(['usuario_crud', 'usuario_consultar']);
+        
+        try {
+            $usuario = User::findOrFail($id);
+            $roles = $usuario->roles()->with('permissions')->get();
+            
+            return response()->json($roles);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao buscar papéis do usuário',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Adiciona um papel a um usuário
+     */
+    public function addRole(Request $request, $id)
+    {
+        // CRUD: apenas usuario_crud
+        $this->checkAccess('usuario_crud');
+        
+        $validator = Validator::make($request->all(), [
+            'role_id' => 'required|exists:roles,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $usuario = User::findOrFail($id);
+            $role = Role::findOrFail($request->role_id);
+            
+            // Verificar se o usuário já tem o papel
+            if ($usuario->roles()->where('role_id', $request->role_id)->exists()) {
+                return response()->json([
+                    'message' => 'Usuário já possui este papel'
+                ], 422);
+            }
+            
+            $usuario->roles()->attach($request->role_id);
+            
+            // Log de sucesso
+            $this->logger->sucessoAdicaoUsuarioPapel($request->role_id, $id, [
+                'adicionado_por' => Auth::id()
+            ]);
+
+            return response()->json([
+                'message' => 'Papel adicionado com sucesso'
+            ]);
+
+        } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('ADICAO_PAPEL_USUARIO', $e->getMessage(), [
+                'user_id' => $id,
+                'role_id' => $request->role_id
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao adicionar papel ao usuário',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Remove um papel de um usuário
+     */
+    public function removeRole($id, $roleId)
+    {
+        // CRUD: apenas usuario_crud
+        $this->checkAccess('usuario_crud');
+        
+        try {
+            $usuario = User::findOrFail($id);
+            $role = Role::findOrFail($roleId);
+            
+            // Verificar se o usuário tem o papel
+            if (!$usuario->roles()->where('role_id', $roleId)->exists()) {
+                return response()->json([
+                    'message' => 'Usuário não possui este papel'
+                ], 422);
+            }
+            
+            $usuario->roles()->detach($roleId);
+            
+            // Log de sucesso
+            $this->logger->sucessoRemocaoUsuarioPapel($roleId, $id, [
+                'removido_por' => Auth::id()
+            ]);
+
+            return response()->json([
+                'message' => 'Papel removido com sucesso'
+            ]);
+
+        } catch (\Exception $e) {
+            $this->logger->erroCriticoUsuarios('REMOCAO_PAPEL_USUARIO', $e->getMessage(), [
+                'user_id' => $id,
+                'role_id' => $roleId
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao remover papel do usuário',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
     /**
      * Atualiza a senha de um usuário
      */

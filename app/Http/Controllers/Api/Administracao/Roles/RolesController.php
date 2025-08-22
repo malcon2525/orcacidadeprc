@@ -99,7 +99,16 @@ class RolesController extends Controller
         $this->checkAccess(['papel_crud', 'papel_consultar']);
         
         try {
-            $query = Role::query();
+            $query = Role::with('permissions');
+
+            // Carregar contadores de usuários e permissões
+            $query->withCount([
+                'users as users_count',
+                'permissions as permissions_count',
+                'permissions as active_permissions_count' => function($q) {
+                    $q->where('is_active', true);
+                }
+            ]);
 
             // Filtro por nome
             if ($request->has('nome') && !empty($request->nome)) {
