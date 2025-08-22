@@ -567,7 +567,7 @@ export default {
                     this.mostrarToast('Erro', 'Erro ao carregar dados', 'error');
                 }
             } catch (error) {
-                console.error('Erro:', error);
+
                 this.mostrarToast('Erro', 'Erro ao carregar dados', 'error');
             } finally {
                 this.loading = false;
@@ -665,7 +665,7 @@ export default {
                     this.mostrarToast('Erro', data.error || 'Erro ao salvar', 'error');
                 }
             } catch (error) {
-                console.error('Erro:', error);
+
                 this.mostrarToast('Erro', 'Erro ao salvar', 'error');
             } finally {
                 this.salvando = false;
@@ -700,7 +700,7 @@ export default {
                     this.mostrarToast('Erro', data.error || 'Erro ao excluir', 'error');
                 }
             } catch (error) {
-                console.error('Erro:', error);
+
                 this.mostrarToast('Erro', 'Erro ao excluir', 'error');
             } finally {
                 this.excluindo = false;
@@ -726,7 +726,7 @@ export default {
                     this.mostrarToast('Erro', data.error || 'Erro na importação', 'error');
                 }
             } catch (error) {
-                console.error('Erro:', error);
+
                 this.mostrarToast('Erro', 'Erro na importação', 'error');
             } finally {
                 this.loading = false;

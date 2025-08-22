@@ -274,7 +274,7 @@ const carregarStatus = async () => {
             stats.value = data.estatisticas || {}
             statusConexao.value = data.estatisticas?.ad_habilitado ? 'enabled' : 'disabled'
         } else {
-            console.error('Estrutura de dados inesperada no status:', data)
+
             stats.value = {}
             statusConexao.value = 'error'
         }
@@ -288,7 +288,7 @@ const carregarStatus = async () => {
         }
         
     } catch (error) {
-        console.error('Erro ao carregar status:', error)
+
         statusConexao.value = 'error'
     }
 }
@@ -319,7 +319,7 @@ const executarSincronizacao = async () => {
             
             resultadosSincronizacao.value = response.data.resultados
         } else {
-            console.error('Estrutura de dados inesperada:', response.data)
+
             // Criar estrutura padrão para evitar erro
             resultadosSincronizacao.value = {
                 usuarios_processados: 0,
@@ -353,7 +353,7 @@ const executarSincronizacao = async () => {
         }, 2000)
         
     } catch (error) {
-        console.error('Erro na sincronização:', error)
+
         
         if (window.showToast) {
             window.showToast('Erro na sincronização: ' + (error.response?.data?.message || error.message), 'error')
@@ -393,7 +393,7 @@ const testarConexao = async () => {
         }
         
     } catch (error) {
-        console.error('Erro no teste de conexão:', error)
+
         
         if (window.showToast) {
             window.showToast('Erro no teste de conexão: ' + (error.response?.data?.message || error.message), 'error')
@@ -432,7 +432,7 @@ const carregarConfiguracao = async () => {
         ultimaAtualizacao.value = data?.updated_at ? new Date(data.updated_at).toLocaleString('pt-BR') : null
         
     } catch (error) {
-        console.error('Erro ao carregar configuração:', error)
+
         // Usar valores padrão em caso de erro
         configuracao.value = {
             sync_enabled: true,
@@ -466,7 +466,7 @@ const salvarConfiguracao = async (showToast = true) => {
         
         return true
     } catch (error) {
-        console.error('Erro ao salvar configuração:', error)
+
         if (showToast && window.showToast) {
             window.showToast('Erro ao salvar configuração: ' + (error.response?.data?.message || error.message), 'error')
         }
@@ -548,7 +548,7 @@ const testarConfiguracao = async () => {
         }
         
     } catch (error) {
-        console.error('Erro ao testar configuração:', error)
+
         alert('❌ Erro ao testar configurações: ' + (error.response?.data?.message || error.message))
     } finally {
         testandoConfig.value = false

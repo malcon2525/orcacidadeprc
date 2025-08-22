@@ -153,7 +153,7 @@ export default {
                     this.tiposOrcamento = response.data.data;
                 }
             } catch (error) {
-                console.error('Erro ao carregar tipos de orçamento:', error);
+
                 this.mostrarToast('Erro ao carregar tipos de orçamento', 'error');
             }
         },
@@ -188,7 +188,7 @@ export default {
                     this.grandesItens = [];
                 }
             } catch (error) {
-                console.error('Erro ao carregar dados:', error);
+
                 this.mostrarToast('Erro ao carregar estrutura de orçamento', 'error');
                 this.grandesItens = [];
             } finally {

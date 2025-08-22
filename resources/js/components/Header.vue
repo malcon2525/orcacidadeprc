@@ -66,7 +66,7 @@ export default {
                 }
             })
             .catch(error => {
-                console.log('Erro ao carregar dados do usuário:', error);
+
                 this.userName = 'Usuário';
             });
         },

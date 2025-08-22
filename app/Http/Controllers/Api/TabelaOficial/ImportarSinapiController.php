@@ -10,10 +10,25 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
+use App\Services\Logging\ImportarSinapiLogService;
 
 
 class ImportarSinapiController extends Controller
 {
+    /**
+     * Service de log para SINAPI
+     */
+    protected ImportarSinapiLogService $logger;
+    
+    /**
+     * Construtor com middleware de autenticação
+     */
+    public function __construct(ImportarSinapiLogService $logger)
+    {
+        $this->middleware('auth');
+        $this->logger = $logger;
+    }
+    
     /**
      * Verifica se o usuário tem permissão para acessar este controller
      */
@@ -58,13 +73,13 @@ class ImportarSinapiController extends Controller
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
             // ===================================================================
             
-            $this->logInicioOperacao('PROCESSAMENTO_COMPOSICOES_INSUMOS', [
+            $this->logger->inicioAba(1, 'COMPOSICOES_INSUMOS', [
                 'arquivo' => $request->file('arquivo')->getClientOriginalName(),
                 'tamanho' => $request->file('arquivo')->getSize()
             ]);
             
             if (!$request->hasFile('arquivo')) {
-                $this->logErroValidacao('VALIDACAO_ARQUIVO', 'Nenhum arquivo enviado');
+                $this->logger->erroValidacaoSinapi('ABA_1_COMPOSICOES_INSUMOS', 'Nenhum arquivo enviado');
                 return response()->json([
                     'success' => false,
                     'message' => 'Nenhum arquivo enviado'
@@ -75,20 +90,20 @@ class ImportarSinapiController extends Controller
 
             // Validar extensão (.xlsx obrigatório)
             if ($arquivo->getClientOriginalExtension() !== 'xlsx') {
-                $this->logErroValidacao('VALIDACAO_ARQUIVO', 'Arquivo deve ter extensão .xlsx');
+                $this->logger->erroValidacaoSinapi('ABA_1_COMPOSICOES_INSUMOS', 'Arquivo deve ter extensão .xlsx');
                 return response()->json([
                     'success' => false,
                     'message' => 'O arquivo deve ter extensão .xlsx'
                 ], 400);
             }
             
-            $this->logProgresso('VALIDACAO_ARQUIVO', 'Arquivo Excel validado com sucesso');
+            $this->logger->progresso('VALIDACAO_ARQUIVO', 'Arquivo Excel validado com sucesso');
             
             // ===================================================================
             // ETAPA 2: LIMPEZA DE DIRETÓRIOS ANTERIORES
             // ===================================================================
             
-            $this->logProgresso('LIMPEZA_DIRETORIOS', 'Iniciando limpeza de diretórios anteriores');
+            $this->logger->progresso('LIMPEZA_DIRETORIOS', 'Iniciando limpeza de diretórios anteriores');
             
                     // Verificar e apagar diretórios anteriores de processamento SINAPI
         $tempDir = storage_path('temp');
@@ -100,13 +115,13 @@ class ImportarSinapiController extends Controller
                 }
             }
             
-            $this->logProgresso('LIMPEZA_DIRETORIOS', 'Diretórios anteriores removidos com sucesso');
+            $this->logger->progresso('LIMPEZA_DIRETORIOS', 'Diretórios anteriores removidos com sucesso');
             
             // ===================================================================
             // ETAPA 3: SALVAMENTO TEMPORÁRIO E CRIAÇÃO DE DIRETÓRIO ÚNICO
             // ===================================================================
             
-            $this->logProgresso('ARQUIVO_TEMPORARIO', 'Salvando arquivo temporariamente');
+            $this->logger->progresso('ARQUIVO_TEMPORARIO', 'Salvando arquivo temporariamente');
             
             // Salvar arquivo temporariamente (usando o mesmo padrão do DER-PR)
             $nomeTemporario = uniqid('entrada_') . '.xlsx';
@@ -125,13 +140,13 @@ class ImportarSinapiController extends Controller
             // Armazenar nome do diretório na session para uso nas outras abas
             session(['sinapi_processamento_dir' => $nomeSaidaDir]);
             
-            $this->logProgresso('DIRETORIO_CRIADO', 'Diretório de processamento criado', ['diretorio' => $nomeSaidaDir]);
+            $this->logger->progresso('DIRETORIO_CRIADO', 'Diretório de processamento criado', ['diretorio' => $nomeSaidaDir]);
             
             // ===================================================================
             // ETAPA 4: EXECUÇÃO DO SCRIPT PYTHON
             // ===================================================================
             
-            $this->logProgresso('SCRIPT_PYTHON', 'Executando script Python para processamento');
+            $this->logger->progresso('SCRIPT_PYTHON', 'Executando script Python para processamento');
             
             // Usar o diretório já criado anteriormente (usando o mesmo padrão do DER-PR)
             $diretorioAbsolutoSaida = Storage::path('temp/' . $nomeSaidaDir);
@@ -141,27 +156,27 @@ class ImportarSinapiController extends Controller
                 throw new \Exception("Arquivo de entrada não encontrado: " . $caminhoAbsolutoEntrada);
             }
             
-            $this->logProgresso('SCRIPT_PYTHON_VERIFICACAO', 'Arquivo de entrada encontrado: ' . $caminhoAbsolutoEntrada);
+            $this->logger->progresso('SCRIPT_PYTHON_VERIFICACAO', 'Arquivo de entrada encontrado: ' . $caminhoAbsolutoEntrada);
             
             // Executar script Python com diretório de saída
             $comando = "python " . base_path("01_python/importacao_SINAPI/01.Importar-SINAPI-Tabela-Servicos.py") . " " . escapeshellarg($caminhoAbsolutoEntrada) . " " . escapeshellarg($diretorioAbsolutoSaida);
             
-            $this->logProgresso('SCRIPT_PYTHON_COMANDO', 'Comando Python: ' . $comando);
+            $this->logger->progresso('SCRIPT_PYTHON_COMANDO', 'Comando Python: ' . $comando);
             
             // Executar script Python usando exec para capturar código de retorno
             $saida = '';
             $codigoRetorno = 0;
             exec($comando . " 2>&1", $saida, $codigoRetorno);
             
-            $this->logProgresso('SCRIPT_PYTHON_CODIGO_RETORNO', 'Código de retorno: ' . $codigoRetorno);
-            $this->logProgresso('SCRIPT_PYTHON_SAIDA', 'Saída do script Python: ' . var_export($saida, true));
+            $this->logger->progresso('SCRIPT_PYTHON_CODIGO_RETORNO', 'Código de retorno: ' . $codigoRetorno);
+            $this->logger->progresso('SCRIPT_PYTHON_SAIDA', 'Saída do script Python: ' . var_export($saida, true));
             
             // Verificar se o script executou com sucesso (0 = sucesso, 1 = erro)
             if ($codigoRetorno !== 0) {
                 throw new \Exception("Script Python retornou erro: " . $codigoRetorno . " - Saída: " . implode("\n", $saida));
             }
             
-            $this->logProgresso('SCRIPT_PYTHON', 'Script Python executado com sucesso');
+            $this->logger->progresso('SCRIPT_PYTHON', 'Script Python executado com sucesso');
             
             // ===================================================================
             // ETAPA 5: LIMPEZA E FINALIZAÇÃO
@@ -169,7 +184,7 @@ class ImportarSinapiController extends Controller
             
             // Limpar arquivo temporário
             Storage::delete($caminhoRelativoEntrada);
-            $this->logProgresso('LIMPEZA', 'Arquivo temporário removido');
+            $this->logger->progresso('LIMPEZA', 'Arquivo temporário removido');
             
             // Armazenar informações para auditoria
             $auditoriaInfo = [
@@ -178,7 +193,7 @@ class ImportarSinapiController extends Controller
                 'usuario' => auth()->user() ? auth()->user()->name : 'N/A'
             ];
             
-            $this->logSucesso('PROCESSAMENTO_COMPOSICOES_INSUMOS', [
+            $this->logger->sucessoAba(1, 'COMPOSICOES_INSUMOS', [
                 'diretorio_processamento' => $nomeSaidaDir,
                 'tamanho_arquivo_original' => $arquivo->getSize()
             ]);
@@ -191,7 +206,7 @@ class ImportarSinapiController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            $this->logErroCritico('PROCESSAMENTO_COMPOSICOES_INSUMOS', $e->getMessage(), [
+            $this->logger->erroCriticoSinapi('ABA_1_COMPOSICOES_INSUMOS', $e->getMessage(), [
                 'arquivo' => $request->hasFile('arquivo') ? $request->file('arquivo')->getClientOriginalName() : 'N/A'
             ]);
             
@@ -217,13 +232,13 @@ class ImportarSinapiController extends Controller
             // ETAPA 1: LOG DE INÍCIO E VALIDAÇÃO
             // ===================================================================
             
-            $this->logInicioOperacao('PROCESSAMENTO_PERCENTAGENS_MAO_DE_OBRA', [
+            $this->logger->inicioAba(2, 'PERCENTAGENS_MAO_DE_OBRA', [
                 'arquivo' => $request->file('arquivo')->getClientOriginalName(),
                 'tamanho' => $request->file('arquivo')->getSize()
             ]);
             
             if (!$request->hasFile('arquivo')) {
-                $this->logErroValidacao('VALIDACAO_ARQUIVO', 'Nenhum arquivo enviado');
+                $this->logger->erroValidacaoSinapi('ABA_2_PERCENTAGENS_MAO_DE_OBRA', 'Nenhum arquivo enviado');
                 return response()->json([
                     'success' => false,
                     'message' => 'Nenhum arquivo enviado'
@@ -234,20 +249,20 @@ class ImportarSinapiController extends Controller
 
             // Validar extensão (.xlsx obrigatório)
             if ($arquivo->getClientOriginalExtension() !== 'xlsx') {
-                $this->logErroValidacao('VALIDACAO_ARQUIVO', 'Arquivo deve ter extensão .xlsx');
+                $this->logger->erroValidacaoSinapi('ABA_2_PERCENTAGENS_MAO_DE_OBRA', 'Arquivo deve ter extensão .xlsx');
                 return response()->json([
                     'success' => false,
                     'message' => 'O arquivo deve ter extensão .xlsx'
                 ], 400);
             }
             
-            $this->logProgresso('VALIDACAO_ARQUIVO', 'Arquivo Excel validado com sucesso');
+            $this->logger->progresso('VALIDACAO_ARQUIVO', 'Arquivo Excel validado com sucesso');
             
             // ===================================================================
             // ETAPA 2: DIRETÓRIO DE PROCESSAMENTO
             // ===================================================================
             
-            $this->logProgresso('VERIFICACAO_DIRETORIO', 'Verificando diretório de processamento');
+            $this->logger->progresso('VERIFICACAO_DIRETORIO', 'Verificando diretório de processamento');
             
             // Obter diretório de processamento da sessão (criado pela Aba 1)
             $nomeDiretorio = session('sinapi_processamento_dir');
@@ -256,7 +271,7 @@ class ImportarSinapiController extends Controller
                             // Fallback: procurar diretório mais recente (usando o mesmo padrão da Aba 1)
             $diretorios = glob(Storage::path('temp/processado_sinapi_*'));
             if (empty($diretorios)) {
-                $this->logErroValidacao('VERIFICACAO_DIRETORIO', 'Nenhum diretório de processamento encontrado');
+                $this->logger->erroValidacaoSinapi('ABA_2_PERCENTAGENS_MAO_DE_OBRA', 'Nenhum diretório de processamento encontrado');
                 return response()->json([
                     'success' => false,
                     'message' => 'Nenhum diretório de processamento encontrado. Execute primeiro o processamento da Aba 1.'
@@ -268,20 +283,20 @@ class ImportarSinapiController extends Controller
         $diretorioProcessamento = Storage::path('temp/' . $nomeDiretorio);
             
             if (!is_dir($diretorioProcessamento)) {
-                $this->logErroValidacao('VERIFICACAO_DIRETORIO', 'Diretório de processamento não encontrado no sistema');
+                $this->logger->erroValidacaoSinapi('ABA_2_PERCENTAGENS_MAO_DE_OBRA', 'Diretório de processamento não encontrado no sistema');
                 return response()->json([
                     'success' => false,
                     'message' => 'Diretório de processamento não encontrado: ' . $nomeDiretorio
                 ], 400);
             }
             
-            $this->logProgresso('VERIFICACAO_DIRETORIO', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
+            $this->logger->progresso('VERIFICACAO_DIRETORIO', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
             
             // ===================================================================
             // ETAPA 3: PROCESSAMENTO DIRETO NO PHP
             // ===================================================================
             
-            $this->logProgresso('PROCESSAMENTO_EXCEL', 'Iniciando processamento do arquivo Excel');
+            $this->logger->progresso('PROCESSAMENTO_EXCEL', 'Iniciando processamento do arquivo Excel');
             
             // Carregar arquivo Excel
             $spreadsheetEntrada = IOFactory::load($arquivo->getRealPath());
@@ -296,7 +311,7 @@ class ImportarSinapiController extends Controller
                     continue;
                 }
                 
-                $this->logProgresso('PROCESSAMENTO_ABA', "Processando aba: {$nomeAba}");
+                $this->logger->progresso('PROCESSAMENTO_ABA', "Processando aba: {$nomeAba}");
                 
                 $sheetEntrada = $spreadsheetEntrada->getSheetByName($nomeAba);
                 $dados = $sheetEntrada->toArray();
@@ -414,7 +429,7 @@ class ImportarSinapiController extends Controller
             // ETAPA 4: GERAR METADADOS
             // ===================================================================
             
-            $this->logProgresso('GERACAO_METADADOS', 'Gerando arquivo de metadados');
+            $this->logger->progresso('GERACAO_METADADOS', 'Gerando arquivo de metadados');
             
             $metadata = [
                 'mes_referencia' => $mesReferencia,
@@ -428,13 +443,13 @@ class ImportarSinapiController extends Controller
             $metadataPath = $diretorioProcessamento . '/sinapi_mao_obra_metadata.json';
             file_put_contents($metadataPath, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             
-            $this->logProgresso('GERACAO_METADADOS', 'Metadados gerados com sucesso');
+            $this->logger->progresso('GERACAO_METADADOS', 'Metadados gerados com sucesso');
 
             // ===================================================================
             // ETAPA 5: RESPOSTA DE SUCESSO
             // ===================================================================
             
-            $this->logSucesso('PROCESSAMENTO_PERCENTAGENS_MAO_DE_OBRA', [
+            $this->logger->sucessoAba(2, 'PERCENTAGENS_MAO_DE_OBRA', [
                 'diretorio_processamento' => $nomeDiretorio,
                 'total_abas_processadas' => count($abasProcessadas),
                 'total_registros' => array_sum($resultados),
@@ -449,7 +464,7 @@ class ImportarSinapiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $this->logErroCritico('PROCESSAMENTO_PERCENTAGENS_MAO_DE_OBRA', $e->getMessage(), [
+            $this->logger->erroCriticoSinapi('ABA_2_PERCENTAGENS_MAO_DE_OBRA', $e->getMessage(), [
                 'arquivo' => $request->hasFile('arquivo') ? $request->file('arquivo')->getClientOriginalName() : 'N/A'
             ]);
 
@@ -488,7 +503,7 @@ class ImportarSinapiController extends Controller
             
             // Se não encontrou na session, procurar o diretório mais recente
             if (!$nomeDiretorio) {
-                $this->logProgresso('DOWNLOAD', 'Session sinapi_processamento_dir não encontrada, procurando diretório mais recente', [
+                $this->logger->progresso('DOWNLOAD', 'Session sinapi_processamento_dir não encontrada, procurando diretório mais recente', [
                     'session_id' => session()->getId()
                 ]);
                 
@@ -740,7 +755,7 @@ class ImportarSinapiController extends Controller
             }
             
             // Log da validação
-            $this->logSINAPI('info', 'VALIDACAO', 'Validação de arquivos SINAPI para gravação', [
+            $this->logger->progresso('VALIDACAO_ARQUIVOS_GRAVACAO', 'Validação de arquivos SINAPI para gravação', [
                 'diretorio' => $nomeDiretorio,
                 'total_esperados' => count($arquivosEsperados),
                 'total_encontrados' => count($arquivosEncontrados),
@@ -766,52 +781,55 @@ class ImportarSinapiController extends Controller
             $resultados = [];
             $detalhesProcessamento = [];
             
-            $this->logInicioGravacao($arquivosEncontrados, $request);
+            $this->logger->gravacaoBanco([
+                'arquivos_encontrados' => array_column($arquivosEncontrados, 'nome'),
+                'total_arquivos' => count($arquivosEncontrados)
+            ]);
             
             // Iniciar transação
             DB::beginTransaction();
             
             try {
                 // Passo 1: Gravar Mão de Obra
-                $this->logProcessamentoArquivo('Mão de Obra', 'INICIANDO');
+                $this->logger->gravacaoArquivo('Mão de Obra');
                 $resultados['mao_de_obra'] = $this->gravarMaoDeObra($diretorioProcessamento);
                 $detalhesProcessamento[] = "Mão de Obra: " . $resultados['mao_de_obra']['message'];
-                $this->logProcessamentoArquivo('Mão de Obra', 'CONCLUIDO', $resultados['mao_de_obra']);
+                $this->logger->processamentoArquivo('Mão de Obra', 'CONCLUIDO', $resultados['mao_de_obra']);
                 
                 // Passo 2: Gravar Composições
-                $this->logProcessamentoArquivo('Composições', 'INICIANDO');
+                $this->logger->gravacaoArquivo('Composições');
                 $resultados['composicoes'] = $this->gravarComposicoes($diretorioProcessamento);
                 $detalhesProcessamento[] = "Composições: " . $resultados['composicoes']['message'];
-                $this->logProcessamentoArquivo('Composições', 'CONCLUIDO', $resultados['composicoes']);
+                $this->logger->processamentoArquivo('Composições', 'CONCLUIDO', $resultados['composicoes']);
                 
                 // Passo 3: Gravar Insumos
-                $this->logProcessamentoArquivo('Insumos', 'INICIANDO');
+                $this->logger->gravacaoArquivo('Insumos');
                 $resultados['insumos'] = $this->gravarInsumos($diretorioProcessamento);
                 $detalhesProcessamento[] = "Insumos: " . $resultados['insumos']['message'];
-                $this->logProcessamentoArquivo('Insumos', 'CONCLUIDO', $resultados['insumos']);
+                $this->logger->processamentoArquivo('Insumos', 'CONCLUIDO', $resultados['insumos']);
                 
                 // Passo 4: Gravar Analítico
-                $this->logProcessamentoArquivo('Analítico', 'INICIANDO');
+                $this->logger->gravacaoArquivo('Analítico');
                 try {
                     $datasDoLote = $this->getDatasDoLote($diretorioProcessamento);
                     $resultados['analitico'] = $this->gravarAnalitico($diretorioProcessamento, $datasDoLote['data_base'], $datasDoLote['data_emissao']);
                 } catch (\Exception $e) {
-                    $this->logSINAPI('warning', 'ANALITICO', 'Erro ao obter datas do lote para analítico, usando datas atuais', [
+                    $this->logger->progresso('ANALITICO', 'Erro ao obter datas do lote para analítico, usando datas atuais', [
                         'erro' => $e->getMessage()
                     ]);
                     $resultados['analitico'] = $this->gravarAnalitico($diretorioProcessamento, Carbon::now()->format('Y-m-d'), Carbon::now()->format('Y-m-d'));
                 }
                 $detalhesProcessamento[] = "Analítico: " . $resultados['analitico']['message'];
-                $this->logProcessamentoArquivo('Analítico', 'CONCLUIDO', $resultados['analitico']);
+                $this->logger->processamentoArquivo('Analítico', 'CONCLUIDO', $resultados['analitico']);
                 
                 // Passo 5: Atualizar view materializada
-                $this->logProcessamentoArquivo('View Materializada', 'INICIANDO');
+                $this->logger->gravacaoArquivo('View Materializada');
                 $this->atualizarViewComposicoes();
                 $detalhesProcessamento[] = "View materializada atualizada";
-                $this->logProcessamentoArquivo('View Materializada', 'CONCLUIDO');
+                $this->logger->processamentoArquivo('View Materializada', 'CONCLUIDO');
                 
                 DB::commit();
-                $this->logSINAPI('info', 'TRANSACAO', 'Transação de gravação SINAPI commitada com sucesso');
+                $this->logger->progresso('TRANSACAO', 'Transação de gravação SINAPI commitada com sucesso');
                 
                 $tempoProcessamento = round(microtime(true) - $inicioProcessamento, 2);
                 
@@ -838,7 +856,13 @@ class ImportarSinapiController extends Controller
                     }
                 }
                 
-                $this->logConclusaoGravacao($resultados, $tempoProcessamento);
+                $this->logger->sucesso('GRAVACAO_BANCO_SINAPI', [
+                    'tempo_processamento' => $tempoProcessamento . 's',
+                    'total_registros' => $totalRegistros,
+                    'total_criados' => $totalCriados,
+                    'total_atualizados' => $totalAtualizados,
+                    'arquivos_processados' => $arquivosProcessados
+                ]);
 
                 // ===================================================================
                 // ETAPA 4: RESPOSTA DE SUCESSO
@@ -867,7 +891,7 @@ class ImportarSinapiController extends Controller
             }
 
         } catch (\Exception $e) {
-            $this->logErroGravacao('Gravação SINAPI', $e->getMessage(), [
+            $this->logger->erroCriticoSinapi('GRAVACAO_BANCO_SINAPI', $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'usuario' => auth()->user()->name ?? 'N/A'
             ]);
@@ -1541,13 +1565,13 @@ class ImportarSinapiController extends Controller
         $this->verificarPermissao();
         
         try {
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Iniciando verificação de arquivos disponíveis');
+            $this->logger->verificacaoArquivos();
             
             // Obter diretório de processamento da session
             $nomeDiretorio = session('sinapi_processamento_dir');
             
             if (!$nomeDiretorio) {
-                $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Nenhum diretório de processamento encontrado na sessão');
+                $this->logger->progresso('VERIFICACAO_ARQUIVOS', 'Nenhum diretório de processamento encontrado na sessão');
                 return response()->json([
                     'success' => true,
                     'message' => 'Nenhum diretório de processamento encontrado',
@@ -1565,7 +1589,7 @@ class ImportarSinapiController extends Controller
             $diretorioProcessamento = Storage::path('temp/' . $nomeDiretorio);
             
             if (!is_dir($diretorioProcessamento)) {
-                $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Diretório de processamento não existe no sistema', ['diretorio' => $nomeDiretorio]);
+                $this->logger->progresso('VERIFICACAO_ARQUIVOS', 'Diretório de processamento não existe no sistema', ['diretorio' => $nomeDiretorio]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Diretório de processamento não existe',
@@ -1580,7 +1604,7 @@ class ImportarSinapiController extends Controller
                 ]);
             }
             
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
+            $this->logger->progresso('VERIFICACAO_ARQUIVOS', 'Diretório de processamento validado', ['diretorio' => $nomeDiretorio]);
             
             // Lista de arquivos esperados (7 arquivos no total)
             $arquivosEsperados = [
@@ -1624,7 +1648,7 @@ class ImportarSinapiController extends Controller
                 $status = 'incompleto';
             }
             
-            $this->logProgresso('VERIFICACAO_ARQUIVOS', 'Verificação concluída', [
+            $this->logger->sucessoVerificacaoArquivos([
                 'status' => $status,
                 'total_disponiveis' => count($arquivosDisponiveis),
                 'total_esperados' => count($arquivosEsperados),
@@ -1646,7 +1670,7 @@ class ImportarSinapiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $this->logErroCritico('VERIFICACAO_ARQUIVOS', $e->getMessage());
+            $this->logger->erroCriticoSinapi('VERIFICACAO_ARQUIVOS', $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -1659,128 +1683,17 @@ class ImportarSinapiController extends Controller
     }
 
 
-    // ========================================
-    // MÉTODOS DE LOG ESPECÍFICOS PARA SINAPI
-    // ========================================
 
-    /**
-     * Loga uma mensagem no arquivo de log específico da importação SINAPI
-     * 
-     * @param string $level Nível do log (info, error, warning, debug)
-     * @param string $origin Origem/Módulo da mensagem
-     * @param string $message Mensagem descritiva do evento
-     * @param array $context Dados adicionais para o log
-     */
-    private function logSINAPI($level, $origin, $message, $context = [])
-    {
-        $user = auth()->user();
-        $userInfo = $user ? "Usuario: {$user->id} ({$user->name})" : "Usuario: N/A";
-        $ip = request()->ip();
 
-        $formattedMessage = "[{$origin}] [{$userInfo}] [IP: {$ip}] - {$message}";
 
-        // Cria um logger on-the-fly que aponta para o arquivo específico SINAPI
-        $logger = Log::build([
-            'driver' => 'single',
-            'path' => storage_path('logs/importacao_sinapi.log'),
-        ]);
 
-        $logger->{$level}($formattedMessage, $context);
-    }
 
-    /**
-     * Loga o início de uma operação de processamento
-     * 
-     * @param string $operation Nome da operação
-     * @param array $context Dados adicionais
-     */
-    private function logInicioProcessamento($operation, $context = [])
-    {
-        $this->logSINAPI('info', 'PROCESSAMENTO', "Início da operação: {$operation}", $context);
-    }
 
-    /**
-     * Loga o sucesso de uma operação de processamento
-     * 
-     * @param string $operation Nome da operação
-     * @param array $resultados Resultados da operação
-     */
-    private function logSucessoProcessamento($operation, $resultados = [])
-    {
-        $this->logSINAPI('info', 'PROCESSAMENTO', "Operação concluída com sucesso: {$operation}", $resultados);
-    }
 
-    /**
-     * Loga erro em uma operação de processamento
-     * 
-     * @param string $operation Nome da operação
-     * @param string $error Mensagem de erro
-     * @param array $context Contexto adicional
-     */
-    private function logErroProcessamento($operation, $error, $context = [])
-    {
-        $this->logSINAPI('error', 'PROCESSAMENTO', "Erro na operação {$operation}: {$error}", $context);
-    }
 
-    /**
-     * Loga o início da operação de gravação no banco
-     * 
-     * @param array $arquivos Arquivos a serem gravados
-     * @param Request $request Requisição HTTP
-     */
-    private function logInicioGravacao($arquivos, Request $request)
-    {
-        $user = auth()->user();
-        $usuarioInfo = $user ? [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email
-        ] : ['id' => null, 'name' => 'guest', 'email' => null];
-        
-        $ip = $request->ip();
-        $arquivosNomes = collect($arquivos)->map(fn($f) => $f['nome'] ?? 'arquivo_desconhecido')->toArray();
-        
-        $this->logSINAPI('info', 'GRAVACAO_BANCO', 'INICIO', [
-            'usuario' => $usuarioInfo,
-            'ip' => $ip,
-            'arquivos' => $arquivosNomes
-        ]);
-    }
 
-    /**
-     * Loga o processamento de um arquivo específico
-     * 
-     * @param string $nomeArquivo Nome do arquivo
-     * @param string $status Status do processamento
-     * @param array $detalhes Detalhes adicionais
-     */
-    private function logProcessamentoArquivo($nomeArquivo, $status, $detalhes = [])
-    {
-        $this->logSINAPI('info', 'GRAVACAO_BANCO', "PROCESSANDO | Arquivo: {$nomeArquivo} | Status: {$status}", $detalhes);
-    }
 
-    /**
-     * Loga a conclusão da operação de gravação
-     * 
-     * @param array $resultados Resultados da gravação
-     * @param float $tempoProcessamento Tempo de processamento
-     */
-    private function logConclusaoGravacao($resultados, $tempoProcessamento)
-    {
-        $this->logSINAPI('info', 'GRAVACAO_BANCO', "CONCLUIDO | Tempo: {$tempoProcessamento}s", $resultados);
-    }
 
-    /**
-     * Loga erros durante a gravação
-     * 
-     * @param string $arquivo Nome do arquivo
-     * @param string $erro Mensagem de erro
-     * @param array $contexto Contexto adicional
-     */
-    private function logErroGravacao($arquivo, $erro, $contexto = [])
-    {
-        $this->logSINAPI('error', 'GRAVACAO_BANCO', "ERRO | Arquivo: {$arquivo} | Erro: {$erro}", $contexto);
-    }
 
     /**
      * Remove um diretório e todo seu conteúdo recursivamente
@@ -1807,155 +1720,7 @@ class ImportarSinapiController extends Controller
         return rmdir($dir);
     }
 
-    // ========================================
-    // SISTEMA DE LOGS CENTRALIZADO PADRONIZADO
-    // ========================================
 
-    /**
-     * Log centralizado para importação SINAPI
-     * 
-     * @param string $level Nível do log (info, error, warning)
-     * @param string $origin Origem da operação
-     * @param string $message Mensagem descritiva
-     * @param array $context Contexto adicional
-     */
-    private function logImportacaoSINAPI($level, $origin, $message, $context = [])
-    {
-        // Capturar usuário autenticado corretamente
-        $user = auth()->user();
-        
-        // Verificar se o usuário está autenticado
-        if ($user) {
-            $userInfo = "Usuario: {$user->id} ({$user->name})";
-        } else {
-            // Se não estiver autenticado, tentar capturar da sessão ou request
-            $userInfo = "Usuario: N/A (Não autenticado)";
-        }
-        
-        $ip = request()->ip();
-        $timestamp = now()->format('Y-m-d H:i:s');
 
-        $formattedMessage = "[{$timestamp}] [SINAPI] [{$origin}] [{$userInfo}] [IP: {$ip}] - {$message}";
 
-        // Grava no log centralizado de importação de tabelas oficiais
-        $logPath = storage_path('logs/importacao_tabelas_oficiais.log');
-        $logDir = dirname($logPath);
-        
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-
-        $logEntry = $formattedMessage;
-        if (!empty($context)) {
-            $logEntry .= " | Contexto: " . json_encode($context, JSON_UNESCAPED_UNICODE);
-        }
-        $logEntry .= "\n";
-
-        file_put_contents($logPath, $logEntry, FILE_APPEND | LOCK_EX);
-    }
-
-    /**
-     * Log de início de operação SINAPI
-     */
-    private function logInicioOperacao($operation, $context = [])
-    {
-        $this->logImportacaoSINAPI('info', 'INICIO_OPERACAO', "Iniciando: {$operation}", $context);
-    }
-
-    /**
-     * Log de progresso da operação SINAPI
-     */
-    private function logProgresso($operation, $status, $context = [])
-    {
-        $this->logImportacaoSINAPI('info', 'PROGRESSO', "{$operation}: {$status}", $context);
-    }
-
-    /**
-     * Log de sucesso da operação SINAPI
-     */
-    private function logSucesso($operation, $resultados = [], $context = [])
-    {
-        $this->logImportacaoSINAPI('info', 'SUCESSO', "Concluído com sucesso: {$operation}", array_merge($resultados, $context));
-    }
-
-    /**
-     * Log de erro de validação/dados SINAPI (não crítico)
-     */
-    private function logErroValidacao($operation, $error, $context = [])
-    {
-        $this->logImportacaoSINAPI('error', 'VALIDACAO', "Erro de validação em {$operation}: {$error}", $context);
-    }
-
-    /**
-     * Log de erro crítico do sistema SINAPI
-     */
-    private function logErroCritico($operation, $error, $context = [])
-    {
-        // Erro crítico vai para ambos os logs
-        $this->logImportacaoSINAPI('error', 'ERRO_CRITICO', "Erro crítico em {$operation}: {$error}", $context);
-        
-        // E também para o Laravel.log (erro crítico do sistema)
-        Log::error("Erro crítico na importação SINAPI: {$operation} - {$error}", $context);
-    }
-
-    /**
-     * Método de teste para verificar o sistema de logs
-     * 
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function testarLogs()
-    {
-        $this->verificarPermissao();
-        
-        try {
-            // Teste 1: Verificar se o usuário está autenticado
-            $user = auth()->user();
-            $authCheck = auth()->check();
-            
-            // Teste 2: Verificar informações da sessão
-            $sessionId = session()->getId();
-            
-            // Teste 3: Verificar se há token JWT
-            $request = request();
-            $authorization = $request->header('Authorization');
-            $bearerToken = $request->bearerToken();
-            
-            // Teste 4: Verificar cookies
-            $cookies = $request->cookies->all();
-            
-            // Log de teste
-            $this->logInicioOperacao('TESTE_LOGS', [
-                'usuario_id' => $user ? $user->id : 'N/A',
-                'usuario_nome' => $user ? $user->name : 'N/A',
-                'autenticado' => $authCheck ? 'Sim' : 'Não',
-                'session_id' => $sessionId,
-                'tem_authorization' => $authorization ? 'Sim' : 'Não',
-                'tem_bearer_token' => $bearerToken ? 'Sim' : 'Não'
-            ]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Teste de logs SINAPI executado',
-                'dados_autenticacao' => [
-                    'usuario' => $user ? [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email
-                    ] : null,
-                    'auth_check' => $authCheck,
-                    'session_id' => $sessionId,
-                    'authorization_header' => $authorization,
-                    'bearer_token' => $bearerToken ? 'Presente' : 'Ausente',
-                    'cookies' => array_keys($cookies)
-                ]
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao testar: ' . $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ], 500);
-        }
-    }
 } 

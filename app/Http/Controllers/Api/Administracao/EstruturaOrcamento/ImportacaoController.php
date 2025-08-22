@@ -11,9 +11,23 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Services\Logging\EstruturaOrcamentoLogService;
 
 class ImportacaoController extends Controller
 {
+    /**
+     * Service de log para Estrutura Orçamento
+     */
+    protected EstruturaOrcamentoLogService $logger;
+    
+    /**
+     * Construtor com dependência do logger
+     */
+    public function __construct(EstruturaOrcamentoLogService $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * Importa estrutura de orçamento a partir de arquivo Excel
      */
@@ -44,18 +58,26 @@ class ImportacaoController extends Controller
             $tipoOrcamentoId = $request->eo_tipo_orcamento_id;
             $arquivo = $request->file('arquivo');
 
-            Log::info('Iniciando importação para tipo_orcamento_id: ' . $tipoOrcamentoId);
+            $this->logger->inicioImportacao($tipoOrcamentoId, [
+                'arquivo' => $arquivo->getClientOriginalName(),
+                'tamanho' => $arquivo->getSize()
+            ]);
 
             // Verificar se o tipo de orçamento existe
             $tipoOrcamento = TipoOrcamento::findOrFail($tipoOrcamentoId);
 
             // Processar arquivo Excel
+            $this->logger->processamentoArquivo([
+                'nome_arquivo' => $arquivo->getClientOriginalName(),
+                'tamanho' => $arquivo->getSize()
+            ]);
             $dados = $this->processarArquivoExcel($arquivo);
 
             // Validar estrutura dos dados
             $this->validarEstruturaDados($dados);
 
             // Limpar estrutura existente
+            $this->logger->limpezaAnterior($tipoOrcamentoId);
             $this->limparEstruturaExistente($tipoOrcamentoId);
 
             // Criar nova estrutura
@@ -63,7 +85,7 @@ class ImportacaoController extends Controller
 
             DB::commit();
 
-            Log::info('Importação concluída com sucesso', [
+            $this->logger->sucessoImportacao([
                 'tipo_orcamento_id' => $tipoOrcamentoId,
                 'grandes_itens' => $resultado['grandes_itens'],
                 'subgrupos' => $resultado['subgrupos']
@@ -82,9 +104,8 @@ class ImportacaoController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             
-            Log::error('Erro na importação', [
+            $this->logger->erroImportacao($e->getMessage(), [
                 'tipo_orcamento_id' => $request->eo_tipo_orcamento_id ?? 'não informado',
-                'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);

@@ -616,7 +616,6 @@ export default {
                 
             } catch (error) {
                 // Tratar erros de processamento
-                console.error('Erro no processamento:', error)
                 this.setStepAvailable('step2')
                 
                 let errorMessage = 'Ocorreu um erro ao processar o arquivo.'

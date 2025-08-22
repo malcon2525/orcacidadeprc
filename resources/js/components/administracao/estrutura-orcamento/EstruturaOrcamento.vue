@@ -739,7 +739,7 @@ export default {
                     this.tiposOrcamento = response.data.data;
                 }
             } catch (error) {
-                console.error('Erro ao carregar tipos de orçamento:', error);
+
                 this.mostrarToast('Erro ao carregar tipos de orçamento', 'error');
             }
         },
@@ -761,7 +761,7 @@ export default {
                     this.grandesItens = [];
                 }
             } catch (error) {
-                console.error('Erro ao carregar dados:', error);
+
                 this.mostrarToast('Erro ao carregar estrutura de orçamento', 'error');
                 this.grandesItens = [];
             } finally {
@@ -890,7 +890,7 @@ export default {
                     this.mostrarToast('Erro ao salvar grande item', 'error');
                 }
             } catch (error) {
-                console.error('Erro ao salvar grande item:', error);
+
                 if (error.response && error.response.data && error.response.data.errors) {
                     this.errors = error.response.data.errors;
                 } else {
@@ -932,7 +932,7 @@ export default {
                     this.mostrarToast('Erro ao salvar subgrupo', 'error');
                 }
             } catch (error) {
-                console.error('Erro ao salvar subgrupo:', error);
+
                 if (error.response && error.response.data && error.response.data.errors) {
                     this.errors = error.response.data.errors;
                 } else {
@@ -981,7 +981,7 @@ export default {
                     this.mostrarToast(`Erro ao excluir ${this.tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'subgrupo'}`, 'error');
                 }
                 } catch (error) {
-                console.error(`Erro ao excluir ${this.tipoItemParaExcluir}:`, error);
+
                 this.mostrarToast(`Erro ao excluir ${this.tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'subgrupo'}`, 'error');
             } finally {
                 this.excluindo = false;
@@ -1148,7 +1148,7 @@ export default {
                     throw new Error(response.data?.message || 'Erro ao processar arquivo');
                 }
             } catch (error) {
-                console.error('Erro ao processar arquivo:', error);
+
                 throw new Error(error.response?.data?.message || 'Erro ao processar arquivo Excel');
             }
         },
@@ -1200,7 +1200,7 @@ export default {
                 await new Promise(resolve => setTimeout(resolve, 500));
 
             } catch (error) {
-                console.error('Erro na importação:', error);
+
                 throw new Error('Erro ao confirmar importação');
             }
         },
@@ -1248,7 +1248,7 @@ export default {
                 }
                 
             } catch (error) {
-                console.error('Erro ao limpar estrutura:', error);
+
                 this.mostrarToast('Erro ao limpar estrutura: ' + (error.response?.data?.message || error.message), 'error');
             } finally {
                 this.limpando = false;

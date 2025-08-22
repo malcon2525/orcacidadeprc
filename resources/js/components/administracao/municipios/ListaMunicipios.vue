@@ -486,7 +486,7 @@ export default {
                 const response = await axios.get(`/api/administracao/municipios?${params.toString()}`);
                 this.municipios = response.data;
             } catch (error) {
-                console.error('Erro ao carregar municípios:', error);
+
                 this.mostrarToast('Erro', 'Não foi possível carregar os municípios', 'fa-exclamation-circle text-danger');
             }
         },
@@ -606,7 +606,7 @@ export default {
                     'fa-check-circle text-success'
                 );
             } catch (error) {
-                console.error('Erro ao salvar município:', error);
+
                 this.mostrarToast('Erro', error.message, 'fa-exclamation-circle text-danger');
             } finally {
                 this.loading = false;
@@ -635,7 +635,7 @@ export default {
                 this.carregarMunicipios();
                 this.mostrarToast('Sucesso', 'Município excluído com sucesso!', 'fa-check-circle text-success');
             } catch (error) {
-                console.error('Erro ao excluir município:', error);
+
                 this.mostrarToast('Erro', error.message, 'fa-exclamation-circle text-danger');
             } finally {
                 this.loading = false;
@@ -666,7 +666,7 @@ export default {
                     'fa-check-circle text-success'
                 );
             } catch (error) {
-                console.error('Erro ao importar municípios:', error);
+
                 this.mostrarToast('Erro', error.message, 'fa-exclamation-circle text-danger');
             } finally {
                 this.loading = false;

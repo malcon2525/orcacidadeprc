@@ -99,7 +99,7 @@ export default {
                     this.nomeUsuario = userData.name || 'Usuário';
                 }
             } catch (error) {
-                console.error('Erro ao buscar dados do usuário:', error);
+
             }
         }
     }

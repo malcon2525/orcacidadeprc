@@ -537,7 +537,6 @@ export default {
                 })
                 
             } catch (error) {
-                console.error('Erro na importação:', error)
                 this.setStepAvailable('step3')
                 
                 let errorMessage = 'Ocorreu um erro durante a importação.'

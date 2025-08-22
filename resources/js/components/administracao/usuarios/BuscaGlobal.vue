@@ -310,7 +310,7 @@ export default {
                 
                 // Verificar se axios está disponível
                 if (typeof axios === 'undefined') {
-                    console.error('Axios não está disponível');
+
                     this.resultados = [];
                     return;
                 }
@@ -329,7 +329,7 @@ export default {
                     this.tempoBusca = response.data.tempo_busca || null;
                     
                 } else {
-                    console.error('Estrutura de resposta inválida:', response.data);
+
                     this.resultados = [];
                     this.tempoBusca = null;
                     if (this.toast) {
@@ -338,7 +338,7 @@ export default {
                 }
                 
             } catch (error) {
-                console.error('Erro ao carregar dados:', error);
+
                 this.resultados = [];
                 this.tempoBusca = null;
                 

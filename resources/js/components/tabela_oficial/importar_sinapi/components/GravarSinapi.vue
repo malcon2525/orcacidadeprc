@@ -514,7 +514,6 @@ export default {
                 }
                 
             } catch (error) {
-                console.error('Erro ao verificar arquivos:', error)
                 this.setStepAvailable('step1')
                 
                 let errorMessage = 'Erro ao verificar arquivos.'
@@ -601,8 +600,6 @@ export default {
                 window.URL.revokeObjectURL(url)
                 
             } catch (error) {
-                console.error('Erro ao fazer download:', error)
-                
                 this.mensagem = {
                     tipo: 'erro',
                     texto: 'Erro ao fazer download do arquivo: ' + arquivo.nome_amigavel + ' - ' + (error.response?.data?.message || error.message)
@@ -753,14 +750,9 @@ export default {
                         registros_atualizados: registrosAtualizados
                     }
                     
-                    console.log('Dados processados:', {
-                        registrosGravados,
-                        registrosAtualizados,
-                        totalRegistros,
-                        resumo_gravacao: dados.resumo_gravacao
-                    })
+
                 } else {
-                    console.log('API retornou success: false')
+                    // API retornou success: false
                 }
                 
                 // Atualizar estado do step3
@@ -782,7 +774,6 @@ export default {
                 
             } catch (error) {
                 // Tratar erros de gravação
-                console.error('Erro na gravação:', error)
                 this.setStepAvailable('step3')
                 
                 let errorMessage = 'Ocorreu um erro ao gravar os dados no banco.'

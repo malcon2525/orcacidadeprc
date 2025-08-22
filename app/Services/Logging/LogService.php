@@ -49,14 +49,29 @@ abstract class LogService
      */
     private function logToFile($logFile, $level, $origin, $message, $context = [])
     {
-        $user = Auth::user();
-        $userInfo = $user ? "Usuario: {$user->id} ({$user->name})" : "Usuario: N/A (Não autenticado)";
-        $ip = Request::ip();
+        try {
+            $user = Auth::user();
+            $userInfo = $user ? "Usuario: {$user->id} ({$user->name})" : "Usuario: N/A (Não autenticado)";
+        } catch (\Exception $e) {
+            $userInfo = "Usuario: N/A (Contexto não disponível)";
+        }
+        
+        try {
+            $ip = Request::ip();
+        } catch (\Exception $e) {
+            $ip = 'N/A';
+        }
+        
         $timestamp = now()->format('Y-m-d H:i:s');
 
         $formattedMessage = "[{$timestamp}] [{$this->module}] [{$origin}] [{$userInfo}] [IP: {$ip}] - {$message}";
 
-        $logPath = storage_path("logs/{$logFile}");
+        // Usar caminho relativo se storage_path não estiver disponível
+        if (function_exists('storage_path')) {
+            $logPath = storage_path("logs/{$logFile}");
+        } else {
+            $logPath = "storage/logs/{$logFile}";
+        }
         $logDir = dirname($logPath);
         
         if (!is_dir($logDir)) {
@@ -110,6 +125,13 @@ abstract class LogService
     public function erroCritico($operation, $error, $context = [])
     {
         $this->log('error', 'ERRO_CRITICO', "Erro crítico em {$operation}: {$error}", $context);
-        Log::error("Erro crítico na funcionalidade: {$operation} - {$error}", $context);
+        // Log adicional para o Laravel se disponível
+        if (class_exists('Log')) {
+            try {
+                Log::error("Erro crítico na funcionalidade: {$operation} - {$error}", $context);
+            } catch (\Exception $e) {
+                // Ignorar se Log não estiver disponível
+            }
+        }
     }
 }

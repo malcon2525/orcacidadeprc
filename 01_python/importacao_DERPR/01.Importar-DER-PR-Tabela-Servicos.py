@@ -50,7 +50,7 @@ def processar_pdf(caminho_arquivo):
                 
                 # Debug: mostrar texto das primeiras páginas
                 if pagina_num < 3:
-                    print(f"Texto da página {pagina_num + 1}: {texto_pagina[:300]}...", file=sys.stderr)
+                    pass  # Debug removido para produção
                 
                 if not data_base or not grupo_servico:
                     continue
@@ -100,7 +100,7 @@ def processar_pdf(caminho_arquivo):
                 }
                 dados_estruturados.append(servico)
             except Exception as e:
-                print(f"Erro ao processar linha: {e}", file=sys.stderr)
+                # Log do erro removido para produção
                 continue
         
         if not dados_estruturados:

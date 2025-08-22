@@ -2660,7 +2660,7 @@ export default {
                     });
                 } else {
                     const mensagem = error.response?.data?.message || error.message || 'Erro ao salvar usuário';
-                    console.error('Erro completo:', error);
+    
                     this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
                 }
             } finally {
@@ -2684,9 +2684,8 @@ export default {
                 // A API agora retorna diretamente o array de usuários
                 this.usuarios = response.data || [];
                 
-                // console.log('Usuários carregados:', this.usuarios.length);
+
             } catch (error) {
-                console.error('Erro ao carregar usuários:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar usuários: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
                 // Em caso de erro, usar dados mockados para teste
                 this.usuarios = [
@@ -2812,7 +2811,6 @@ export default {
                 this.filtroPermissoesDisponiveis = '';
                 
             } catch (error) {
-                console.error('Erro ao carregar permissões do papel:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar permissões: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.loadingPermissoesPapel = false;
@@ -2848,7 +2846,6 @@ export default {
                 this.carregarPapeis();
                 
             } catch (error) {
-                console.error('Erro ao adicionar permissão ao papel:', error);
                 this.mostrarToast('Erro', 'Erro ao adicionar permissão ao papel: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.salvandoPermissoesPapel = false;
@@ -2951,7 +2948,6 @@ export default {
                 this.carregarUsuarios();
                 
             } catch (error) {
-                console.error('Erro ao adicionar usuário ao papel:', error);
                 this.mostrarToast('Erro', 'Erro ao adicionar usuário ao papel: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.salvandoUsuariosPapel = false;
@@ -2997,7 +2993,6 @@ export default {
                 this.modalVisualizarDetalhes.show();
                 
             } catch (error) {
-                console.error('Erro ao carregar detalhes da permissão:', error);
                 this.loadingDetalhesPermissao = false;
                 this.mostrarToast('Erro', 'Erro ao carregar detalhes da permissão', 'error');
             }
@@ -3037,7 +3032,6 @@ export default {
                 this.mostrarToast('Sucesso', `Papel '${papel.display_name}' excluído com sucesso!`, 'fa-check-circle text-success');
                 await this.carregarPapeis();
             } catch (error) {
-                console.error('Erro ao excluir papel:', error);
                 const mensagem = error.response?.data?.message || 'Erro ao excluir papel';
                 this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
             }
@@ -3077,7 +3071,6 @@ export default {
                 this.modalExclusaoInteligente.show();
                 
             } catch (error) {
-                console.error('Erro ao carregar detalhes para exclusão:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar detalhes do papel', 'fa-exclamation-circle text-danger');
             }
         },
@@ -3089,23 +3082,22 @@ export default {
             this.excluindoPapel = true;
             
             try {
-                // console.log('Iniciando exclusão inteligente do papel:', this.papelParaExcluir.display_name);
-                // console.log('Detalhes de exclusão:', this.detalhesExclusao);
+
                 
                 // Primeiro, remover todas as permissões do papel
                 if (this.detalhesExclusao.permissoes.length > 0) {
-                    //console.log('Removendo permissões do papel...');
+
                     await axios.post(`/api/administracao/papeis/${this.papelParaExcluir.id}/permissions`, {
                         permissions: []
                     });
-                    //console.log('Permissões removidas com sucesso');
+
                 }
                 
                 // Depois, remover todos os usuários do papel
                 if (this.detalhesExclusao.usuarios.length > 0) {
-                    //console.log('Removendo usuários do papel...');
+
                     for (const usuario of this.detalhesExclusao.usuarios) {
-                        //console.log('Processando usuário:', usuario.name, 'Roles:', usuario.roles);
+
                         
                         // Verificar se usuario.roles existe e é um array
                         const rolesAtuais = Array.isArray(usuario.roles) ? usuario.roles : [];
@@ -3120,27 +3112,26 @@ export default {
                             is_active: usuario.is_active,
                             roles: papeisAtuais.map(role => role.id)
                         });
-                        //console.log('Usuário atualizado:', usuario.name);
+
                     }
-                    //console.log('Todos os usuários foram removidos do papel');
+
                 }
                 
                 // Finalmente, excluir o papel
-                //console.log('Excluindo o papel...');
+
                 await axios.delete(`/api/administracao/papeis/${this.papelParaExcluir.id}`, {
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     }
                 });
                 
-                //console.log('Papel excluído com sucesso!');
+
                 this.modalExclusaoInteligente.hide();
                 this.mostrarToast('Sucesso', `Papel '${this.papelParaExcluir.display_name}' excluído com sucesso!`, 'fa-check-circle text-success');
                 this.carregarPapeis();
                 this.carregarUsuarios();
                 
             } catch (error) {
-                console.error('Erro ao excluir papel com vínculos:', error);
                 this.mostrarToast('Erro', 'Erro ao excluir papel', 'fa-exclamation-circle text-danger');
             } finally {
                 this.excluindoPapel = false;
@@ -3149,7 +3140,7 @@ export default {
         
         // Mostrar mensagem quando papel não pode ser excluído (método antigo - mantido para compatibilidade)
         mostrarMensagemNaoExcluivel(papel) {
-            //console.log('Método mostrarMensagemNaoExcluivel chamado para:', papel);
+
             
             let mensagem = `Não é possível excluir o papel '${papel.display_name}' porque:`;
             
@@ -3218,7 +3209,6 @@ export default {
                 this.papeis = Array.isArray(response.data) ? response.data : [];
                 
             } catch (error) {
-                console.error('Erro ao carregar papéis:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar papéis: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
                 this.papeis = [];
             } finally {
@@ -3302,7 +3292,6 @@ export default {
                 // Garantir que sempre seja um array
                 this.permissoes = Array.isArray(response.data) ? response.data : [];
             } catch (error) {
-                console.error('Erro ao carregar permissões:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar permissões: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
                 // Em caso de erro, usar dados mockados para teste
                 this.permissoes = [
@@ -3588,7 +3577,6 @@ export default {
                 this.mensagemConfirmacao = '';
                 
             } catch (error) {
-                console.error('Erro na exclusão:', error);
                 this.mostrarToast('Erro', 'Erro ao executar exclusão', 'fa-exclamation-circle text-danger');
             } finally {
                 this.excluindo = false;
@@ -3609,7 +3597,6 @@ export default {
                 this.carregarUsuarios();
                 this.carregarPapeis();
             } catch (error) {
-                console.error('Erro ao excluir usuário:', error);
                 const mensagem = error.response?.data?.message || error.message || 'Erro ao excluir usuário';
                 this.mostrarToast('Erro', mensagem, 'fa-exclamation-circle text-danger');
                 throw error; // Re-throw para ser capturado pelo método principal
@@ -3655,7 +3642,6 @@ export default {
                 this.carregarUsuarios();
                 
             } catch (error) {
-                console.error('Erro ao remover usuário do papel:', error);
                 this.mostrarToast('Erro', 'Erro ao remover usuário do papel: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.salvandoUsuariosPapel = false;
@@ -3689,7 +3675,6 @@ export default {
                 this.carregarPapeis();
                 
             } catch (error) {
-                console.error('Erro ao remover permissão do papel:', error);
                 this.mostrarToast('Erro', 'Erro ao remover permissão do papel: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.salvandoPermissoesPapel = false;
@@ -3705,7 +3690,6 @@ export default {
                 this.currentUser = response.data;
     
             } catch (error) {
-                console.error('Erro ao carregar dados do usuário:', error);
             }
         },
         
@@ -3767,7 +3751,6 @@ export default {
                 this.carregarUsuarios();
                 
             } catch (error) {
-                console.error('Erro ao adicionar papel ao usuário:', error);
                 this.mostrarToast('Erro', 'Erro ao adicionar papel ao usuário: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.salvandoPapeisUsuario = false;
@@ -3795,7 +3778,6 @@ export default {
                 this.carregarUsuarios();
                 
             } catch (error) {
-                console.error('Erro ao remover papel do usuário:', error);
                 this.mostrarToast('Erro', 'Erro ao remover papel do usuário: ' + (error.response?.data?.message || error.message), 'fa-exclamation-circle text-danger');
             } finally {
                 this.salvandoPapeisUsuario = false;
