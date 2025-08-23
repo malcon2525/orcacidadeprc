@@ -125,27 +125,43 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        Log::info('Logout realizado', [
-            'user_id' => Auth::id(),
-            'email' => Auth::user()->email ?? 'N/A'
-        ]);
+        try {
+            // Verificar se o usuário ainda está autenticado
+            if (Auth::check()) {
+                Log::info('Logout realizado', [
+                    'user_id' => Auth::id(),
+                    'email' => Auth::user()->email ?? 'N/A'
+                ]);
 
-        // Fazer logout da sessão
-        Auth::logout();
+                // Fazer logout da sessão
+                Auth::logout();
+            }
 
-        // Invalidar sessão
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+            // Invalidar sessão se existir
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
 
-        // Se for uma requisição API, retorna JSON
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'Logout realizado com sucesso'
+            // Se for uma requisição API, retorna JSON
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Logout realizado com sucesso'
+                ]);
+            }
+
+            // Se for uma requisição web (formulário), redireciona para welcome
+            return redirect()->route('welcome')->with('status', 'Logout realizado com sucesso!');
+            
+        } catch (\Exception $e) {
+            Log::warning('Erro durante logout, redirecionando para welcome', [
+                'error' => $e->getMessage(),
+                'user_agent' => $request->userAgent()
             ]);
+            
+            // Em caso de erro, sempre redirecionar para welcome
+            return redirect()->route('welcome');
         }
-
-        // Se for uma requisição web (formulário), redireciona para welcome
-        return redirect()->route('welcome');
     }
 
     /**

@@ -43,6 +43,21 @@
                     </div>
                 </nav>
 
+                {{-- Mensagens de Status --}}
+                @if (session('status'))
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ session('status') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('error_type') === 'csrf_expired')
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <strong>Sessão Expirada:</strong> Sua sessão expirou por inatividade. Por favor, faça login novamente.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 <div class="d-flex flex-row justify-content-between flex-wrap">
                     
                     {{-- inicio coluna da esquerda --}}

@@ -34,6 +34,8 @@ Route::prefix('api/auth')->name('api.auth.')->group(function () {
 // ===== ROTA DE LOGOUT WEB =====
 Route::post('/logout', [App\Http\Controllers\Api\Auth\AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+
+
 // ===================================================================
 // ROTAS PROTEGIDAS (REQUEREM AUTENTICAÇÃO)
 // ===================================================================
