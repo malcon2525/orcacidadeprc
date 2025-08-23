@@ -150,7 +150,7 @@
                 </a>
                 @endif
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_tabela_derpr'))
-                <a href="#" class="menu-link">
+                <a href="{{ route('derpr.consultar.index') }}" class="menu-link">
                     <i class="fas fa-search"></i>
                     <span>Consultar DER-PR</span>
                 </a>

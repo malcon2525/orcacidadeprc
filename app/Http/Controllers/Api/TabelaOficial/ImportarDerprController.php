@@ -640,7 +640,8 @@ class ImportarDerprController extends Controller
             'derpr_itens_incidencia.xlsx',
             'derpr_materiais.xlsx',
             'derpr_servicos.xlsx',
-            'derpr_transportes.xlsx'
+            'derpr_transportes.xlsx',
+            'formulas_transporte.xlsx'
         ];
         
         foreach ($arquivosDisponiveis as $nomeArquivo) {
@@ -674,7 +675,7 @@ class ImportarDerprController extends Controller
                     'status' => 'sem_diretorio',
                     'message' => 'Nenhum diretório de processamento encontrado',
                     'total_disponiveis' => 0,
-                    'total_esperados' => 7,
+                    'total_esperados' => 8,
                     'pode_gravar' => false,
                     'arquivos_disponiveis' => [],
                     'arquivos_faltantes' => [
@@ -684,7 +685,8 @@ class ImportarDerprController extends Controller
                         'derpr_itens_incidencia.xlsx',
                         'derpr_materiais.xlsx',
                         'derpr_servicos.xlsx',
-                        'derpr_transportes.xlsx'
+                        'derpr_transportes.xlsx',
+                        'formulas_transporte.xlsx'
                     ],
                     'diretorio' => null
                 ]);
@@ -698,7 +700,7 @@ class ImportarDerprController extends Controller
                     'status' => 'diretorio_inexistente',
                     'message' => 'Diretório de processamento não existe',
                     'total_disponiveis' => 0,
-                    'total_esperados' => 7,
+                    'total_esperados' => 8,
                     'pode_gravar' => false,
                     'arquivos_disponiveis' => [],
                     'arquivos_faltantes' => [
@@ -708,7 +710,8 @@ class ImportarDerprController extends Controller
                         'derpr_itens_incidencia.xlsx',
                         'derpr_materiais.xlsx',
                         'derpr_servicos.xlsx',
-                        'derpr_transportes.xlsx'
+                        'derpr_transportes.xlsx',
+                        'formulas_transporte.xlsx'
                     ],
                     'diretorio' => $nomeDiretorio
                 ]);
@@ -721,7 +724,8 @@ class ImportarDerprController extends Controller
                 'derpr_itens_incidencia.xlsx',
                 'derpr_materiais.xlsx',
                 'derpr_servicos.xlsx',
-                'derpr_transportes.xlsx'
+                'derpr_transportes.xlsx',
+                'formulas_transporte.xlsx'
             ];
             
             $arquivosDisponiveis = [];
@@ -842,7 +846,8 @@ class ImportarDerprController extends Controller
                 'derpr_itens_incidencia.xlsx',
                 'derpr_materiais.xlsx',
                 'derpr_servicos.xlsx',
-                'derpr_transportes.xlsx'
+                'derpr_transportes.xlsx',
+                'formulas_transporte.xlsx'
             ];
             
             $arquivosFaltantes = [];
@@ -1181,6 +1186,14 @@ class ImportarDerprController extends Controller
             ],
             'derpr_transportes.xlsx' => [
                 'colunas_obrigatorias' => [
+                    'codigo_servico', 'descricao_servico', 'unidade_servico', 
+                    'data_base', 'honerado', 'descricao', 'codigo', 'unidade', 
+                    'formula1', 'formula2', 'consumo'
+                ],
+                'model' => DerprTransporte::class
+            ],
+            'formulas_transporte.xlsx' => [
+                'colunas_obrigatorias' => [
                     'data_base', 'desoneracao', 'codigo', 'descricao', 
                     'unidade', 'formula_transporte'
                 ],
@@ -1324,7 +1337,12 @@ class ImportarDerprController extends Controller
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
-                            $model->data_base = \Carbon\Carbon::createFromFormat('d/m/Y', trim($linha[$colunas['data_base']]))->format('Y-m-d');
+                            $data_br = trim($linha[$colunas['data_base']]);
+                            $data_obj = \Carbon\Carbon::createFromFormat('d/m/Y', $data_br);
+                            if ($data_obj === false) {
+                                throw new \Exception("Data inválida: '{$data_br}'. Formato esperado: DD/MM/YYYY");
+                            }
+                            $model->data_base = $data_obj->format('Y-m-d');
                             $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
                             $model->descricao          = trim($linha[$colunas['descricao']]);
                             $model->codigo_equipamento = trim($linha[$colunas['codigo_equipamento']]);
@@ -1341,7 +1359,12 @@ class ImportarDerprController extends Controller
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
-                            $model->data_base = \Carbon\Carbon::createFromFormat('d/m/Y', trim($linha[$colunas['data_base']]))->format('Y-m-d');
+                            $data_br = trim($linha[$colunas['data_base']]);
+                            $data_obj = \Carbon\Carbon::createFromFormat('d/m/Y', $data_br);
+                            if ($data_obj === false) {
+                                throw new \Exception("Data inválida: '{$data_br}'. Formato esperado: DD/MM/YYYY");
+                            }
+                            $model->data_base = $data_obj->format('Y-m-d');
                             $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
                             $model->descricao          = trim($linha[$colunas['descricao']]);
                             $model->codigo = trim($linha[$colunas['codigo']]);
@@ -1356,7 +1379,12 @@ class ImportarDerprController extends Controller
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
-                            $model->data_base = \Carbon\Carbon::createFromFormat('d/m/Y', trim($linha[$colunas['data_base']]))->format('Y-m-d');
+                            $data_br = trim($linha[$colunas['data_base']]);
+                            $data_obj = \Carbon\Carbon::createFromFormat('d/m/Y', $data_br);
+                            if ($data_obj === false) {
+                                throw new \Exception("Data inválida: '{$data_br}'. Formato esperado: DD/MM/YYYY");
+                            }
+                            $model->data_base = $data_obj->format('Y-m-d');
                             $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
                             $model->descricao          = trim($linha[$colunas['descricao']]);
                             $model->codigo = trim($linha[$colunas['codigo']]);
@@ -1369,7 +1397,12 @@ class ImportarDerprController extends Controller
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
-                            $model->data_base = \Carbon\Carbon::createFromFormat('d/m/Y', trim($linha[$colunas['data_base']]))->format('Y-m-d');
+                            $data_br = trim($linha[$colunas['data_base']]);
+                            $data_obj = \Carbon\Carbon::createFromFormat('d/m/Y', $data_br);
+                            if ($data_obj === false) {
+                                throw new \Exception("Data inválida: '{$data_br}'. Formato esperado: DD/MM/YYYY");
+                            }
+                            $model->data_base = $data_obj->format('Y-m-d');
                             $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
                             $model->descricao          = trim($linha[$colunas['descricao']]);
                             $model->codigo = trim($linha[$colunas['codigo']]);
@@ -1383,7 +1416,12 @@ class ImportarDerprController extends Controller
                             $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
                             $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
                             $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
-                            $model->data_base = \Carbon\Carbon::createFromFormat('d/m/Y', trim($linha[$colunas['data_base']]))->format('Y-m-d');
+                            $data_br = trim($linha[$colunas['data_base']]);
+                            $data_obj = \Carbon\Carbon::createFromFormat('d/m/Y', $data_br);
+                            if ($data_obj === false) {
+                                throw new \Exception("Data inválida: '{$data_br}'. Formato esperado: DD/MM/YYYY");
+                            }
+                            $model->data_base = $data_obj->format('Y-m-d');
                             $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
                             $model->descricao          = trim($linha[$colunas['descricao']]);
                             $model->codigo = trim($linha[$colunas['codigo']]);
@@ -1394,8 +1432,51 @@ class ImportarDerprController extends Controller
                             break;
                             
                         case 'derpr_transportes.xlsx':
-                            // A data já está no formato Y-m-d, não precisa converter
-                            $model->data_base = trim($linha[$colunas['data_base']]);
+                            // Detectar e converter data automaticamente
+                            $data_input = trim($linha[$colunas['data_base']]);
+                            
+                            // Tentar primeiro formato ISO (Y-m-d)
+                            $data_obj = \DateTime::createFromFormat('Y-m-d', $data_input);
+                            if ($data_obj === false) {
+                                // Se falhar, tentar formato brasileiro (d/m/Y)
+                                $data_obj = \DateTime::createFromFormat('d/m/Y', $data_input);
+                                if ($data_obj === false) {
+                                    throw new \Exception("Data inválida: '{$data_input}'. Formatos aceitos: YYYY-MM-DD ou DD/MM/YYYY");
+                                }
+                            }
+                            
+                            $data_iso = $data_obj->format('Y-m-d');
+                            $model->data_base = $data_iso;
+                            $model->desoneracao = strtolower(trim($linha[$colunas['honerado']])) === 'com desoneração' ? 'com' : 'sem';
+                            $model->codigo_servico = trim($linha[$colunas['codigo_servico']]);
+                            $model->descricao_servico = trim($linha[$colunas['descricao_servico']]);
+                            $model->unidade_servico = trim($linha[$colunas['unidade_servico']]);
+                            $model->descricao = trim($linha[$colunas['descricao']]);
+                            $model->codigo = trim($linha[$colunas['codigo']]);
+                            $model->unidade = trim($linha[$colunas['unid']]);
+                            $model->formula1 = trim($linha[$colunas['formula1']]);
+                            $model->formula2 = trim($linha[$colunas['formula2']]);
+                            $model->custo = $this->paraDecimal($linha[$colunas['custo']]);
+                            $model->consumo = (float) str_replace(',', '.', $linha[$colunas['consumo']]);
+                            $model->custo_unitario = $this->paraDecimal($linha[$colunas['custo_unitario']]);
+                            break;
+                            
+                        case 'formulas_transporte.xlsx':
+                            // Detectar e converter data automaticamente
+                            $data_input = trim($linha[$colunas['data_base']]);
+                            
+                            // Tentar primeiro formato ISO (Y-m-d)
+                            $data_obj = \DateTime::createFromFormat('Y-m-d', $data_input);
+                            if ($data_obj === false) {
+                                // Se falhar, tentar formato brasileiro (d/m/Y)
+                                $data_obj = \DateTime::createFromFormat('d/m/Y', $data_input);
+                                if ($data_obj === false) {
+                                    throw new \Exception("Data inválida: '{$data_input}'. Formatos aceitos: YYYY-MM-DD ou DD/MM/YYYY");
+                                }
+                            }
+                            
+                            $data_iso = $data_obj->format('Y-m-d');
+                            $model->data_base = $data_iso;
                             $model->desoneracao = strtolower(trim($linha[$colunas['desoneracao']])) === 'com' ? 'com' : 'sem';
                             $model->codigo = trim($linha[$colunas['codigo']]);
                             $model->descricao = trim($linha[$colunas['descricao']]);
@@ -1450,6 +1531,13 @@ class ImportarDerprController extends Controller
                             break;
                             
                         case 'derpr_transportes.xlsx':
+                            $registroExistente = $config['model']::where('codigo', $model->codigo)
+                                ->where('data_base', $model->data_base)
+                                ->where('desoneracao', $model->desoneracao)
+                                ->first();
+                            break;
+                            
+                        case 'formulas_transporte.xlsx':
                             $registroExistente = $config['model']::where('codigo', $model->codigo)
                                 ->where('data_base', $model->data_base)
                                 ->where('desoneracao', $model->desoneracao)
@@ -1547,7 +1635,7 @@ class ImportarDerprController extends Controller
             }
 
             // Salvar arquivo
-            $caminhoArquivo = $diretorioProcessamento . '/derpr_transportes.xlsx';
+            $caminhoArquivo = $diretorioProcessamento . '/formulas_transporte.xlsx';
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save($caminhoArquivo);
 
@@ -1560,7 +1648,7 @@ class ImportarDerprController extends Controller
                 'ip' => request()->ip()
             ];
 
-            $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata_transportes.json';
+            $arquivoMetadata = $diretorioProcessamento . '/derpr_metadata_formulas_transporte.json';
             file_put_contents($arquivoMetadata, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
             // Arquivo Excel de fórmulas de transporte salvo com sucesso

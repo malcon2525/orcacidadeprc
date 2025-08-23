@@ -41,6 +41,7 @@ import ComposicoesInsumos from './components/tabela_oficial/importar_sinapi/comp
 import PercentagensMaoDeObra from './components/tabela_oficial/importar_sinapi/components/PercentagensMaoDeObra.vue';
 import GravarSinapi from './components/tabela_oficial/importar_sinapi/components/GravarSinapi.vue';
 import ConsultarSinapi from './components/tabela_oficial/consultar_sinapi/ConsultarSinapi.vue';
+import ConsultarDerpr from './components/tabela_oficial/consultar_derpr/Index.vue';
 
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
@@ -68,6 +69,9 @@ app.component('composicoes-insumos', ComposicoesInsumos);
 app.component('percentagens-mao-de-obra', PercentagensMaoDeObra);
 app.component('gravar-sinapi', GravarSinapi);
 app.component('consultar-sinapi-component', ConsultarSinapi);
+
+// DER-PR Components
+app.component('consultar-derpr-index', ConsultarDerpr);
 
 /**
  * The following block of code may be used to automatically register your
