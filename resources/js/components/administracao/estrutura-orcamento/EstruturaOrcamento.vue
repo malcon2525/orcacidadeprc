@@ -473,7 +473,8 @@
                             <div class="text-center mb-4">
                                 <i class="fas fa-cloud-upload-alt text-primary mb-3" style="font-size: 3rem;"></i>
                                 <h6>Selecione o arquivo Excel</h6>
-                                <p class="text-muted">O arquivo deve conter as colunas: grande_item_ordem, grande_item_descricao, subgrupo_ordem, subgrupo_descricao</p>
+                                <p class="text-muted">O arquivo deve conter as colunas: <strong>codigo</strong> e <strong>descricao</strong></p>
+                                <p class="text-muted small">Formato do código: XX.YY (ex: 01.00 = Grande Item, 01.01 = Subgrupo)</p>
                             </div>
                             
                             <div class="upload-area" 
@@ -1148,7 +1149,6 @@ export default {
                     throw new Error(response.data?.message || 'Erro ao processar arquivo');
                 }
             } catch (error) {
-
                 throw new Error(error.response?.data?.message || 'Erro ao processar arquivo Excel');
             }
         },
