@@ -40,6 +40,7 @@ import ImportarSinapi from './components/tabela_oficial/importar_sinapi/Index.vu
 import ComposicoesInsumos from './components/tabela_oficial/importar_sinapi/components/ComposicoesInsumos.vue';
 import PercentagensMaoDeObra from './components/tabela_oficial/importar_sinapi/components/PercentagensMaoDeObra.vue';
 import GravarSinapi from './components/tabela_oficial/importar_sinapi/components/GravarSinapi.vue';
+import ConsultarSinapi from './components/tabela_oficial/consultar_sinapi/ConsultarSinapi.vue';
 
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
@@ -66,6 +67,7 @@ app.component('importar-sinapi', ImportarSinapi);
 app.component('composicoes-insumos', ComposicoesInsumos);
 app.component('percentagens-mao-de-obra', PercentagensMaoDeObra);
 app.component('gravar-sinapi', GravarSinapi);
+app.component('consultar-sinapi-component', ConsultarSinapi);
 
 /**
  * The following block of code may be used to automatically register your

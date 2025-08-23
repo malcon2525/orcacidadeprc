@@ -156,7 +156,7 @@
                 </a>
                 @endif
                 @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_sinapi'))
-                <a href="#" class="menu-link">
+                <a href="{{ route('sinapi.consultar.index') }}" class="menu-link">
                     <i class="fas fa-search"></i>
                     <span>Consultar SINAPI-PR</span>
                 </a>

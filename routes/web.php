@@ -138,6 +138,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/testar-logs', [\App\Http\Controllers\Api\TabelaOficial\ImportarSinapiController::class, 'testarLogs'])->name('testar_logs');
     });
     
+    // ===================================================================
+    // MÓDULO DE CONSULTA DE TABELAS SINAPI
+    // Todas as rotas deste grupo são para consulta de tabelas oficiais SINAPI
+    // ===================================================================
+    
+    // Rota Web para interface (sem prefixo api)
+    Route::prefix('tabela_oficial/consultar_sinapi')->name('sinapi.consultar.')->middleware(['auth'])->group(function () {
+        // Página principal da consulta SINAPI (renderiza a view com o componente Vue)
+        Route::get('/', [\App\Http\Controllers\Web\TabelaOficial\ConsultarSinapi\ConsultarSinapiController::class, 'index'])->name('index');
+    });
+    
+    // Rotas API para consulta de dados (com prefixo api)
+    Route::prefix('api/tabela_oficial/consultar_sinapi')->name('api.sinapi.consultar.')->middleware(['auth'])->group(function () {
+        // Rotas para consulta de dados
+        Route::get('/buscar_tabelas', [\App\Http\Controllers\Api\TabelaOficial\ConsultarSinapi\ConsultarSinapiController::class, 'buscarTabelas'])->name('buscar_tabelas');
+        Route::get('/buscar_dados', [\App\Http\Controllers\Api\TabelaOficial\ConsultarSinapi\ConsultarSinapiController::class, 'buscarDados'])->name('buscar_dados');
+        Route::get('/exportar_excel', [\App\Http\Controllers\Api\TabelaOficial\ConsultarSinapi\ConsultarSinapiController::class, 'exportarExcel'])->name('exportar_excel');
+        Route::get('/zoom_servicos', [\App\Http\Controllers\Api\TabelaOficial\ConsultarSinapi\ConsultarSinapiController::class, 'zoomServicos'])->name('zoom_servicos');
+    });
+    
     // ===== ROTAS API - DADOS =====
     
     // API para dados do usuário (session-based) - compatibilidade com componentes Vue
