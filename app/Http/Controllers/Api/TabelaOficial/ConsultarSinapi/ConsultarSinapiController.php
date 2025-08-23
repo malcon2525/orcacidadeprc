@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\TabelaOficial\ConsultarSinapi;
 
 use App\Http\Controllers\Controller;
+use App\Models\Administracao\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -23,6 +25,32 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 class ConsultarSinapiController extends Controller
 {
     /**
+     * Verifica se o usuário tem acesso à funcionalidade
+     * 
+     * @param string|array $permissions
+     * @param bool $requireAll
+     * @return bool
+     */
+    private function checkAccess()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        
+        // 1. É super admin? → Acesso total
+        if ($user->hasRole('super')) {
+            return true;
+        }
+        
+        // 2. Tem o papel específico para consultar SINAPI? → Acesso permitido
+        if ($user->hasRole('consultar_tabela_sinapi')) {
+            return true;
+        }
+        
+        // 3. Acesso negado
+        abort(403, 'Acesso negado. Papel insuficiente.');
+    }
+
+    /**
      * Retorna a lista de tabelas disponíveis
      * 
      * Busca as combinações únicas de data_base e desoneracao na view
@@ -31,6 +59,9 @@ class ConsultarSinapiController extends Controller
      */
     public function buscarTabelas()
     {
+        // Verifica acesso
+        $this->checkAccess();
+        
         try {
             $tabelas = DB::table('sinapi_composicoes_view')
                 ->select('data_base', 'desoneracao')
@@ -68,6 +99,9 @@ class ConsultarSinapiController extends Controller
      */
     public function buscarDados(Request $request)
     {
+        // Verifica acesso
+        $this->checkAccess();
+        
         try {
             $request->validate([
                 'tabela' => 'required|string'
@@ -131,6 +165,9 @@ class ConsultarSinapiController extends Controller
      */
     public function exportarExcel(Request $request)
     {
+        // Verifica acesso
+        $this->checkAccess();
+        
         try {
             $request->validate([
                 'tabela' => 'required|string'
@@ -267,6 +304,9 @@ class ConsultarSinapiController extends Controller
      */
     public function zoomServicos(Request $request)
     {
+        // Verifica acesso
+        $this->checkAccess();
+        
         try {
             $termo = $request->input('termo');
             $desoneracao = strtolower($request->input('desoneracao', 'com'));

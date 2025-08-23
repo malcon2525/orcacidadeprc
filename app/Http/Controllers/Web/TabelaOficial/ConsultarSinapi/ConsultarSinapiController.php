@@ -26,15 +26,15 @@ class ConsultarSinapiController extends Controller
         /** @var User $user */
         $user = Auth::user();
         
-        // Verifica se é super admin ou tem papel específico
-        if ($user->isSuperAdmin() || $user->hasRole('gerenciar_tabela_oficial') || $user->hasRole('visualizar_tabela_oficial')) {
+        // Verifica se é super admin ou tem papel específico para consultar SINAPI
+        if ($user->isSuperAdmin() || $user->hasRole('consultar_tabela_sinapi')) {
             $permissoes = [
-                'crud' => $user->isSuperAdmin() || $user->hasPermission('tabela_oficial_crud'),
-                'consultar' => $user->isSuperAdmin() || $user->hasPermission('tabela_oficial_consultar'),
-                'importar' => $user->isSuperAdmin() || $user->hasPermission('tabela_oficial_importar')
+                'crud' => $user->isSuperAdmin(),
+                'consultar' => true, // Sempre true para quem tem acesso
+                'importar' => false  // Não há importação nesta funcionalidade
             ];
         } else {
-            abort(403, 'Acesso negado');
+            abort(403, 'Acesso negado. Papel insuficiente.');
         }
 
         return view('tabela_oficial.consultar_sinapi.index', compact('permissoes'));

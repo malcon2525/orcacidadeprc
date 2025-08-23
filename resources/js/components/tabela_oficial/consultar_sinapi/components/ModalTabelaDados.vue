@@ -65,6 +65,7 @@
                             </div>
                             <div class="col-md-4 d-flex align-items-end justify-content-end">
                                 <button 
+                                    v-if="podeExportar"
                                     class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2"
                                     @click="exportarExcel"
                                     :disabled="exportando"
@@ -204,6 +205,15 @@ export default {
         modalId: {
             type: String,
             required: true
+        },
+        permissoes: {
+            type: Object,
+            required: true,
+            default: () => ({
+                crud: false,
+                consultar: true,
+                importar: false
+            })
         }
     },
     emits: ['fechar'],
@@ -266,6 +276,11 @@ export default {
             
             return paginas
         })
+
+        // Controle de acesso baseado nas permissões
+        const podeExportar = computed(() => {
+            return props.permissoes.crud;
+        });
 
         /**
          * Função para filtrar dados
@@ -481,6 +496,7 @@ export default {
             paginacao,
             paginasVisiveis,
             exportando,
+            podeExportar,
             filtrarDados,
             mudarPagina,
             exportarExcel,

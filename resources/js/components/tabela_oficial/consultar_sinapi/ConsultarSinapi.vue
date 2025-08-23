@@ -122,6 +122,7 @@
             :tabela="tabelaSelecionada"
             @fechar="fecharModalTabela"
             modal-id="modal-tabela-dados-sinapi"
+            :permissoes="permissoes"
         />
     </div>
 </template>
@@ -136,17 +137,17 @@ export default {
     components: {
         ModalTabelaDados
     },
-    props: {
-        permissoes: {
-            type: Object,
-            required: true,
-            default: () => ({
-                crud: false,
-                consultar: false,
-                importar: false
-            })
-        }
-    },
+                    props: {
+                    permissoes: {
+                        type: Object,
+                        required: true,
+                        default: () => ({
+                            crud: false,
+                            consultar: true,
+                            importar: false
+                        })
+                    }
+                },
     setup(props) {
         // Estado reativo para os filtros
         const filtros = ref({
@@ -268,10 +269,21 @@ export default {
             }
         })
 
+        // Controle de acesso baseado nas permissões
+        const podeConsultar = computed(() => {
+            return props.permissoes.consultar || props.permissoes.crud;
+        });
+
+        const podeExportar = computed(() => {
+            return props.permissoes.crud;
+        });
+
         return {
             filtros,
             ordenacao,
             tabelas,
+            podeConsultar,
+            podeExportar,
             tabelaSelecionada,
             filtrosVisiveis,
             datasUnicas,
