@@ -84,19 +84,7 @@
                                         <td>{{ formatarPreco(item.mao_de_obra) }}</td>
                                         <td>{{ formatarPreco(item.material_equipamento) }}</td>
                                         <td>{{ formatarPreco(item.custo_total) }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                {{ item.transporte }}
-                                                <button 
-                                                    v-if="item.transporte === 'A acrescer'"
-                                                    class="btn btn-sm btn-outline-primary"
-                                                    @click="abrirModalTransporte(item)"
-                                                    title="Calcular transporte"
-                                                >
-                                                    <i class="fas fa-calculator"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <td>{{ item.transporte }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -420,16 +408,7 @@ export default {
             emit('fechar')
         }
 
-        /**
-         * Método para abrir o modal de transporte
-         */
-        const abrirModalTransporte = (item) => {
-            // Emite evento para o componente pai com os dados necessários
-            emit('abrir-transporte', {
-                item: item,
-                tabela: props.tabela
-            })
-        }
+
 
         // Carrega dados quando o componente é montado
         onMounted(() => {
@@ -475,8 +454,7 @@ export default {
             exportarExcel,
             formatarPreco,
             formatarData,
-            fecharModal,
-            abrirModalTransporte
+            fecharModal
         }
     }
 }

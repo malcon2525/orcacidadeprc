@@ -113,19 +113,7 @@
             v-if="tabelaSelecionada"
             :tabela="tabelaSelecionada"
             @fechar="fecharModalTabela"
-            @abrir-transporte="abrirModalTransporte"
             modal-id="modal-tabela-dados"
-        />
-
-        <!-- Modal de Cálculo de Transporte -->
-        <modal-calculo-transporte
-            v-if="itemSelecionado && dataBaseSelecionada && desoneracaoSelecionada"
-            :modal-id="'modal-calculo-transporte'"
-            :codigo="itemSelecionado.codigo"
-            :data-base="dataBaseSelecionada"
-            :desoneracao="desoneracaoSelecionada"
-            :custo-total="Number(itemSelecionado.custo_total) || 0"
-            @valor-calculado="valorTransporteCalculado"
         />
     </div>
 </template>
@@ -134,13 +122,11 @@
 import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import axios from 'axios'
 import ModalTabelaDados from './ModalTabelaDados.vue'
-import ModalCalculoTransporte from './ModalCalculoTransporte.vue'
 
 export default {
     name: 'ConsultarDerpr',
     components: {
-        ModalTabelaDados,
-        ModalCalculoTransporte
+        ModalTabelaDados
     },
     setup() {
         // Estado reativo para os filtros
@@ -159,8 +145,6 @@ export default {
         const tabelas = ref([])
         const tabelaSelecionada = ref(null)
         const itemSelecionado = ref(null)
-        const dataBaseSelecionada = ref(null)
-        const desoneracaoSelecionada = ref(null)
         const filtrosVisiveis = ref(false)
 
         /**
@@ -290,36 +274,9 @@ export default {
         /**
          * Método para abrir o modal de transporte
          */
-        const abrirModalTransporte = (dados) => {
-            // Extrai os dados do evento
-            const { item, tabela } = dados
-            
-            // Define os dados necessários
-            itemSelecionado.value = item
-            
-            // Extrai data_base e desoneracao da tabela
-            const [data, desoneracao] = tabela.id.split('_')
-            dataBaseSelecionada.value = data
-            desoneracaoSelecionada.value = desoneracao
 
-            // Aguarda o próximo tick para garantir que o modal seja renderizado
-            nextTick(() => {
-                setTimeout(() => {
-                    const modalEl = document.getElementById('modal-calculo-transporte')
-                    if (modalEl) {
-                        const modal = new window.bootstrap.Modal(modalEl)
-                        modal.show()
-                    }
-                }, 100)
-            })
-        }
 
-        /**
-         * Callback para quando o valor do transporte é calculado
-         */
-        const valorTransporteCalculado = (valor) => {
-            // Aqui você pode processar o valor calculado se necessário
-        }
+
 
         // Inicializa quando o componente é montado
         onMounted(() => {
@@ -334,8 +291,6 @@ export default {
             datasUnicas,
             tabelaSelecionada,
             itemSelecionado,
-            dataBaseSelecionada,
-            desoneracaoSelecionada,
             filtrosVisiveis,
             ordenarPor,
             getIconOrdenacao,
@@ -344,9 +299,7 @@ export default {
             toggleFiltros,
             abrirModalTabela,
             fecharModalTabela,
-            formatarData,
-            abrirModalTransporte,
-            valorTransporteCalculado
+            formatarData
         }
     }
 }

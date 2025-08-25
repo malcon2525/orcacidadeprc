@@ -21,9 +21,9 @@
 ### Rotas API (`routes/api.php`)
 | Método | Endpoint | Controller/Action | Descrição |
 |--------|----------|-------------------|-----------|
-| GET | /api/preco/derpr/transporte/formulas | DerprTransporteController@obterFormulas | Retorna fórmulas de cálculo de transporte |
-| GET | /api/preco/derpr/transporte/itens | DerprTransporteController@itensPorComposicao | Retorna itens de transporte da composição |
-| POST | /api/preco/derpr/transporte/calcular | DerprTransporteController@calcular | Calcula custos de transporte |
+| GET | `/api/tabela_oficial/consultar_derpr/buscar_tabelas` | ConsultarDerprController@buscarTabelas | Retorna tabelas disponíveis |
+| GET | `/api/tabela_oficial/consultar_derpr/buscar_dados` | ConsultarDerprController@buscarDados | Retorna dados da tabela selecionada |
+| GET | `/api/tabela_oficial/consultar_derpr/exportar_excel` | ConsultarDerprController@exportarExcel | Exporta dados para Excel |
 
 **Parâmetros da rota de dados:**
 - `tabela`: String no formato "DATA_BASE_DESONERACAO" (ex: "2024-04-30_sem")
@@ -70,14 +70,13 @@
 ---
 
 ## 3. Arquivos Envolvidos
-- **Controller Web:** `app/Http/Controllers/Web/Preco/Consultas/ConsultarDERPRController.php`
-- **Controller API:** `app/Http/Controllers/Api/DerprTransporteController.php`
-- **Service:** `app/Services/DerprTransporteService.php`
-- **Model:** `app/Models/Importacao/Derpr/DerprComposicao.php`
-- **View Blade:** `resources/views/web/preco/consultas/derpr/index.blade.php`
-- **Componente Vue:** `resources/js/components/tabela_oficial/consultar_derpr/ConsultarDerpr.vue`
-- **Componente Modal:** `resources/js/components/tabela_oficial/consultar_derpr/components/ModalCalculoTransporte.vue`
-- **Rotas:** `routes/web.php`, `routes/api.php`
+- **Controller Web:** `app/Http/Controllers/Web/TabelaOficial/ConsultarDerpr/ConsultarDerprController.php`
+- **Controller API:** `app/Http/Controllers/Api/TabelaOficial/ConsultarDerpr/ConsultarDerprController.php`
+- **Model:** `app/Models/TabelaOficial/Derpr/DerprComposicao.php`
+- **View Blade:** `resources/views/tabela_oficial/consultar_derpr/index.blade.php`
+- **Componente Vue:** `resources/js/components/tabela_oficial/consultar_derpr/Index.vue`
+- **Componente Modal:** `resources/js/components/tabela_oficial/consultar_derpr/components/ModalTabelaDados.vue`
+- **Rotas:** `routes/web.php`
 
 ---
 

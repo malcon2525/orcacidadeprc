@@ -175,15 +175,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/buscar_tabelas', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'buscarTabelas'])->name('buscar_tabelas');
         Route::get('/buscar_dados', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'buscarDados'])->name('buscar_dados');
         Route::get('/exportar_excel', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'exportarExcel'])->name('exportar_excel');
-        Route::get('/calculo_transporte', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'calculoTransporte'])->name('calculo_transporte');
     });
 
-    // Rotas API específicas para transporte DER-PR (compatibilidade com sistema original)
-    Route::prefix('api/preco/derpr/transporte')->name('api.derpr.transporte.')->middleware(['auth'])->group(function () {
-        // Rotas para cálculo de transporte
-        Route::get('/itens', [\App\Http\Controllers\Api\DerprTransporteController::class, 'itensPorComposicao'])->name('itens');
-        Route::get('/formulas', [\App\Http\Controllers\Api\DerprTransporteController::class, 'obterFormulas'])->name('formulas');
-    });
+
     
     // ===== ROTAS API - DADOS =====
     
