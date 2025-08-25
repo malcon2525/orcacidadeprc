@@ -1,0 +1,357 @@
+# Regras do Projeto ORÇACIDADE - Cursor AI
+
+## 🎯 **REGRAS CRÍTICAS (OBRIGATÓRIAS SEMPRE)**
+
+### **🏗️ Estrutura de Arquivos - SEMPRE seguir**
+```
+MÓDULO → FUNCIONALIDADE → ARQUIVOS_ESPECÍFICOS
+
+app/Http/Controllers/Web/[Modulo]/[Funcionalidade]/[Funcionalidade]Controller.php
+app/Http/Controllers/Api/[Modulo]/[Funcionalidade]/[Funcionalidade]Controller.php
+app/Models/[Modulo]/[Model].php
+resources/views/[modulo]/[funcionalidade]/index.blade.php
+resources/js/components/[modulo]/[funcionalidade]/Lista[Funcionalidade].vue
+routes/web.php (TODAS as rotas)
+```
+
+### **🚫 PROIBIÇÕES ABSOLUTAS**
+- ❌ **NUNCA** criar estilos locais para componentes
+- ❌ **NUNCA** usar `confirm()` nativo para exclusões
+- ❌ **NUNCA** usar estilos inline
+- ❌ **NUNCA** usar apenas um controller (sempre Web + Api)
+- ❌ **NUNCA** colocar rotas em `api.php` (sempre em `web.php`)
+- ❌ **NUNCA** esquecer do prefixo `/api` para rotas de dados
+- ❌ **NUNCA** usar autenticação JWT para CRUD interno
+
+---
+
+## 🎨 **PADRÕES VISUAIS OBRIGATÓRIOS**
+
+### **Cores Padronizadas (SEMPRE usar)**
+- **Verde Principal**: `#5EA853` - Títulos principais
+- **Azul Secundário**: `#18578A` - Títulos de abas, cabeçalhos
+- **Cinza Médio**: `#6c757d` - Texto secundário, labels
+
+### **Classes CSS Globais (OBRIGATÓRIO)**
+```css
+/* Larguras */
+.w-100px { width: 100px !important; }
+.w-180px { width: 180px !important; }
+.max-w-200px { max-width: 200px !important; }
+
+/* Alturas */
+.min-h-58 { min-height: 58px !important; }
+.h-58 { height: 58px !important; }
+
+/* Funcionalidades */
+.resize-vertical { resize: vertical !important; }
+.overflow-auto { overflow: auto !important; }
+.cursor-pointer { cursor: pointer !important; }
+.z-1000 { z-index: 1000 !important; }
+
+/* Texto */
+.text-custom { color: #18578A !important; font-weight: 600; }
+```
+
+### **Estrutura Visual Base (OBRIGATÓRIO)**
+```html
+<div class="container-fluid px-4">
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-semibold" style="color: #5EA853; font-size: 1.2rem; padding: 5px 0;">
+                <i class="fas fa-[icon] me-2"></i>[Título da Funcionalidade]
+            </h6>
+        </div>
+        <div class="card-body">
+            <!-- Conteúdo específico aqui -->
+        </div>
+    </div>
+</div>
+```
+
+---
+
+## 🔧 **PADRÕES CRUD OBRIGATÓRIOS**
+
+### **Modal de Confirmação (EXCLUSÃO) - SEMPRE usar**
+```html
+<div class="modal fade modal-confirmacao" id="modalConfirmacaoExclusao">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center">
+                    <div class="header-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5 class="modal-title mb-0">Confirmar Exclusão</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="confirm-text">Tem certeza que deseja excluir o [tipo]</p>
+                <p class="target-entity">"{{ itemParaExcluir?.name }}"</p>
+                <div class="irreversible">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span>Esta ação é permanente e não poderá ser desfeita.</span>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" @click="confirmarExclusao" :disabled="excluindo">
+                    <span v-if="excluindo" class="spinner-border spinner-border-sm me-2"></span>
+                    <i v-else class="fas fa-trash me-2"></i>
+                    {{ excluindo ? 'Excluindo...' : 'Excluir' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+### **Tabelas CRUD (SEMPRE usar)**
+```html
+<div class="table-responsive">
+    <table class="table table-hover align-middle usuarios-table">
+        <thead>
+            <tr>
+                <th class="fw-semibold text-custom">[Coluna]</th>
+                <th class="fw-semibold text-custom text-end w-180px">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in dados" :key="item.id" class="usuario-row">
+                <td class="align-middle">
+                    <div class="fw-medium">{{ item.nome }}</div>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex gap-1 justify-content-end">
+                        <button class="btn btn-sm btn-warning" @click="editarItem(item)" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" @click="excluirItem(item)" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+```
+
+### **Formulários CRUD (SEMPRE usar)**
+```html
+<div class="form-floating">
+    <input type="text" 
+           class="form-control" 
+           :class="{ 'is-invalid': errors.nome }"
+           id="nome" 
+           v-model="form.nome"
+           placeholder="Nome do item"
+           required>
+    <label for="nome">Nome *</label>
+</div>
+<div class="invalid-feedback" v-if="errors.nome">
+    {{ errors.name[0] }}
+</div>
+```
+
+---
+
+## 🛣️ **ROTAS - REGRAS OBRIGATÓRIAS**
+
+### **Localização (SEMPRE)**
+- **TODAS as rotas em `routes/web.php`**
+- **NUNCA usar `routes/api.php` para CRUD interno**
+
+### **Estrutura de Rotas (OBRIGATÓRIO)**
+```php
+// ===== ROTAS WEB - INTERFACE =====
+Route::prefix('[modulo]')->name('[modulo].')->group(function () {
+    Route::prefix('[funcionalidade]')->name('[funcionalidade].')->group(function () {
+        Route::get('/', [Web\[Modulo]\[Funcionalidade]\[Funcionalidade]Controller::class, 'index'])
+            ->name('index');
+    });
+});
+
+// ===== ROTAS API - DADOS =====
+Route::prefix('api/[modulo]')->name('api.[modulo].')->group(function () {
+    Route::prefix('[funcionalidade]')->name('[funcionalidade].')->group(function () {
+        Route::get('/', [Api\[Modulo]\[Funcionalidade]\[Funcionalidade]Controller::class, 'listar'])
+            ->name('listar');
+        Route::post('/', [Api\[Modulo]\[Funcionalidade]\[Funcionalidade]Controller::class, 'store'])
+            ->name('store');
+        Route::put('/{id}', [Api\[Modulo]\[Funcionalidade]\[Funcionalidade]Controller::class, 'update'])
+            ->name('update');
+        Route::delete('/{id}', [Api\[Modulo]\[Funcionalidade]\[Funcionalidade]Controller::class, 'destroy'])
+            ->name('destroy');
+    });
+});
+```
+
+---
+
+## 🔐 **SISTEMA DE AUTENTICAÇÃO**
+
+### **Configuração (OBRIGATÓRIO)**
+- **Driver**: Session-based (NÃO JWT)
+- **Verificação**: Método `checkAccess()` em todos os controllers
+
+### **Verificação de Acesso (SEMPRE implementar)**
+```php
+private function checkAccess($permissions, $requireAll = false)
+{
+    $user = Auth::user();
+    
+    // 1. É super admin? → Acesso total
+    if ($user->isSuperAdmin()) {
+        return true;
+    }
+    
+    // 2. Verificação de permissões
+    if (is_string($permissions)) {
+        $permissions = [$permissions];
+    }
+    
+    if ($requireAll) {
+        foreach ($permissions as $permission) {
+            if (!$user->hasPermission($permission)) {
+                abort(403, "Permissão obrigatória: {$permission}");
+            }
+        }
+    } else {
+        $hasAnyPermission = false;
+        foreach ($permissions as $permission) {
+            if ($user->hasPermission($permission)) {
+                $hasAnyPermission = true;
+                break;
+            }
+        }
+        
+        if (!$hasAnyPermission) {
+            abort(403, 'Acesso negado. Permissão insuficiente.');
+        }
+    }
+    
+    return true;
+}
+```
+
+---
+
+## 📝 **NOMENCLATURA OBRIGATÓRIA**
+
+| Elemento | Padrão | Exemplo |
+|----------|--------|---------|
+| **Módulos** | minúsculo com underscore | `administracao`, `orcamento` |
+| **Funcionalidades** | minúsculo com underscore | `usuarios`, `composicao_propria` |
+| **Controllers** | PascalCase + Controller | `UsuariosController` |
+| **Models** | PascalCase | `User`, `ComposicaoPropria` |
+| **Services** | PascalCase + Service | `UsuariosService` |
+| **Views** | snake_case | `index.blade.php` |
+| **Componentes Vue** | `Lista[Funcionalidade].vue` | `ListaUsuarios.vue` |
+
+---
+
+## 📱 **PAGINAÇÃO - REGRAS OBRIGATÓRIAS**
+
+### **Posicionamento (SEMPRE)**
+- **PAGINAÇÃO FORA DO CARD** principal
+- **Container**: `paginacao-container mt-4`
+
+### **Estrutura (OBRIGATÓRIO)**
+```html
+<div v-if="dados.length > 0" class="paginacao-container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <!-- Informações de Registros -->
+        <div class="text-muted fw-medium">
+            Mostrando {{ (paginaAtual - 1) * itensPorPagina + 1 }} até {{ Math.min(paginaAtual * itensPorPagina, dados.length) }} de {{ dados.length }} registros
+        </div>
+        
+        <!-- Navegação -->
+        <nav v-if="totalPaginas > 1">
+            <ul class="pagination pagination-generic mb-0">
+                <!-- Botões de navegação aqui -->
+            </ul>
+        </nav>
+    </div>
+</div>
+```
+
+---
+
+## 🎨 **BADGES E STATUS**
+
+### **Badges DISCRETOS (SEMPRE usar)**
+```html
+<!-- Status Ativo -->
+<span class="badge badge-status badge-ativo">
+    <i class="fas fa-check-circle"></i>
+    ATIVO
+</span>
+
+<!-- Status Inativo -->
+<span class="badge badge-status badge-inativo">
+    <i class="fas fa-times-circle"></i>
+    INATIVO
+</span>
+```
+
+**Regras:**
+- ✅ **SEMPRE usar** badges discretos (NÃO sólidos Bootstrap)
+- ✅ **SEMPRE incluir** ícones Font Awesome
+- ✅ **SEMPRE usar** texto em maiúsculo (ATIVO, INATIVO)
+
+---
+
+## 🔄 **FLUXO DE IMPLEMENTAÇÃO**
+
+### **Checklist para Nova Funcionalidade**
+1. ✅ Criar estrutura de pastas completa
+2. ✅ Definir namespace correto
+3. ✅ Criar controller Web com nomenclatura padrão
+4. ✅ Criar controller Api com nomenclatura padrão
+5. ✅ Criar model necessário
+6. ✅ Criar view index (container Vue)
+7. ✅ Criar componente Vue `Lista[Funcionalidade].vue`
+8. ✅ **COLOCAR TODAS AS ROTAS em `routes/web.php`**
+9. ✅ **SEMPRE usar prefixo `/api` para rotas de dados**
+10. ✅ **NUNCA usar `routes/api.php` para CRUD interno**
+
+---
+
+## 📚 **REFERÊNCIAS RÁPIDAS**
+
+### **Arquivos de Diretrizes Detalhadas**
+- **Estrutura**: `docs/diretrizes/01_projeto/01_padrao_estrutura_diretorios.md`
+- **Layout**: `docs/diretrizes/01_projeto/02_padrao_layout_interface.md`
+- **CRUD**: `docs/diretrizes/02_desenvolvimento/01_padrao_crud.md`
+- **Autenticação**: `docs/diretrizes/03_autenticacao/01_sistema_autenticacao.md`
+- **Modais**: `docs/diretrizes/01_projeto/07_padrao_modais.md`
+
+### **Arquivos de Implementação**
+- **CSS Global**: `public/assets/css/modern-interface.css`
+- **Rotas**: `routes/web.php`
+- **App Vue**: `resources/js/app.js`
+
+---
+
+## 🎯 **PRINCÍPIOS FUNDAMENTAIS**
+
+### **Arquitetura**
+- **Separação Web/Api**: Dois controllers por funcionalidade
+- **Vue.js + API**: Interface dinâmica com modal
+- **Responsabilidade Única**: Um CRUD = Dois Controllers
+- **Interface Consistente**: Front-end padronizado e uniforme
+
+### **Desenvolvimento**
+- **Reutilização**: Classes genéricas para qualquer funcionalidade
+- **Consistência**: Mesmo padrão para todas as operações
+- **Manutenibilidade**: Estrutura clara e organizada
+- **Escalabilidade**: Padrões que crescem com o projeto
+
+---
+
+> **IMPORTANTE**: Estas regras são OBRIGATÓRIAS para manter a consistência do projeto ORÇACIDADE. Para detalhes completos, consulte as diretrizes detalhadas nas referências.
+
+> **ÚLTIMA ATUALIZAÇÃO**: Janeiro 2025 - Baseado na análise crítica das diretrizes oficiais (8.000+ linhas)
