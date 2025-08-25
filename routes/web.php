@@ -34,6 +34,28 @@ Route::prefix('api/auth')->name('api.auth.')->group(function () {
 // ===== ROTA DE LOGOUT WEB =====
 Route::post('/logout', [App\Http\Controllers\Api\Auth\AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+// ===== ROTAS PÚBLICAS - ANDAMENTO DO PROJETO =====
+
+// PÁGINA DE ANDAMENTO DO PROJETO
+Route::prefix('andamento-projeto')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'index'])->name('andamento-projeto.index');
+    Route::get('/escopo', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'escopo'])->name('andamento-projeto.escopo');
+    Route::get('/backlog-global', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'backlogGlobal'])->name('andamento-projeto.backlog-global');
+    Route::get('/fases-e-sprints', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'fasesESprints'])->name('andamento-projeto.fases-e-sprints');
+    Route::get('/conceitos', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'conceitos'])->name('andamento-projeto.conceitos');
+    Route::get('/relatorios', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'relatorios'])->name('andamento-projeto.relatorios');
+    Route::get('/relatorios/{modulo}', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'relatorioIndividual'])->name('andamento-projeto.relatorio.individual');
+});
+
+// ===== ROTAS DE DOCUMENTAÇÃO =====
+Route::prefix('andamento-projeto/documentacao')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AndamentoProjeto\DocumentacaoController::class, 'index'])->name('documentacao.index');
+    Route::get('/{modulo}', [\App\Http\Controllers\AndamentoProjeto\DocumentacaoController::class, 'show'])->name('documentacao.show');
+});
+
+// ===== ROTA PARA PROTÓTIPO DA PLANILHA ORÇAMENTÁRIA =====
+Route::get('/planilha-prototipo', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'planilhaPrototipo'])->name('planilha-prototipo');
+
 
 
 // ===================================================================
@@ -289,14 +311,5 @@ Route::middleware(['auth'])->group(function () {
 
     
     
-    // ===== ROTAS TEMPORÁRIAS (REDIRECIONAM PARA HOME) =====
-    
-    // Rotas que existiam no sistema antigo - redirecionam para home
-    Route::get('/andamento-projeto', function() { 
-        return redirect('/home'); 
-    })->name('andamento-projeto.index');
 
-    Route::get('/planilha-prototipo', function() { 
-        return redirect('/home'); 
-    })->name('planilha-prototipo');
 });

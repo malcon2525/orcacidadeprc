@@ -80,172 +80,172 @@
     @stack('styles')
 </head>
 
-@auth
-{{-- SISTEMA COMPLETO COM MENU LATERAL - SÓ APARECE QUANDO LOGADO --}}
-
-{{-- inicio menu lateral esquerdo --}}
-
-<!-- Trigger do Menu Lateral -->
-<div class="sidebar-trigger" title="Menu Principal">
-    <i class="fas fa-bars"></i>
-</div>
-
-<div class="sidebar">
-    <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <div class="logo-icon">
-                <i class="fas fa-building"></i>
-            </div>
-            <div class="logo-text">
-                <h3>OrçaCidade</h3>
-                <p>Sistema de Orçamentos</p>
-            </div>
-        </div>
-        <button class="sidebar-close">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    
-    <div class="sidebar-content">
-        <!-- DEBUG TEMPORÁRIO -->
-        @php
-            $user = Auth::user();
-            $roles = $user->roles;
-            $isSuper = $user->isSuperAdmin();
-        @endphp
-        <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
-            <strong>DEBUG:</strong><br>
-            Usuário: {{ $user->name }}<br>
-            Email: {{ $user->email }}<br>
-            Papéis: {{ $roles->pluck('name')->implode(', ') ?: 'Nenhum papel' }}<br>
-            Count: {{ $roles->count() }}<br>
-            isSuperAdmin(): {{ $isSuper ? 'SIM' : 'NÃO' }}<br>
-            <hr>
-            <strong>Detalhes dos papéis:</strong><br>
-            @foreach($roles as $role)
-                - {{ $role->name }} ({{ $role->display_name }})<br>
-            @endforeach
-        </div>
-
-        <!-- TABELAS OFICIAIS -->
-        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr') || Auth::user()->hasRole('gerenciar_importacao_sinapi') || Auth::user()->hasRole('consultar_tabela_derpr') || Auth::user()->hasRole('consultar_tabela_sinapi'))
-        <div class="menu-group">
-            <div class="menu-header myBox">
-                <div class="menu-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <span>TABELAS OFICIAIS</span>
-            </div>
-            <div class="menu-items">
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr'))
-                <a href="{{ route('derpr.importar.index') }}" class="menu-link">
-                    <i class="fas fa-download"></i>
-                    <span>Importar DER-PR</span>
-                </a>
-                @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_sinapi'))
-                <a href="{{ route('sinapi.importar.index') }}" class="menu-link">
-                    <i class="fas fa-download"></i>
-                    <span>Importar SINAPI</span>
-                </a>
-                @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_tabela_derpr'))
-                <a href="{{ route('derpr.consultar.index') }}" class="menu-link">
-                    <i class="fas fa-search"></i>
-                    <span>Consultar DER-PR</span>
-                </a>
-                @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_tabela_sinapi'))
-                <a href="{{ route('sinapi.consultar.index') }}" class="menu-link">
-                    <i class="fas fa-search"></i>
-                    <span>Consultar SINAPI-PR</span>
-                </a>
-                @endif
-            </div>
-        </div>
-        @endif
-
-        <!-- ADMINISTRAÇÃO -->
-        @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura_orcamento') || Auth::user()->hasRole('visualizar_estrutura_orcamento'))
-        <div class="menu-group">
-            <div class="menu-header myBox">
-                <div class="menu-icon">
-                    <i class="fas fa-cogs"></i>
-                </div>
-                <span>ADMINISTRAÇÃO</span>
-            </div>
-            <div class="menu-items">
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios'))
-                <a href="{{ route('admin.usuarios.index') }}" class="menu-link">
-                    <i class="fas fa-users-cog"></i>
-                    <span>Gerenciamento de Usuários</span>
-                </a>
-                @endif
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_ad'))
-                <a href="{{ route('admin.active-directory.index') }}" class="menu-link">
-                    <i class="fas fa-network-wired"></i>
-                    <span>Active Directory</span>
-                </a>
-                @endif
-
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios'))
-                <a href="{{ route('admin.municipios.index') }}" class="menu-link">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>Municípios</span>
-                </a>
-                @endif
-                
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria'))
-                <a href="{{ route('admin.entidades-orcamentarias.index') }}" class="menu-link">
-                    <i class="fas fa-building"></i>
-                    <span>Entidades Orçamentárias</span>
-                </a>
-                @endif
-
-                @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_estrutura_orcamento') || Auth::user()->hasRole('visualizar_estrutura_orcamento'))
-                <a href="{{ route('admin.estrutura-orcamento.index') }}" class="menu-link">
-                    <i class="fas fa-sitemap"></i>
-                    <span>Estrutura de Orçamentos</span>
-                </a>
-                @endif
-            </div>
-        </div>
-        @endif
-
-        <!-- USUÁRIO -->
-        <div class="menu-group user-section">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-details">
-                    <div class="user-name">{{ Auth::user()->name ?? 'Usuário' }}</div>
-                    <div class="user-role">{{ Auth::user()->email ?? 'admin@orcacidade.com' }}</div>
-                </div>
-            </div>
-            
-            <div class="menu-items">
-                <a href="#" class="menu-link">
-                    <i class="fas fa-user"></i>
-                    <span>Meu Perfil</span>
-                </a>
-                <a href="#" class="menu-link">
-                    <i class="fas fa-cog"></i>
-                    <span>Configurações</span>
-                </a>
-                <a href="#" class="menu-link logout-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sair</span>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- fim menu lateral esquerdo --}}
-
 <body>
     <div id="app">
+        @auth
+        {{-- SISTEMA COMPLETO COM MENU LATERAL - SÓ APARECE QUANDO LOGADO --}}
+
+        {{-- inicio menu lateral esquerdo --}}
+
+        <!-- Trigger do Menu Lateral -->
+        <div class="sidebar-trigger" title="Menu Principal">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="logo-text">
+                    <h3>OrçaCidade</h3>
+                    <p>Sistema de Orçamentos</p>
+                </div>
+            </div>
+            <button class="sidebar-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-content">
+            <!-- DEBUG TEMPORÁRIO -->
+            @php
+                $user = Auth::user()->load('roles');
+                $roles = $user->roles;
+                $isSuper = $user->isSuperAdmin();
+            @endphp
+            <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
+                <strong>DEBUG:</strong><br>
+                Usuário: {{ $user->name }}<br>
+                Email: {{ $user->email }}<br>
+                Papéis: {{ $roles->pluck('name')->implode(', ') ?: 'Nenhum papel' }}<br>
+                Count: {{ $roles->count() }}<br>
+                isSuperAdmin(): {{ $isSuper ? 'SIM' : 'NÃO' }}<br>
+                <hr>
+                <strong>Detalhes dos papéis:</strong><br>
+                @foreach($roles as $role)
+                    - {{ $role->name }} ({{ $role->display_name }})<br>
+                @endforeach
+            </div>
+
+            <!-- TABELAS OFICIAIS -->
+            @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr') || Auth::user()->hasRole('gerenciar_importacao_sinapi') || Auth::user()->hasRole('consultar_tabela_derpr') || Auth::user()->hasRole('consultar_tabela_sinapi'))
+            <div class="menu-group">
+                <div class="menu-header myBox">
+                    <div class="menu-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <span>TABELAS OFICIAIS</span>
+                </div>
+                <div class="menu-items">
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr'))
+                    <a href="{{ route('derpr.importar.index') }}" class="menu-link">
+                        <i class="fas fa-download"></i>
+                        <span>Importar DER-PR</span>
+                    </a>
+                    @endif
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_sinapi'))
+                    <a href="{{ route('sinapi.importar.index') }}" class="menu-link">
+                        <i class="fas fa-download"></i>
+                        <span>Importar SINAPI</span>
+                    </a>
+                    @endif
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_tabela_derpr'))
+                    <a href="{{ route('derpr.consultar.index') }}" class="menu-link">
+                        <i class="fas fa-search"></i>
+                        <span>Consultar DER-PR</span>
+                    </a>
+                    @endif
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('consultar_tabela_sinapi'))
+                    <a href="{{ route('sinapi.consultar.index') }}" class="menu-link">
+                        <i class="fas fa-search"></i>
+                        <span>Consultar SINAPI-PR</span>
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            <!-- ADMINISTRAÇÃO -->
+            @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura_orcamento') || Auth::user()->hasRole('visualizar_estrutura_orcamento'))
+            <div class="menu-group">
+                <div class="menu-header myBox">
+                    <div class="menu-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span>ADMINISTRAÇÃO</span>
+                </div>
+                <div class="menu-items">
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios'))
+                    <a href="{{ route('admin.usuarios.index') }}" class="menu-link">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Gerenciamento de Usuários</span>
+                    </a>
+                    @endif
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_ad'))
+                    <a href="{{ route('admin.active-directory.index') }}" class="menu-link">
+                        <i class="fas fa-network-wired"></i>
+                        <span>Active Directory</span>
+                    </a>
+                    @endif
+
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios'))
+                    <a href="{{ route('admin.municipios.index') }}" class="menu-link">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Municípios</span>
+                    </a>
+                    @endif
+                    
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria'))
+                    <a href="{{ route('admin.entidades-orcamentarias.index') }}" class="menu-link">
+                        <i class="fas fa-building"></i>
+                        <span>Entidades Orçamentárias</span>
+                    </a>
+                    @endif
+
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_estrutura_orcamento') || Auth::user()->hasRole('visualizar_estrutura_orcamento'))
+                    <a href="{{ route('admin.estrutura-orcamento.index') }}" class="menu-link">
+                        <i class="fas fa-sitemap"></i>
+                        <span>Estrutura de Orçamentos</span>
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            <!-- USUÁRIO -->
+            <div class="menu-group user-section">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">{{ Auth::user()->name ?? 'Usuário' }}</div>
+                        <div class="user-role">{{ Auth::user()->email ?? 'admin@orcacidade.com' }}</div>
+                    </div>
+                </div>
+                
+                <div class="menu-items">
+                    <a href="#" class="menu-link">
+                        <i class="fas fa-user"></i>
+                        <span>Meu Perfil</span>
+                    </a>
+                    <a href="#" class="menu-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Configurações</span>
+                    </a>
+                    <a href="#" class="menu-link logout-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sair</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        {{-- fim menu lateral esquerdo --}}
+
         {{-- HEADER COMPONENT SERÁ CRIADO --}}
         <header-component></header-component>
 
@@ -267,19 +267,23 @@
                 </div>
             @endif
 
-                    @yield('content')
-    </main>
-</div>
+            @yield('content')
+        </main>
+        @else
+        {{-- LAYOUT SIMPLES PARA LOGIN --}}
+        @yield('content')
+        @endauth
+    </div>
 
-<!-- Imagem de boas-vindas (cidade) -->
-{{-- <div class="predio">
-    <img width="200px" src="{{ asset('assets/images/boasvindas-cidade.png') }}" class="" alt="Boas-vindas">
-    <div class="predio_txt">
-        <span class="txt_boas_vindas_borda">
-            <span class="cor_verde">Orça<span class="cor_azul">Cidade</span></span>
-        </span>
-    </div>            
-</div> --}}
+    <!-- Imagem de boas-vindas (cidade) -->
+    {{-- <div class="predio">
+        <img width="200px" src="{{ asset('assets/images/boasvindas-cidade.png') }}" class="" alt="Boas-vindas">
+        <div class="predio_txt">
+            <span class="txt_boas_vindas_borda">
+                <span class="cor_verde">Orça<span class="cor_azul">Cidade</span></span>
+            </span>
+        </div>            
+    </div> --}}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     
@@ -308,16 +312,4 @@
     </form>
 
 </body>
-
-@else
-{{-- LAYOUT SIMPLES PARA LOGIN --}}
-<body>
-    <div id="app-login">
-        @yield('content')
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
-@endauth
-
 </html>
