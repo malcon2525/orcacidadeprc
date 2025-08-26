@@ -27,30 +27,39 @@ class AprovacaoCadastrosController extends Controller
         try {
             $query = SolicitacaoCadastro::with([
                 'user:id,name,email',
-                'municipio:id,nome',
-                'entidadeOrcamentaria:id,nome_fantasia',
+                'entidadeOrcamentaria:id,jurisdicao_nome_fantasia,tipo_organizacao,nivel_administrativo',
                 'aprovadoPor:id,name,email'
             ]);
 
-            // Filtros
+            // NOVOS FILTROS CONFORME SOLICITADO
+            if ($request->filled('nome')) {
+                $query->porNome($request->nome);
+            }
+
+            if ($request->filled('email')) {
+                $query->porEmail($request->email);
+            }
+
+            if ($request->filled('entidade_id')) {
+                $query->porEntidade($request->entidade_id);
+            }
+
+            if ($request->filled('tipo_organizacao')) {
+                $query->whereHas('entidadeOrcamentaria', function ($q) use ($request) {
+                    $q->where('tipo_organizacao', $request->tipo_organizacao);
+                });
+            }
+
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
-            if ($request->filled('municipio_id')) {
-                $query->where('municipio_id', $request->municipio_id);
+            if ($request->filled('visitante_uf')) {
+                $query->porUf($request->visitante_uf);
             }
 
-            if ($request->filled('entidade_id')) {
-                $query->where('entidade_orcamentaria_id', $request->entidade_id);
-            }
-
-            if ($request->filled('busca')) {
-                $busca = trim($request->busca);
-                $query->whereHas('user', function ($q) use ($busca) {
-                    $q->where('name', 'LIKE', "%{$busca}%")
-                      ->orWhere('email', 'LIKE', "%{$busca}%");
-                });
+            if ($request->filled('visitante_municipio')) {
+                $query->porMunicipio($request->visitante_municipio);
             }
 
             // Ordenação
@@ -84,9 +93,7 @@ class AprovacaoCadastrosController extends Controller
         $this->checkAccess(['aprovar-cadastros']);
 
         $validator = Validator::make($request->all(), [
-            'observacoes_aprovacao' => 'nullable|string|max:1000',
-            'municipio_id' => 'required|exists:municipios,id',
-            'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id'
+            'observacoes_aprovacao' => 'nullable|string|max:1000'
         ]);
 
         if ($validator->fails()) {
@@ -116,9 +123,7 @@ class AprovacaoCadastrosController extends Controller
                 'status' => 'aprovado',
                 'data_aprovacao' => now(),
                 'aprovado_por_user_id' => Auth::id(),
-                'observacoes_aprovacao' => $request->observacoes_aprovacao,
-                'municipio_id' => $request->municipio_id,
-                'entidade_orcamentaria_id' => $request->entidade_orcamentaria_id
+                'observacoes_aprovacao' => $request->observacoes_aprovacao
             ]);
 
             Log::info('Ativando usuário');
@@ -128,12 +133,12 @@ class AprovacaoCadastrosController extends Controller
             ]);
 
             Log::info('Vinculando usuário à entidade');
-            // Vincular usuário à entidade orçamentária
+            // Vincular usuário à entidade orçamentária solicitada
             try {
                 // Inserir diretamente na tabela pivot
                 DB::table('user_entidades_orcamentarias')->insertOrIgnore([
                     'user_id' => $solicitacao->user_id,
-                    'entidade_orcamentaria_id' => $request->entidade_orcamentaria_id,
+                    'entidade_orcamentaria_id' => $solicitacao->entidade_orcamentaria_id,
                     'ativo' => true,
                     'data_vinculacao' => now(),
                     'vinculado_por_user_id' => Auth::id(),
@@ -151,7 +156,7 @@ class AprovacaoCadastrosController extends Controller
 
             return response()->json([
                 'message' => 'Solicitação aprovada com sucesso!',
-                'solicitacao' => $solicitacao->load(['user', 'municipio', 'entidadeOrcamentaria', 'aprovadoPor'])
+                'solicitacao' => $solicitacao->load(['user', 'entidadeOrcamentaria', 'aprovadoPor'])
             ]);
 
         } catch (\Exception $e) {
@@ -206,7 +211,7 @@ class AprovacaoCadastrosController extends Controller
 
             return response()->json([
                 'message' => 'Solicitação rejeitada com sucesso!',
-                'solicitacao' => $solicitacao->load(['user', 'municipio', 'entidadeOrcamentaria', 'aprovadoPor'])
+                'solicitacao' => $solicitacao->load(['user', 'entidadeOrcamentaria', 'aprovadoPor'])
             ]);
 
         } catch (\Exception $e) {
@@ -218,7 +223,7 @@ class AprovacaoCadastrosController extends Controller
     }
 
     /**
-     * Retorna dados para os filtros (municípios e entidades)
+     * Retorna dados para os filtros (entidades e tipos)
      */
     public function filtros(): JsonResponse
     {
@@ -226,18 +231,19 @@ class AprovacaoCadastrosController extends Controller
         $this->checkAccess(['aprovar-cadastros']);
 
         try {
-            $municipios = Municipio::select('id', 'nome')
-                ->orderBy('nome')
+            $entidades = EntidadeOrcamentaria::select('id', 'jurisdicao_nome_fantasia as nome', 'tipo_organizacao')
+                ->where('ativo', true)
+                ->orderBy('jurisdicao_nome_fantasia')
                 ->get();
 
-            $entidades = EntidadeOrcamentaria::select('id', 'nome_fantasia as nome')
-                ->where('ativo', true)
-                ->orderBy('nome_fantasia')
-                ->get();
+            $tiposOrganizacao = EntidadeOrcamentaria::select('tipo_organizacao')
+                ->distinct()
+                ->orderBy('tipo_organizacao')
+                ->pluck('tipo_organizacao');
 
             return response()->json([
-                'municipios' => $municipios,
-                'entidades' => $entidades
+                'entidades' => $entidades,
+                'tipos_organizacao' => $tiposOrganizacao
             ]);
 
         } catch (\Exception $e) {

@@ -135,50 +135,76 @@
                     </div>
                 </div>
                 
-                <!-- Dados da Solicitação -->
+                <!-- Sua Localização -->
                 <div class="col-12 mt-4">
                     <h6 class="text-custom mb-3">
-                        <i class="fas fa-building me-2"></i>Local de Trabalho
+                        <i class="fas fa-map-marker-alt me-2"></i>Sua Localização
                     </h6>
                 </div>
                 
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <select class="form-control" 
-                                :class="{ 'is-invalid': errors.municipio_id }"
-                                id="municipio_id" 
-                                v-model="form.municipio_id"
-                                @change="filtrarEntidades"
-                                required>
-                            <option value="">Selecione um município...</option>
-                            <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.id">
-                                {{ municipio.nome }}
-                            </option>
-                        </select>
-                        <label for="municipio_id">Município *</label>
+                        <input type="text" 
+                               class="form-control" 
+                               :class="{ 'is-invalid': errors.visitante_municipio }"
+                               id="visitante_municipio" 
+                               v-model="form.visitante_municipio"
+                               placeholder="Seu município"
+                               required>
+                        <label for="visitante_municipio">Seu Município *</label>
                     </div>
-                    <div class="invalid-feedback" v-if="errors.municipio_id">
-                        {{ errors.municipio_id[0] }}
+                    <div class="invalid-feedback" v-if="errors.visitante_municipio">
+                        {{ errors.visitante_municipio[0] }}
                     </div>
                 </div>
                 
                 <div class="col-md-6">
                     <div class="form-floating">
+                        <input type="text" 
+                               class="form-control" 
+                               :class="{ 'is-invalid': errors.visitante_uf }"
+                               id="visitante_uf" 
+                               v-model="form.visitante_uf"
+                               placeholder="Sua UF"
+                               maxlength="2"
+                               style="text-transform: uppercase"
+                               required>
+                        <label for="visitante_uf">Sua UF *</label>
+                    </div>
+                    <div class="invalid-feedback" v-if="errors.visitante_uf">
+                        {{ errors.visitante_uf[0] }}
+                    </div>
+                </div>
+                
+                <!-- Entidade Solicitada -->
+                <div class="col-12 mt-4">
+                    <h6 class="text-custom mb-3">
+                        <i class="fas fa-building me-2"></i>Entidade Orçamentária Solicitada
+                    </h6>
+                </div>
+                
+                <div class="col-12">
+                    <div class="form-floating">
                         <select class="form-control" 
                                 :class="{ 'is-invalid': errors.entidade_orcamentaria_id }"
                                 id="entidade_orcamentaria_id" 
                                 v-model="form.entidade_orcamentaria_id"
-                                :disabled="!form.municipio_id"
                                 required>
-                            <option value="">Selecione uma entidade...</option>
-                            <option v-for="entidade in entidadesFiltradas" :key="entidade.id" :value="entidade.id">
-                                {{ entidade.nome }}
+                            <option value="">Selecione uma entidade orçamentária...</option>
+                            <option v-for="entidade in entidades" :key="entidade.id" :value="entidade.id">
+                                {{ entidade.nome }} ({{ entidade.tipo_organizacao }} - {{ entidade.nivel_administrativo }})
                             </option>
                         </select>
                         <label for="entidade_orcamentaria_id">Entidade Orçamentária *</label>
                     </div>
                     <div class="invalid-feedback" v-if="errors.entidade_orcamentaria_id">
                         {{ errors.entidade_orcamentaria_id[0] }}
+                    </div>
+                    <div class="form-text">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Escolha a entidade orçamentária para a qual você precisa de acesso no sistema
+                        </small>
                     </div>
                 </div>
                 
@@ -294,14 +320,15 @@
                             <h6>Suas Solicitações:</h6>
                             <div v-for="solicitacao in resultadosConsulta" :key="solicitacao.id" class="border rounded p-3 mb-2">
                                 <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <strong>ID #{{ solicitacao.id }}</strong><br>
-                                        <small class="text-muted">{{ solicitacao.municipio }} - {{ solicitacao.entidade }}</small><br>
-                                        <small class="text-muted">Solicitado em: {{ solicitacao.data_solicitacao }}</small>
-                                        <div v-if="solicitacao.data_aprovacao">
-                                            <small class="text-muted">Processado em: {{ solicitacao.data_aprovacao }}</small>
-                                        </div>
+                                                                    <div>
+                                    <strong>ID #{{ solicitacao.id }}</strong><br>
+                                    <small class="text-muted">{{ solicitacao.visitante_municipio }}/{{ solicitacao.visitante_uf }} → {{ solicitacao.entidade }}</small><br>
+                                    <small class="text-muted">{{ solicitacao.entidade_tipo }}</small><br>
+                                    <small class="text-muted">Solicitado em: {{ solicitacao.data_solicitacao }}</small>
+                                    <div v-if="solicitacao.data_aprovacao">
+                                        <small class="text-muted">Processado em: {{ solicitacao.data_aprovacao }}</small>
                                     </div>
+                                </div>
                                     <span class="badge" :class="getStatusClass(solicitacao.status)">
                                         {{ solicitacao.status_label }}
                                     </span>
@@ -363,15 +390,14 @@ export default {
                 telefone: '',
                 cpf: '',
                 cargo: '',
-                municipio_id: '',
+                visitante_municipio: '',
+                visitante_uf: '',
                 entidade_orcamentaria_id: '',
                 justificativa: ''
             },
             
             // Dados para selects
-            municipios: [],
             entidades: [],
-            entidadesFiltradas: [],
             
             // Formulário de consulta
             consultaForm: {
@@ -406,7 +432,6 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    this.municipios = data.municipios;
                     this.entidades = data.entidades;
                 } else {
                     throw new Error(data.message || 'Erro ao carregar dados do formulário');
@@ -420,23 +445,7 @@ export default {
             }
         },
         
-        filtrarEntidades() {
-            if (this.form.municipio_id) {
-                this.entidadesFiltradas = this.entidades.filter(entidade => 
-                    !entidade.municipio_id || entidade.municipio_id == this.form.municipio_id
-                );
-            } else {
-                this.entidadesFiltradas = this.entidades;
-            }
-            
-            // Limpar seleção de entidade se não for válida para o município
-            if (this.form.entidade_orcamentaria_id) {
-                const entidadeValida = this.entidadesFiltradas.find(e => e.id == this.form.entidade_orcamentaria_id);
-                if (!entidadeValida) {
-                    this.form.entidade_orcamentaria_id = '';
-                }
-            }
-        },
+
         
         async enviarSolicitacao() {
             this.enviando = true;
@@ -532,12 +541,12 @@ export default {
                 telefone: '',
                 cpf: '',
                 cargo: '',
-                municipio_id: '',
+                visitante_municipio: '',
+                visitante_uf: '',
                 entidade_orcamentaria_id: '',
                 justificativa: ''
             };
             this.errors = {};
-            this.entidadesFiltradas = this.entidades;
         },
         
         getStatusClass(status) {

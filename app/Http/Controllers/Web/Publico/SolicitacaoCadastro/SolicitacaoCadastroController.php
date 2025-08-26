@@ -25,22 +25,17 @@ class SolicitacaoCadastroController extends Controller
     }
 
     /**
-     * Retorna dados para os selects do formulário (municípios e entidades)
+     * Retorna entidades orçamentárias para o select do formulário
      */
     public function dadosFormulario(): JsonResponse
     {
         try {
-            $municipios = Municipio::select('id', 'nome')
-                ->orderBy('nome')
-                ->get();
-
-            $entidades = EntidadeOrcamentaria::select('id', 'nome_fantasia as nome')
+            $entidades = EntidadeOrcamentaria::select('id', 'jurisdicao_nome_fantasia as nome', 'tipo_organizacao', 'nivel_administrativo')
                 ->where('ativo', true)
-                ->orderBy('nome_fantasia')
+                ->orderBy('jurisdicao_nome_fantasia')
                 ->get();
 
             return response()->json([
-                'municipios' => $municipios,
                 'entidades' => $entidades
             ]);
 
@@ -64,15 +59,18 @@ class SolicitacaoCadastroController extends Controller
             'username' => 'nullable|string|max:255|unique:users,username',
             'password' => 'required|confirmed|min:3',
             
-            // Dados da solicitação
-            'municipio_id' => 'required|exists:municipios,id',
-            'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id',
-            'justificativa' => 'required|string|max:1000',
-            
-            // Campos auxiliares
-            'cargo' => 'nullable|string|max:255',
+            // Dados pessoais do visitante
             'telefone' => 'nullable|string|max:20',
-            'cpf' => 'nullable|string|max:14'
+            'cpf' => 'nullable|string|max:14',
+            'cargo' => 'nullable|string|max:255',
+            
+            // Localização do visitante
+            'visitante_municipio' => 'required|string|max:255',
+            'visitante_uf' => 'required|string|size:2',
+            
+            // Entidade solicitada
+            'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id',
+            'justificativa' => 'required|string|max:1000'
         ], [
             'name.required' => 'O nome é obrigatório',
             'email.required' => 'O email é obrigatório',
@@ -82,8 +80,9 @@ class SolicitacaoCadastroController extends Controller
             'password.required' => 'A senha é obrigatória',
             'password.confirmed' => 'As senhas não conferem',
             'password.min' => 'A senha deve ter pelo menos 3 caracteres',
-            'municipio_id.required' => 'O município é obrigatório',
-            'municipio_id.exists' => 'Município inválido',
+            'visitante_municipio.required' => 'Seu município é obrigatório',
+            'visitante_uf.required' => 'Sua UF é obrigatória',
+            'visitante_uf.size' => 'UF deve ter exatamente 2 caracteres',
             'entidade_orcamentaria_id.required' => 'A entidade orçamentária é obrigatória',
             'entidade_orcamentaria_id.exists' => 'Entidade orçamentária inválida',
             'justificativa.required' => 'A justificativa é obrigatória',
@@ -100,8 +99,6 @@ class SolicitacaoCadastroController extends Controller
         try {
             DB::beginTransaction();
 
-            // Município e Entidade são conceitos independentes - sem validação de relacionamento
-
             // Criar usuário (inativo inicialmente)
             $user = User::create([
                 'name' => $request->name,
@@ -112,25 +109,21 @@ class SolicitacaoCadastroController extends Controller
                 'login_type' => 'local'
             ]);
 
-            // Criar solicitação de cadastro
+            // Criar solicitação de cadastro com nova estrutura
             $solicitacao = SolicitacaoCadastro::create([
                 'user_id' => $user->id,
-                'municipio_id' => $request->municipio_id,
                 'entidade_orcamentaria_id' => $request->entidade_orcamentaria_id,
+                'visitante_nome' => $request->name,
+                'visitante_email' => $request->email,
+                'visitante_telefone' => $request->telefone,
+                'visitante_cpf' => $request->cpf,
+                'visitante_cargo' => $request->cargo,
+                'visitante_municipio' => $request->visitante_municipio,
+                'visitante_uf' => strtoupper($request->visitante_uf),
                 'status' => 'pendente',
                 'justificativa' => $request->justificativa,
                 'data_solicitacao' => now()
             ]);
-
-            // Dados auxiliares em JSON (se fornecidos)
-            $dadosAuxiliares = [];
-            if ($request->filled('cargo')) $dadosAuxiliares['cargo'] = $request->cargo;
-            if ($request->filled('telefone')) $dadosAuxiliares['telefone'] = $request->telefone;
-            if ($request->filled('cpf')) $dadosAuxiliares['cpf'] = $request->cpf;
-            
-            if (!empty($dadosAuxiliares)) {
-                $solicitacao->update(['dados_auxiliares' => json_encode($dadosAuxiliares)]);
-            }
 
             DB::commit();
 
@@ -168,8 +161,7 @@ class SolicitacaoCadastroController extends Controller
         try {
             $query = SolicitacaoCadastro::with([
                 'user:id,name,email',
-                'municipio:id,nome',
-                'entidadeOrcamentaria:id,nome_fantasia'
+                'entidadeOrcamentaria:id,jurisdicao_nome_fantasia,tipo_organizacao'
             ])
             ->whereHas('user', function ($q) use ($request) {
                 $q->where('email', $request->email);
@@ -193,8 +185,10 @@ class SolicitacaoCadastroController extends Controller
                         'id' => $solicitacao->id,
                         'status' => $solicitacao->status,
                         'status_label' => $this->getStatusLabel($solicitacao->status),
-                        'municipio' => $solicitacao->municipio->nome,
-                        'entidade' => $solicitacao->entidadeOrcamentaria->nome_fantasia,
+                        'visitante_municipio' => $solicitacao->visitante_municipio,
+                        'visitante_uf' => $solicitacao->visitante_uf,
+                        'entidade' => $solicitacao->entidadeOrcamentaria->jurisdicao_nome_fantasia,
+                        'entidade_tipo' => $solicitacao->entidadeOrcamentaria->tipo_organizacao,
                         'data_solicitacao' => $solicitacao->data_solicitacao->format('d/m/Y H:i'),
                         'data_aprovacao' => $solicitacao->data_aprovacao?->format('d/m/Y H:i'),
                         'observacoes_aprovacao' => $solicitacao->observacoes_aprovacao

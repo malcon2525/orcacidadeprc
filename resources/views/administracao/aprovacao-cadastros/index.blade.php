@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Componente Vue.js será montado aqui -->
-<div id="aprovacao-cadastros-app">
+<div id="app">
     <lista-aprovacao-cadastros></lista-aprovacao-cadastros>
 </div>
 @endsection

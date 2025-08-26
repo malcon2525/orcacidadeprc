@@ -21,8 +21,14 @@ class SolicitacaoCadastro extends Model
      */
     protected $fillable = [
         'user_id',
-        'municipio_id',
         'entidade_orcamentaria_id',
+        'visitante_nome',
+        'visitante_email',
+        'visitante_telefone',
+        'visitante_cpf',
+        'visitante_cargo',
+        'visitante_municipio',
+        'visitante_uf',
         'status',
         'justificativa',
         'observacoes_aprovacao',
@@ -59,13 +65,7 @@ class SolicitacaoCadastro extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Relacionamento com município escolhido
-     */
-    public function municipio(): BelongsTo
-    {
-        return $this->belongsTo(Municipio::class);
-    }
+
 
     /**
      * Relacionamento com entidade orçamentária escolhida
@@ -107,6 +107,34 @@ class SolicitacaoCadastro extends Model
     public function scopeRecentes($query)
     {
         return $query->orderBy('data_solicitacao', 'desc');
+    }
+
+    /**
+     * Scopes para filtros da tela de aprovação
+     */
+    public function scopePorNome($query, $nome)
+    {
+        return $query->where('visitante_nome', 'like', '%' . $nome . '%');
+    }
+
+    public function scopePorEmail($query, $email)
+    {
+        return $query->where('visitante_email', 'like', '%' . $email . '%');
+    }
+
+    public function scopePorUf($query, $uf)
+    {
+        return $query->where('visitante_uf', $uf);
+    }
+
+    public function scopePorMunicipio($query, $municipio)
+    {
+        return $query->where('visitante_municipio', 'like', '%' . $municipio . '%');
+    }
+
+    public function scopePorEntidade($query, $entidadeId)
+    {
+        return $query->where('entidade_orcamentaria_id', $entidadeId);
     }
 
     /**

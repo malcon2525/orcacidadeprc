@@ -202,36 +202,63 @@
                                 </div>
                             </div>
                             
-                                                         <!-- Dados da Solicitação -->
-                             <div class="col-12 mt-3">
-                                 <h6 class="fw-semibold mb-2" style="color: #5EA853;">
-                                     <i class="fas fa-building me-2"></i>Local de Trabalho
-                                 </h6>
-                             </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-control" 
-                                            id="municipio_id" 
-                                            name="municipio_id"
-                                            required>
-                                        <option value="">Selecione um município...</option>
-                                    </select>
-                                    <label for="municipio_id">Município *</label>
-                                </div>
+                                                                                                                 <!-- Sua Localização -->
+                            <div class="col-12 mt-3">
+                                <h6 class="fw-semibold mb-2" style="color: #5EA853;">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Sua Localização
+                                </h6>
                             </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-control" 
-                                            id="entidade_orcamentaria_id" 
-                                            name="entidade_orcamentaria_id"
-                                            required>
-                                        <option value="">Selecione uma entidade...</option>
-                                    </select>
-                                    <label for="entidade_orcamentaria_id">Entidade Orçamentária *</label>
-                                </div>
-                            </div>
+                           
+                           <div class="col-md-6">
+                               <div class="form-floating">
+                                   <input type="text" 
+                                          class="form-control" 
+                                          id="visitante_municipio" 
+                                          name="visitante_municipio"
+                                          placeholder="Seu município"
+                                          required>
+                                   <label for="visitante_municipio">Seu Município *</label>
+                               </div>
+                           </div>
+                           
+                           <div class="col-md-6">
+                               <div class="form-floating">
+                                   <input type="text" 
+                                          class="form-control" 
+                                          id="visitante_uf" 
+                                          name="visitante_uf"
+                                          placeholder="Sua UF"
+                                          maxlength="2"
+                                          style="text-transform: uppercase"
+                                          required>
+                                   <label for="visitante_uf">Sua UF *</label>
+                               </div>
+                           </div>
+                           
+                           <!-- Entidade Solicitada -->
+                           <div class="col-12 mt-3">
+                               <h6 class="fw-semibold mb-2" style="color: #5EA853;">
+                                   <i class="fas fa-building me-2"></i>Entidade Orçamentária Solicitada
+                               </h6>
+                           </div>
+                           
+                           <div class="col-12">
+                               <div class="form-floating">
+                                   <select class="form-control" 
+                                           id="entidade_orcamentaria_id" 
+                                           name="entidade_orcamentaria_id"
+                                           required>
+                                       <option value="">Selecione uma entidade orçamentária...</option>
+                                   </select>
+                                   <label for="entidade_orcamentaria_id">Entidade Orçamentária *</label>
+                               </div>
+                               <div class="form-text">
+                                   <small class="text-muted">
+                                       <i class="fas fa-info-circle me-1"></i>
+                                       Escolha a entidade orçamentária para a qual você precisa de acesso no sistema
+                                   </small>
+                               </div>
+                           </div>
                             
                                                          <!-- Justificativa -->
                              <div class="col-12 mt-3">
@@ -362,32 +389,16 @@
                  const response = await fetch('/api/publico/solicitar-cadastro/dados-formulario');
                  const data = await response.json();
                  
-                                      if (response.ok) {
- 
-                         
-                         // Preencher municípios
-                         const selectMunicipio = document.getElementById('municipio_id');
-                         selectMunicipio.innerHTML = '<option value="">Selecione um município...</option>';
-                         data.municipios.forEach(municipio => {
-                             const option = document.createElement('option');
-                             option.value = municipio.id;
-                             option.textContent = municipio.nome;
-                             selectMunicipio.appendChild(option);
-                         });
-                         
-                         // Preencher entidades
-                         const selectEntidade = document.getElementById('entidade_orcamentaria_id');
-                         selectEntidade.innerHTML = '<option value="">Selecione uma entidade...</option>';
-                         data.entidades.forEach(entidade => {
-                             const option = document.createElement('option');
-                             option.value = entidade.id;
-                             option.textContent = entidade.nome;
-                             selectEntidade.appendChild(option);
-                         });
-                         
- 
-                     
-                     // Os selects funcionam independentemente - sem filtro necessário
+                                                                           if (response.ok) {
+                        // Preencher entidades orçamentárias
+                        const selectEntidade = document.getElementById('entidade_orcamentaria_id');
+                        selectEntidade.innerHTML = '<option value="">Selecione uma entidade orçamentária...</option>';
+                        data.entidades.forEach(entidade => {
+                            const option = document.createElement('option');
+                            option.value = entidade.id;
+                            option.textContent = `${entidade.nome} (${entidade.tipo_organizacao} - ${entidade.nivel_administrativo})`;
+                            selectEntidade.appendChild(option);
+                        });
                  } else {
                      console.error('Erro ao carregar dados:', data.message);
                  }
@@ -400,7 +411,7 @@
           
           function limparErros() {
               // Limpar classes de erro de todos os campos
-              const campos = ['name', 'email', 'password', 'password_confirmation', 'municipio_id', 'entidade_orcamentaria_id', 'justificativa'];
+              const campos = ['name', 'email', 'password', 'password_confirmation', 'visitante_municipio', 'visitante_uf', 'entidade_orcamentaria_id', 'justificativa'];
               campos.forEach(campo => {
                   const elemento = document.getElementById(campo);
                   if (elemento) {

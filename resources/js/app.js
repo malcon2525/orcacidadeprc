@@ -45,6 +45,9 @@ import GravarSinapi from './components/tabela_oficial/importar_sinapi/components
 import ConsultarSinapi from './components/tabela_oficial/consultar_sinapi/ConsultarSinapi.vue';
 import ConsultarDerpr from './components/tabela_oficial/consultar_derpr/Index.vue';
 
+// Componente Público
+import FormularioSolicitacaoCadastro from './components/publico/FormularioSolicitacaoCadastro.vue';
+
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
 app.component('header-component', HeaderComponent);
@@ -76,6 +79,9 @@ app.component('consultar-sinapi-component', ConsultarSinapi);
 
 // DER-PR Components
 app.component('consultar-derpr-index', ConsultarDerpr);
+
+// Componente Público
+app.component('formulario-solicitacao-cadastro', FormularioSolicitacaoCadastro);
 
 /**
  * The following block of code may be used to automatically register your

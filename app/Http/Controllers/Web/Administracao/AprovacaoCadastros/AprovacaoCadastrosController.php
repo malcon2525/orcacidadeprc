@@ -3,74 +3,52 @@
 namespace App\Http\Controllers\Web\Administracao\AprovacaoCadastros;
 
 use App\Http\Controllers\Controller;
+use App\Models\Administracao\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AprovacaoCadastrosController extends Controller
 {
     /**
-     * Exibe a interface principal de aprovação de cadastros
+     * Construtor com middleware de autenticação
      */
-    public function index()
+    public function __construct()
     {
-        // Verificação de acesso conforme padrões
-        /** @var \App\Models\Administracao\User $user */
-        $user = Auth::user();
-        
-        // 1. É super admin? → Acesso total
-        if ($user->isSuperAdmin()) {
-            return view('administracao.aprovacao-cadastros.index');
-        }
-        
-        // 2. Tem permissão específica? → Acesso ao módulo
-        if ($user->hasPermission('aprovar-cadastros')) {
-            return view('administracao.aprovacao-cadastros.index');
-        }
-        
-        // 3. Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente para aprovar cadastros.');
+        $this->middleware('auth');
     }
 
     /**
-     * Verificação de acesso unificada
+     * Exibe a interface de aprovação de cadastros
+     * O Vue.js fará todo o gerenciamento através da API
      */
-    private function checkAccess($permissions, $requireAll = false)
+    public function index()
     {
-        /** @var \App\Models\Administracao\User $user */
+        /** @var User $user */
         $user = Auth::user();
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
-            return true;
+            return view('administracao.aprovacao-cadastros.index', [
+                'permissoes' => [
+                    'crud' => true,
+                    'consultar' => true,
+                    'aprovar' => true
+                ]
+            ]);
         }
         
-        // 2. Verificação flexível de permissões
-        if (is_string($permissions)) {
-            $permissions = [$permissions];
+        // 2. Tem a permissão de aprovar cadastros?
+        if ($user->hasPermission('aprovar-cadastros')) {
+            return view('administracao.aprovacao-cadastros.index', [
+                'permissoes' => [
+                    'crud' => false,
+                    'consultar' => true,
+                    'aprovar' => true
+                ]
+            ]);
         }
         
-        if ($requireAll) {
-            // Todas as permissões são obrigatórias (AND)
-            foreach ($permissions as $permission) {
-                if (!$user->hasPermission($permission)) {
-                    abort(403, "Permissão obrigatória: {$permission}");
-                }
-            }
-        } else {
-            // Pelo menos uma permissão é suficiente (OR)
-            $hasAnyPermission = false;
-            foreach ($permissions as $permission) {
-                if ($user->hasPermission($permission)) {
-                    $hasAnyPermission = true;
-                    break;
-                }
-            }
-            
-            if (!$hasAnyPermission) {
-                abort(403, 'Acesso negado. Permissão insuficiente.');
-            }
-        }
-        
-        return true;
+        // 3. Nenhuma das opções → Acesso negado
+        abort(403, 'Acesso negado. Permissão insuficiente para aprovar cadastros.');
     }
 }

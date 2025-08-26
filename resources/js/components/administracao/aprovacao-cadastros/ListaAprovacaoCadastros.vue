@@ -27,22 +27,62 @@
                 <div class="filtros-aba-container mb-3" v-if="filtrosVisiveis">
                     <div class="filtros-aba-content" :class="{ 'show': filtrosVisiveis }">
                         <div class="row g-3 align-items-end">
-                            <!-- Campo de Busca -->
+                            <!-- Nome do Visitante -->
                             <div class="col-md-3">
                                 <div class="form-floating">
                                     <input type="text" 
                                            class="form-control" 
-                                           id="busca" 
-                                           v-model="filtros.busca"
-                                           placeholder="Buscar por nome ou email..."
+                                           id="nome" 
+                                           v-model="filtros.nome"
+                                           placeholder="Buscar por nome..."
                                            @keyup.enter="filtrarDados"
                                            @input="onBuscaInput">
-                                    <label for="busca">Buscar</label>
+                                    <label for="nome">Nome</label>
                                 </div>
                             </div>
                             
-                            <!-- Filtro de Status -->
-                            <div class="col-md-2">
+                            <!-- Email do Visitante -->
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="email" 
+                                           v-model="filtros.email"
+                                           placeholder="Buscar por email..."
+                                           @keyup.enter="filtrarDados"
+                                           @input="onBuscaInput">
+                                    <label for="email">Email</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Entidade Orçamentária -->
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-control" id="filtroEntidade" v-model="filtros.entidade_id">
+                                        <option value="">Todas as entidades</option>
+                                        <option v-for="entidade in entidades" :key="entidade.id" :value="entidade.id">
+                                            {{ entidade.nome }}
+                                        </option>
+                                    </select>
+                                    <label for="filtroEntidade">Entidade Orçamentária</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Tipo de Organização -->
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-control" id="filtroTipo" v-model="filtros.tipo_organizacao">
+                                        <option value="">Todos os tipos</option>
+                                        <option v-for="tipo in tiposOrganizacao" :key="tipo" :value="tipo">
+                                            {{ tipo }}
+                                        </option>
+                                    </select>
+                                    <label for="filtroTipo">Tipo</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Status -->
+                            <div class="col-md-3">
                                 <div class="form-floating">
                                     <select class="form-control" id="filtroStatus" v-model="filtros.status">
                                         <option value="">Todos</option>
@@ -54,29 +94,19 @@
                                 </div>
                             </div>
                             
-                            <!-- Filtro de Município -->
+                            <!-- UF do Visitante -->
                             <div class="col-md-3">
                                 <div class="form-floating">
-                                    <select class="form-control" id="filtroMunicipio" v-model="filtros.municipio_id">
-                                        <option value="">Todos os municípios</option>
-                                        <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.id">
-                                            {{ municipio.nome }}
-                                        </option>
-                                    </select>
-                                    <label for="filtroMunicipio">Município</label>
-                                </div>
-                            </div>
-                            
-                            <!-- Filtro de Entidade -->
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select class="form-control" id="filtroEntidade" v-model="filtros.entidade_id">
-                                        <option value="">Todas as entidades</option>
-                                        <option v-for="entidade in entidades" :key="entidade.id" :value="entidade.id">
-                                            {{ entidade.nome }}
-                                        </option>
-                                    </select>
-                                    <label for="filtroEntidade">Entidade</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="visitante_uf" 
+                                           v-model="filtros.visitante_uf"
+                                           placeholder="Ex: PR, SP..."
+                                           maxlength="2"
+                                           style="text-transform: uppercase"
+                                           @keyup.enter="filtrarDados"
+                                           @input="onBuscaInput">
+                                    <label for="visitante_uf">UF</label>
                                 </div>
                             </div>
                             
@@ -108,9 +138,9 @@
                     <table class="table table-hover align-middle" style="min-width: 800px;">
                         <thead>
                             <tr>
-                                <th class="table-header">Solicitante</th>
-                                <th class="table-header">Município</th>
-                                <th class="table-header">Entidade</th>
+                                <th class="table-header">Visitante</th>
+                                <th class="table-header">Localização</th>
+                                <th class="table-header">Entidade Solicitada</th>
                                 <th class="table-header">Status</th>
                                 <th class="table-header">Data</th>
                                 <th class="table-header">Processado por</th>
@@ -120,14 +150,19 @@
                         <tbody>
                             <tr v-for="solicitacao in dados" :key="solicitacao.id" class="table-row">
                                 <td class="table-cell">
-                                    <div class="fw-medium">{{ solicitacao.user?.name }}</div>
-                                    <small class="text-muted">{{ solicitacao.user?.email }}</small>
+                                    <div class="fw-medium">{{ solicitacao.visitante_nome }}</div>
+                                    <small class="text-muted">{{ solicitacao.visitante_email }}</small>
+                                    <div v-if="solicitacao.visitante_cargo" class="text-muted" style="font-size: 0.75rem;">
+                                        {{ solicitacao.visitante_cargo }}
+                                    </div>
                                 </td>
                                 <td class="table-cell">
-                                    <div class="fw-medium">{{ solicitacao.municipio?.nome }}</div>
+                                    <div class="fw-medium">{{ solicitacao.visitante_municipio }}</div>
+                                    <small class="text-muted">{{ solicitacao.visitante_uf }}</small>
                                 </td>
                                 <td class="table-cell">
-                                    <div class="fw-medium">{{ solicitacao.entidade_orcamentaria?.nome_fantasia }}</div>
+                                    <div class="fw-medium">{{ solicitacao.entidade_orcamentaria?.jurisdicao_nome_fantasia }}</div>
+                                    <small class="text-muted">{{ solicitacao.entidade_orcamentaria?.tipo_organizacao }} - {{ solicitacao.entidade_orcamentaria?.nivel_administrativo }}</small>
                                 </td>
                                 <td class="table-cell">
                                     <span class="badge badge-status" :class="getStatusClass(solicitacao.status)">
@@ -233,17 +268,17 @@
                 <!-- Body do Modal -->
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div v-if="solicitacaoSelecionada">
-                        <!-- Dados do Solicitante -->
+                        <!-- Dados do Visitante -->
                         <div class="mb-4">
                             <h6 class="fw-semibold mb-3" style="color: #5EA853;">
-                                <i class="fas fa-user me-2"></i>Dados do Solicitante
+                                <i class="fas fa-user me-2"></i>Dados do Visitante
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
-                                               :value="solicitacaoSelecionada.user?.name"
+                                               :value="solicitacaoSelecionada.visitante_nome"
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Nome Completo</label>
@@ -253,26 +288,46 @@
                                     <div class="form-floating">
                                         <input type="email" 
                                                class="form-control" 
-                                               :value="solicitacaoSelecionada.user?.email"
+                                               :value="solicitacaoSelecionada.visitante_email"
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Email</label>
                                     </div>
                                 </div>
+                                <div class="col-md-6" v-if="solicitacaoSelecionada.visitante_telefone">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoSelecionada.visitante_telefone"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Telefone</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" v-if="solicitacaoSelecionada.visitante_cargo">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoSelecionada.visitante_cargo"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Cargo</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Local de Trabalho -->
+                        <!-- Localização do Visitante -->
                         <div class="mb-4">
-                            <!-- <h6 class="fw-semibold mb-3" style="color: #5EA853;">
-                                <i class="fas fa-building me-2"></i>Local de Trabalho
-                            </h6> -->
+                            <h6 class="fw-semibold mb-3" style="color: #5EA853;">
+                                <i class="fas fa-map-marker-alt me-2"></i>Localização do Visitante
+                            </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
-                                               :value="solicitacaoSelecionada.municipio?.nome"
+                                               :value="solicitacaoSelecionada.visitante_municipio"
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Município</label>
@@ -282,10 +337,49 @@
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
-                                               :value="solicitacaoSelecionada.entidade_orcamentaria?.nome_fantasia"
+                                               :value="solicitacaoSelecionada.visitante_uf"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>UF</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Entidade Solicitada -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #5EA853;">
+                                <i class="fas fa-building me-2"></i>Entidade Orçamentária Solicitada
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoSelecionada.entidade_orcamentaria?.jurisdicao_nome_fantasia"
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Entidade Orçamentária</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoSelecionada.entidade_orcamentaria?.tipo_organizacao"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Tipo de Organização</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoSelecionada.entidade_orcamentaria?.nivel_administrativo"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Nível Administrativo</label>
                                     </div>
                                 </div>
                             </div>
@@ -425,17 +519,17 @@
                 <!-- Body do Modal -->
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div v-if="solicitacaoParaAprovar">
-                        <!-- Dados do Solicitante (Somente Leitura) -->
+                        <!-- Dados do Visitante (Somente Leitura) -->
                         <div class="mb-4">
                             <h6 class="fw-semibold mb-3" style="color: #5EA853;">
-                                <i class="fas fa-user me-2"></i>Dados do Solicitante
+                                <i class="fas fa-user me-2"></i>Dados do Visitante
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
-                                               :value="solicitacaoParaAprovar.user?.name"
+                                               :value="solicitacaoParaAprovar.visitante_nome"
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Nome Completo</label>
@@ -445,55 +539,30 @@
                                     <div class="form-floating">
                                         <input type="email" 
                                                class="form-control" 
-                                               :value="solicitacaoParaAprovar.user?.email"
+                                               :value="solicitacaoParaAprovar.visitante_email"
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Email</label>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Configuração de Vinculação (EDITÁVEL) -->
-                        <div class="mb-4">
-                            <h6 class="fw-semibold mb-3" style="color: #5EA853;">
-                                <i class="fas fa-link me-2"></i>Configuração de Vinculação
-                            </h6>
-                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <select class="form-control" 
-                                                id="municipioAprovacao" 
-                                                v-model="formAprovacao.municipio_id"
-                                                :class="{ 'is-invalid': errors.municipio_id }"
-                                                required>
-                                            <option value="">Selecione...</option>
-                                            <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.id">
-                                                {{ municipio.nome }}
-                                            </option>
-                                        </select>
-                                        <label for="municipioAprovacao">Município *</label>
-                                        <div class="invalid-feedback" v-if="errors.municipio_id">
-                                            {{ errors.municipio_id[0] }}
-                                        </div>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoParaAprovar.visitante_municipio + '/' + solicitacaoParaAprovar.visitante_uf"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Localização</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
-                                        <select class="form-control" 
-                                                id="entidadeAprovacao" 
-                                                v-model="formAprovacao.entidade_orcamentaria_id"
-                                                :class="{ 'is-invalid': errors.entidade_orcamentaria_id }"
-                                                required>
-                                            <option value="">Selecione...</option>
-                                            <option v-for="entidade in entidades" :key="entidade.id" :value="entidade.id">
-                                                {{ entidade.nome }}
-                                            </option>
-                                        </select>
-                                        <label for="entidadeAprovacao">Entidade Orçamentária *</label>
-                                        <div class="invalid-feedback" v-if="errors.entidade_orcamentaria_id">
-                                            {{ errors.entidade_orcamentaria_id[0] }}
-                                        </div>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoParaAprovar.entidade_orcamentaria?.jurisdicao_nome_fantasia"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Entidade Solicitada</label>
                                     </div>
                                 </div>
                             </div>
@@ -698,8 +767,8 @@ export default {
         return {
             loading: true,
             dados: [],
-            municipios: [],
             entidades: [],
+            tiposOrganizacao: [],
             registros: {
                 current_page: 1,
                 last_page: 1,
@@ -707,10 +776,12 @@ export default {
                 total: 0
             },
             filtros: {
-                busca: '',
+                nome: '',
+                email: '',
+                entidade_id: '',
+                tipo_organizacao: '',
                 status: '',
-                municipio_id: '',
-                entidade_id: ''
+                visitante_uf: ''
             },
             filtrosVisiveis: false,
             
@@ -720,8 +791,6 @@ export default {
             // Modal de aprovação
             solicitacaoParaAprovar: null,
             formAprovacao: {
-                municipio_id: '',
-                entidade_orcamentaria_id: '',
                 observacoes_aprovacao: ''
             },
             aprovando: false,
@@ -749,10 +818,10 @@ export default {
         'filtros.status'() {
             this.filtrarDados();
         },
-        'filtros.municipio_id'() {
+        'filtros.entidade_id'() {
             this.filtrarDados();
         },
-        'filtros.entidade_id'() {
+        'filtros.tipo_organizacao'() {
             this.filtrarDados();
         }
     },
@@ -769,17 +838,23 @@ export default {
                 params.append('page', this.registros.current_page);
                 params.append('per_page', this.registros.per_page);
                 
-                if (this.filtros.busca && this.filtros.busca.toString().trim()) {
-                    params.append('busca', this.filtros.busca.toString().trim());
+                if (this.filtros.nome && this.filtros.nome.toString().trim()) {
+                    params.append('nome', this.filtros.nome.toString().trim());
+                }
+                if (this.filtros.email && this.filtros.email.toString().trim()) {
+                    params.append('email', this.filtros.email.toString().trim());
+                }
+                if (this.filtros.entidade_id) {
+                    params.append('entidade_id', this.filtros.entidade_id);
+                }
+                if (this.filtros.tipo_organizacao) {
+                    params.append('tipo_organizacao', this.filtros.tipo_organizacao);
                 }
                 if (this.filtros.status) {
                     params.append('status', this.filtros.status);
                 }
-                if (this.filtros.municipio_id) {
-                    params.append('municipio_id', this.filtros.municipio_id);
-                }
-                if (this.filtros.entidade_id) {
-                    params.append('entidade_id', this.filtros.entidade_id);
+                if (this.filtros.visitante_uf && this.filtros.visitante_uf.toString().trim()) {
+                    params.append('visitante_uf', this.filtros.visitante_uf.toString().trim());
                 }
 
 
@@ -826,8 +901,8 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    this.municipios = data.municipios || [];
                     this.entidades = data.entidades || [];
+                    this.tiposOrganizacao = data.tipos_organizacao || [];
                 } else {
                     console.error('Erro ao carregar filtros:', data.message);
                 }
@@ -867,10 +942,12 @@ export default {
             }
             
             this.filtros = {
-                busca: '',
+                nome: '',
+                email: '',
+                entidade_id: '',
+                tipo_organizacao: '',
                 status: '',
-                municipio_id: '',
-                entidade_id: ''
+                visitante_uf: ''
             };
             this.filtrarDados();
         },
@@ -906,11 +983,9 @@ export default {
         aprovarSolicitacao(solicitacao) {
             this.solicitacaoParaAprovar = solicitacao;
             
-            // Preencher formulário com valores atuais
+            // Limpar formulário
             this.formAprovacao = {
-                municipio_id: solicitacao.municipio_id || '',
-                entidade_orcamentaria_id: solicitacao.entidade_orcamentaria_id || '',
-                observacoes: ''
+                observacoes_aprovacao: ''
             };
             
             // Limpar erros
@@ -938,12 +1013,6 @@ export default {
         },
         
         async confirmarAprovacao() {
-            // Validação
-            if (!this.formAprovacao.municipio_id || !this.formAprovacao.entidade_orcamentaria_id) {
-                this.mostrarToast('Erro', 'Preencha todos os campos obrigatórios', 'fa-exclamation-circle text-danger');
-                return;
-            }
-            
             this.aprovando = true;
             this.errors = {};
             
@@ -973,8 +1042,6 @@ export default {
                     
                     // Limpar formulário
                     this.formAprovacao = {
-                        municipio_id: '',
-                        entidade_orcamentaria_id: '',
                         observacoes_aprovacao: ''
                     };
                     this.solicitacaoParaAprovar = null;
