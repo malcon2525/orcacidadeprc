@@ -22,7 +22,7 @@
                     <button class="btn-importar-padrao" @click="importarMunicipios" :disabled="loading">
                         <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
                         <i v-else class="fas fa-arrow-right me-2"></i>
-                        <span>Importar Municípios</span>
+                        <span>Importar os Municípios do 'Portal dos Municípios'</span>
                     </button>
                 </div>
             </div>

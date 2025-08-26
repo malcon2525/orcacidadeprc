@@ -19,23 +19,21 @@ class EntidadeOrcamentaria extends Model
      * @var array
      */
     protected $fillable = [
-        'razao_social',
-        'nome_fantasia',
         'tipo_organizacao',
-        'email',
-        'endereco',
         'nivel_administrativo',
-        'jurisdicao_nome',
+        'jurisdicao_razao_social',
+        'jurisdicao_nome_fantasia',
+        'jurisdicao_uf',
         'jurisdicao_codigo_ibge',
-        'populacao',
         'cep',
+        'endereco',
         'telefone',
+        'email',
         'cnpj',
+        'ativo',
+        'observacao',
         'responsavel',
-        'responsavel_cargo',
-        'responsavel_telefone',
-        'responsavel_email',
-        'ativo'
+        'responsavel_cargo'
     ];
 
     /**
@@ -44,8 +42,7 @@ class EntidadeOrcamentaria extends Model
      * @var array
      */
     protected $casts = [
-        'ativo' => 'boolean',
-        'populacao' => 'integer'
+        'ativo' => 'boolean'
     ];
 
     /**
@@ -116,11 +113,7 @@ class EntidadeOrcamentaria extends Model
      */
     public function getJurisdicaoFormatadaAttribute(): string
     {
-        if ($this->isMunicipal() && $this->municipio) {
-            return $this->municipio->nome . ' - PR';
-        }
-        
-        return $this->jurisdicao_nome;
+        return $this->jurisdicao_nome_fantasia . ' - ' . $this->jurisdicao_uf;
     }
 
     /**
@@ -128,15 +121,7 @@ class EntidadeOrcamentaria extends Model
      */
     public function getTipoFormatadoAttribute(): string
     {
-        $tipos = [
-            'municipio' => 'MUNICÍPIO',
-            'secretaria' => 'SECRETARIA',
-            'órgão' => 'ÓRGÃO',
-            'autarquia' => 'AUTARQUIA',
-            'outros' => 'OUTROS'
-        ];
-
-        return $tipos[$this->tipo_organizacao] ?? strtoupper($this->tipo_organizacao);
+        return strtoupper($this->tipo_organizacao);
     }
 
     /**
@@ -162,7 +147,23 @@ class EntidadeOrcamentaria extends Model
     }
 
     /**
-     * Scope para filtrar por jurisdição (código IBGE)
+     * Scope para filtrar por tipo de organização
+     */
+    public function scopeDoTipo($query, string $tipo)
+    {
+        return $query->where('tipo_organizacao', $tipo);
+    }
+
+    /**
+     * Scope para filtrar por UF
+     */
+    public function scopeDaUf($query, string $uf)
+    {
+        return $query->where('jurisdicao_uf', $uf);
+    }
+
+    /**
+     * Scope para filtrar por código IBGE
      */
     public function scopeDaJurisdicao($query, string $codigoIbge)
     {
@@ -170,13 +171,21 @@ class EntidadeOrcamentaria extends Model
     }
 
     /**
-     * Scope para entidades municipais de um município específico
+     * Scope para entidades ativas
      */
-    public function scopeDoMunicipio($query, int $municipioId)
+    public function scopeAtivas($query)
     {
-        return $query->where('nivel_administrativo', 'municipal')
-                    ->whereHas('municipio', function ($q) use ($municipioId) {
-                        $q->where('id', $municipioId);
-                    });
+        return $query->where('ativo', true);
+    }
+
+    /**
+     * Scope para busca por razão social ou nome fantasia
+     */
+    public function scopeBuscarPorNome($query, string $termo)
+    {
+        return $query->where(function ($q) use ($termo) {
+            $q->where('jurisdicao_razao_social', 'like', '%' . $termo . '%')
+              ->orWhere('jurisdicao_nome_fantasia', 'like', '%' . $termo . '%');
+        });
     }
 }

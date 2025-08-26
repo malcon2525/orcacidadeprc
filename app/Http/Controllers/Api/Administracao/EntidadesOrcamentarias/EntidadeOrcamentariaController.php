@@ -45,14 +45,14 @@ class EntidadeOrcamentariaController extends Controller
             $query = EntidadeOrcamentaria::query();
 
             // Aplicar filtros
-            if ($request->has('razao_social') && !empty($request->razao_social)) {
-                Log::info('Aplicando filtro razao_social', ['valor' => $request->razao_social]);
-                $query->where('razao_social', 'like', '%' . $request->razao_social . '%');
+            if ($request->has('jurisdicao_razao_social') && !empty($request->jurisdicao_razao_social)) {
+                Log::info('Aplicando filtro jurisdicao_razao_social', ['valor' => $request->jurisdicao_razao_social]);
+                $query->where('jurisdicao_razao_social', 'like', '%' . $request->jurisdicao_razao_social . '%');
             }
 
-            if ($request->has('nome_fantasia') && !empty($request->nome_fantasia)) {
-                Log::info('Aplicando filtro nome_fantasia', ['valor' => $request->nome_fantasia]);
-                $query->where('nome_fantasia', 'like', '%' . $request->nome_fantasia . '%');
+            if ($request->has('jurisdicao_nome_fantasia') && !empty($request->jurisdicao_nome_fantasia)) {
+                Log::info('Aplicando filtro jurisdicao_nome_fantasia', ['valor' => $request->jurisdicao_nome_fantasia]);
+                $query->where('jurisdicao_nome_fantasia', 'like', '%' . $request->jurisdicao_nome_fantasia . '%');
             }
 
             if ($request->has('tipo_organizacao') && !empty($request->tipo_organizacao)) {
@@ -60,8 +60,18 @@ class EntidadeOrcamentariaController extends Controller
                 $query->where('tipo_organizacao', $request->tipo_organizacao);
             }
 
+            if ($request->has('nivel_administrativo') && !empty($request->nivel_administrativo)) {
+                Log::info('Aplicando filtro nivel_administrativo', ['valor' => $request->nivel_administrativo]);
+                $query->where('nivel_administrativo', $request->nivel_administrativo);
+            }
+
+            if ($request->has('jurisdicao_uf') && !empty($request->jurisdicao_uf)) {
+                Log::info('Aplicando filtro jurisdicao_uf', ['valor' => $request->jurisdicao_uf]);
+                $query->where('jurisdicao_uf', $request->jurisdicao_uf);
+            }
+
             // Ordenação padrão
-            $query->orderBy('razao_social', 'asc');
+            $query->orderBy('jurisdicao_razao_social', 'asc');
 
             Log::info('Executando paginação...');
             $registros = $query->paginate(15);
@@ -83,7 +93,7 @@ class EntidadeOrcamentariaController extends Controller
             ]);
             
             $this->logger->erroCritico('LISTAGEM_ENTIDADES', $e->getMessage(), [
-                'filtros' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
+                'filtros' => $request->only(['jurisdicao_razao_social', 'jurisdicao_nome_fantasia', 'tipo_organizacao'])
             ]);
             
             return response()->json(['error' => 'Erro interno do servidor'], 500);
@@ -91,16 +101,16 @@ class EntidadeOrcamentariaController extends Controller
     }
 
     /**
-     * Retorna apenas id e nome_fantasia como nome para campos de seleção
+     * Retorna apenas id e jurisdicao_nome_fantasia como nome para campos de seleção
      */
     public function listarSelect()
     {
         try {
-            $result = EntidadeOrcamentaria::select('id', 'nome_fantasia as nome')
-                ->orderBy('nome_fantasia', 'asc')
+            $result = EntidadeOrcamentaria::select('id', 'jurisdicao_nome_fantasia as nome')
+                ->where('ativo', true)
+                ->orderBy('jurisdicao_nome_fantasia', 'asc')
                 ->get();
                 
-            // Retornar dados sem log desnecessário
             return response()->json(['data' => $result]);
         } catch (\Exception $e) {
             $this->logger->erroCritico('LISTAGEM_SELECT', $e->getMessage());
@@ -122,47 +132,45 @@ class EntidadeOrcamentariaController extends Controller
             ]);
 
             $validator = Validator::make($request->all(), [
-                'razao_social' => 'required|string|max:255|unique:entidades_orcamentarias',
-                'nome_fantasia' => 'required|string|max:255|unique:entidades_orcamentarias',
-                'tipo_organizacao' => 'required|in:municipio,secretaria,órgão,autarquia,outros',
-                'email' => 'required|email|max:255|unique:entidades_orcamentarias',
-                'endereco' => 'nullable|string|max:255',
+                // CAMPOS OBRIGATÓRIOS
+                'tipo_organizacao' => 'required|in:Unidade Federativa,Secretaria,Órgão,Autarquia,Consórcio,S/A,PJ,PF',
                 'nivel_administrativo' => 'required|in:municipal,estadual,federal',
-                'jurisdicao_nome' => 'required|string|max:255',
+                'jurisdicao_razao_social' => 'required|string|max:255',
+                'jurisdicao_nome_fantasia' => 'required|string|max:255',
+                'jurisdicao_uf' => 'required|string|size:2',
+                'email' => 'required|email|max:255',
+                
+                // CAMPOS OPCIONAIS
                 'jurisdicao_codigo_ibge' => 'nullable|string|max:20',
-                'populacao' => 'nullable|integer',
-                'cep' => 'nullable|string|max:10',
-                'telefone' => 'required|string|max:20',
-                'cnpj' => 'nullable|string|max:20|unique:entidades_orcamentarias',
-                'responsavel' => 'required|string|max:255',
-                'responsavel_cargo' => 'required|string|max:100',
-                'responsavel_telefone' => 'nullable|string|max:20',
-                'responsavel_email' => 'nullable|email|max:100'
+                'cep' => 'nullable|string|max:20',
+                'endereco' => 'nullable|string|max:255',
+                'telefone' => 'nullable|string|max:20',
+                'cnpj' => 'nullable|string|max:20',
+                'observacao' => 'nullable|string',
+                'responsavel' => 'nullable|string|max:255',
+                'responsavel_cargo' => 'nullable|string|max:255',
+                'ativo' => 'sometimes|boolean'
             ], [
-                'razao_social.required' => 'A razão social é obrigatória',
-                'razao_social.unique' => 'Esta razão social já está cadastrada',
-                'nome_fantasia.required' => 'O nome fantasia é obrigatório',
-                'nome_fantasia.unique' => 'Este nome fantasia já está cadastrado',
+                // Mensagens dos campos obrigatórios
                 'tipo_organizacao.required' => 'O tipo de organização é obrigatório',
                 'tipo_organizacao.in' => 'O tipo de organização selecionado é inválido',
+                'nivel_administrativo.required' => 'O nível administrativo é obrigatório',
+                'nivel_administrativo.in' => 'O nível administrativo selecionado é inválido',
+                'jurisdicao_razao_social.required' => 'A razão social é obrigatória',
+                'jurisdicao_nome_fantasia.required' => 'O nome fantasia é obrigatório',
+                'jurisdicao_uf.required' => 'A UF é obrigatória',
+                'jurisdicao_uf.size' => 'A UF deve ter exatamente 2 caracteres',
                 'email.required' => 'O email é obrigatório',
                 'email.email' => 'O email informado é inválido',
-                'email.unique' => 'Este email já está cadastrado',
-                'codigo_ibge.unique' => 'Este código IBGE já está cadastrado',
-                'populacao.integer' => 'A população deve ser um número inteiro',
-                'telefone.required' => 'O telefone é obrigatório',
-                'cnpj.unique' => 'Este CNPJ já está cadastrado',
-                'responsavel.required' => 'O responsável é obrigatório',
-                'responsavel_cargo.required' => 'O cargo do responsável é obrigatório',
-                'responsavel_email.email' => 'O email do responsável é inválido'
+                
+                // Mensagens dos campos opcionais
+                'cnpj.max' => 'O CNPJ deve ter no máximo 20 caracteres',
+                'telefone.max' => 'O telefone deve ter no máximo 20 caracteres',
+                'cep.max' => 'O CEP deve ter no máximo 20 caracteres'
             ]);
 
             if ($validator->fails()) {
                 Log::warning('Validação falhou no store', ['errors' => $validator->errors()]);
-                $this->logger->erroValidacao('CRIACAO_ENTIDADE', $validator->errors()->toArray(), [
-                    'dados' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
-                ]);
-                
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
@@ -223,70 +231,39 @@ class EntidadeOrcamentariaController extends Controller
             $registro = EntidadeOrcamentaria::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'razao_social' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::unique('entidades_orcamentarias')->ignore($registro->id)
-                ],
-                'nome_fantasia' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::unique('entidades_orcamentarias')->ignore($registro->id)
-                ],
-                'tipo_organizacao' => 'required|in:municipio,secretaria,órgão,autarquia,outros',
-                'email' => [
-                    'required',
-                    'email',
-                    'max:255',
-                    Rule::unique('entidades_orcamentarias')->ignore($registro->id)
-                ],
+                // CAMPOS OBRIGATÓRIOS
+                'tipo_organizacao' => 'required|in:Unidade Federativa,Secretaria,Órgão,Autarquia,Consórcio,S/A,PJ,PF',
+                'nivel_administrativo' => 'required|in:municipal,estadual,federal',
+                'jurisdicao_razao_social' => 'required|string|max:255',
+                'jurisdicao_nome_fantasia' => 'required|string|max:255',
+                'jurisdicao_uf' => 'required|string|size:2',
+                'email' => 'required|email|max:255',
+                
+                // CAMPOS OPCIONAIS
+                'jurisdicao_codigo_ibge' => 'nullable|string|max:20',
+                'cep' => 'nullable|string|max:20',
                 'endereco' => 'nullable|string|max:255',
-                'codigo_ibge' => [
-                    'nullable',
-                    'string',
-                    'max:20',
-                    Rule::unique('entidades_orcamentarias')->ignore($registro->id)
-                ],
-                'populacao' => 'nullable|integer',
-                'cep' => 'nullable|string|max:10',
-                'telefone' => 'required|string|max:20',
-                'cnpj' => [
-                    'nullable',
-                    'string',
-                    'max:20',
-                    Rule::unique('entidades_orcamentarias')->ignore($registro->id)
-                ],
-                'responsavel' => 'required|string|max:255',
-                'responsavel_cargo' => 'required|string|max:100',
-                'responsavel_telefone' => 'nullable|string|max:20',
-                'responsavel_email' => 'nullable|email|max:100'
+                'telefone' => 'nullable|string|max:20',
+                'cnpj' => 'nullable|string|max:20',
+                'observacao' => 'nullable|string',
+                'responsavel' => 'nullable|string|max:255',
+                'responsavel_cargo' => 'nullable|string|max:255',
+                'ativo' => 'sometimes|boolean'
             ], [
-                'razao_social.required' => 'A razão social é obrigatória',
-                'razao_social.unique' => 'Esta razão social já está cadastrada',
-                'nome_fantasia.required' => 'O nome fantasia é obrigatório',
-                'nome_fantasia.unique' => 'Este nome fantasia já está cadastrado',
+                // Mensagens dos campos obrigatórios
                 'tipo_organizacao.required' => 'O tipo de organização é obrigatório',
                 'tipo_organizacao.in' => 'O tipo de organização selecionado é inválido',
+                'nivel_administrativo.required' => 'O nível administrativo é obrigatório',
+                'nivel_administrativo.in' => 'O nível administrativo selecionado é inválido',
+                'jurisdicao_razao_social.required' => 'A razão social é obrigatória',
+                'jurisdicao_nome_fantasia.required' => 'O nome fantasia é obrigatório',
+                'jurisdicao_uf.required' => 'A UF é obrigatória',
+                'jurisdicao_uf.size' => 'A UF deve ter exatamente 2 caracteres',
                 'email.required' => 'O email é obrigatório',
-                'email.email' => 'O email informado é inválido',
-                'email.unique' => 'Este email já está cadastrado',
-                'codigo_ibge.unique' => 'Este código IBGE já está cadastrado',
-                'populacao.integer' => 'A população deve ser um número inteiro',
-                'telefone.required' => 'O telefone é obrigatório',
-                'cnpj.unique' => 'Este CNPJ já está cadastrado',
-                'responsavel.required' => 'O responsável é obrigatório',
-                'responsavel_cargo.required' => 'O cargo do responsável é obrigatório',
-                'responsavel_email.email' => 'O email do responsável é inválido'
+                'email.email' => 'O email informado é inválido'
             ]);
 
             if ($validator->fails()) {
-                $this->logger->erroValidacao('EDICAO_ENTIDADE', $validator->errors()->toArray(), [
-                    'entidade_id' => $id,
-                    'dados' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
-                ]);
-                
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
@@ -340,74 +317,55 @@ class EntidadeOrcamentariaController extends Controller
     public function importarMunicipios()
     {
         try {
-            // Verificar se a conexão PostgreSQL está configurada
-            if (!config('database.connections.pgsql.host') || config('database.connections.pgsql.host') === 'nada') {
-                return response()->json([
-                    'message' => 'Conexão PostgreSQL não configurada. Configure as variáveis de ambiente DB_PG_* no arquivo .env',
-                    'error' => 'CONNECTION_NOT_CONFIGURED'
-                ], 400);
-            }
+            $this->checkAccess(['gerenciar_entidades_orcamentarias']);
 
             DB::beginTransaction();
 
-            // Busca os municípios da tabela de origem (PostgreSQL)
-            $municipiosOrigem = DB::connection('pgsql')
-                ->table('municipio')
-                ->select([
-                    'nome',
-                    'prefeito',
-                    'email',
-                    'endereco_prefeitura',
-                    'codigo_ibge',
-                    'populacao',
-                    'cep',
-                    'telefone',
-                    'cnpj'
-                ])
-                ->get();
+            // Buscar todos os municípios
+            $municipios = Municipio::all();
+            
+            if ($municipios->isEmpty()) {
+                return response()->json([
+                    'message' => 'Nenhum município encontrado para importar.',
+                    'novos' => 0,
+                    'atualizados' => 0
+                ], 400);
+            }
 
             $importados = 0;
             $atualizados = 0;
-            foreach ($municipiosOrigem as $municipio) {
-                // Busca por nome (case-insensitive)
-                $entidadeExistente = EntidadeOrcamentaria::whereRaw('LOWER(nome_fantasia) = ?', [mb_strtolower($municipio->nome)])->first();
+
+            foreach ($municipios as $municipio) {
+                // Verificar se já existe uma entidade com mesmo código IBGE
+                $entidadeExistente = EntidadeOrcamentaria::where('jurisdicao_codigo_ibge', $municipio->codigo_ibge)
+                    ->where('nivel_administrativo', 'municipal')
+                    ->first();
+
+                $dadosEntidade = [
+                    'tipo_organizacao' => 'Unidade Federativa',
+                    'nivel_administrativo' => 'municipal',
+                    'jurisdicao_razao_social' => $municipio->nome,
+                    'jurisdicao_nome_fantasia' => "Prefeitura Municipal de {$municipio->nome}",
+                    'jurisdicao_uf' => 'PR',
+                    'jurisdicao_codigo_ibge' => $municipio->codigo_ibge,
+                    'email' => $municipio->email ?? '',
+                    'endereco' => $municipio->endereco_prefeitura ?? '',
+                    'telefone' => $municipio->telefone ?? '',
+                    'cnpj' => $municipio->cnpj ?? '',
+                    'cep' => $municipio->cep ?? '',
+                    'responsavel' => $municipio->prefeito ?? null,
+                    'responsavel_cargo' => $municipio->prefeito ? 'Prefeito' : null,
+                    'observacao' => 'Importado automaticamente da base de municípios do Paraná',
+                    'ativo' => true
+                ];
+
                 if ($entidadeExistente) {
-                    $entidadeExistente->update([
-                        'razao_social' => $municipio->nome,
-                        'nome_fantasia' => $municipio->nome,
-                        'tipo_organizacao' => 'municipio',
-                        'email' => $municipio->email ?? '',
-                        'endereco' => $municipio->endereco_prefeitura ?? '',
-                        'codigo_ibge' => $municipio->codigo_ibge,
-                        'populacao' => $municipio->populacao ?? 0,
-                        'cep' => $municipio->cep ?? '',
-                        'telefone' => $municipio->telefone ?? '',
-                        'cnpj' => $municipio->cnpj ?? '',
-                        'responsavel' => $municipio->prefeito ?? 'Prefeito',
-                        'responsavel_cargo' => 'Prefeito',
-                        'responsavel_telefone' => $municipio->telefone ?? '',
-                        'responsavel_email' => $municipio->email ?? '',
-                        'ativo' => true
-                    ]);
+                    // Atualizar entidade existente
+                    $entidadeExistente->update($dadosEntidade);
                     $atualizados++;
                 } else {
-                    EntidadeOrcamentaria::create([
-                        'razao_social' => $municipio->nome,
-                        'nome_fantasia' => $municipio->nome,
-                        'tipo_organizacao' => 'municipio',
-                        'email' => $municipio->email ?? '',
-                        'endereco' => $municipio->endereco_prefeitura ?? '',
-                        'codigo_ibge' => $municipio->codigo_ibge,
-                        'populacao' => $municipio->populacao ?? 0,
-                        'cep' => $municipio->cep ?? '',
-                        'telefone' => $municipio->telefone ?? '',
-                        'cnpj' => $municipio->cnpj ?? '',
-                        'responsavel' => $municipio->prefeito ?? 'Prefeito',
-                        'responsavel_cargo' => 'Prefeito',
-                        'responsavel_telefone' => $municipio->telefone ?? '',
-                        'responsavel_email' => $municipio->email ?? '',
-                        'ativo' => true
-                    ]);
+                    // Criar nova entidade
+                    EntidadeOrcamentaria::create($dadosEntidade);
                     $importados++;
                 }
             }
@@ -415,14 +373,17 @@ class EntidadeOrcamentariaController extends Controller
             DB::commit();
 
             $this->logger->sucessoImportacao($importados, $atualizados, [
-                'importado_por' => Auth::id()
+                'importado_por' => Auth::id(),
+                'tipo_importacao' => 'municipios_parana'
             ]);
 
             return response()->json([
-                'message' => 'Importação concluída com sucesso',
+                'message' => 'Importação concluída com sucesso!',
                 'novos' => $importados,
-                'atualizados' => $atualizados
+                'atualizados' => $atualizados,
+                'total_processados' => $importados + $atualizados
             ]);
+
         } catch (\Exception $e) {
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
@@ -432,82 +393,8 @@ class EntidadeOrcamentariaController extends Controller
                 'importado_por' => Auth::id()
             ]);
             
-            // Verificar se é erro de conexão
-            if (str_contains($e->getMessage(), 'SSL negotiation') || str_contains($e->getMessage(), 'Connection refused')) {
-                return response()->json([
-                    'message' => 'Erro de conexão com PostgreSQL. Verifique se o banco está rodando e as configurações estão corretas.',
-                    'error' => 'CONNECTION_ERROR',
-                    'details' => $e->getMessage()
-                ], 500);
-            }
-            
             return response()->json([
                 'message' => 'Erro ao importar municípios: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Retorna municípios para seleção (filtrado por estado)
-     */
-    public function buscarMunicipios(Request $request)
-    {
-        try {
-            Log::info('=== BUSCAR MUNICÍPIOS - INÍCIO ===', [
-                'user_id' => Auth::id(),
-                'estado' => $request->estado,
-                'request_url' => $request->fullUrl()
-            ]);
-
-            $query = Municipio::select('id', 'nome', 'codigo_ibge')
-                ->orderBy('nome');
-
-            // Todos os municípios são do Paraná, não é necessário filtrar por estado
-            Log::info('Carregando todos os municípios (todos são do Paraná)');
-
-            Log::info('Executando query SQL', ['sql' => $query->toSql()]);
-            $municipios = $query->get();
-            
-            Log::info('Municípios encontrados', [
-                'total' => $municipios->count(),
-                'primeiros_3' => $municipios->take(3)->pluck('nome')
-            ]);
-
-            return response()->json([
-                'data' => $municipios
-            ]);
-        } catch (\Exception $e) {
-            Log::error('=== ERRO EM BUSCAR MUNICÍPIOS ===', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'error' => 'Erro ao buscar municípios',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Retorna estados para seleção (simplificado - apenas Paraná)
-     */
-    public function buscarEstados()
-    {
-        try {
-            $estados = [
-                ['sigla' => 'PR', 'nome' => 'Paraná']
-            ];
-
-            return response()->json([
-                'data' => $estados
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Erro ao buscar estados',
-                'message' => $e->getMessage()
             ], 500);
         }
     }

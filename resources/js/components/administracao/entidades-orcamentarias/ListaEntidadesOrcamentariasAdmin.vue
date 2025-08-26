@@ -15,7 +15,7 @@
                         <i class="fas fa-plus"></i>
                         <span>Nova Entidade</span>
                     </button>
-                    <button v-if="permissoes.importar" class="btn btn-moderno btn-primary-moderno d-flex align-items-center gap-2 px-3 py-2" @click="importarMunicipios" :disabled="loading">
+                    <button v-if="permissoes.crud" class="btn btn-moderno btn-primary-moderno d-flex align-items-center gap-2 px-3 py-2" @click="importarMunicipios" :disabled="loading">
                         <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
                         <i v-else class="fas fa-file-import"></i>
                         <span>Importar Municípios</span>
@@ -32,7 +32,7 @@
                                     <input type="text" 
                                            class="form-control form-control-lg" 
                                            id="filtroRazaoSocial" 
-                                           v-model="filtros.razao_social" 
+                                           v-model="filtros.jurisdicao_razao_social" 
                                            @input="filtrarDados"
                                            placeholder="Razão Social...">
                                     <label for="filtroRazaoSocial">Razão Social</label>
@@ -43,33 +43,50 @@
                                     <input type="text" 
                                            class="form-control form-control-lg" 
                                            id="filtroNomeFantasia" 
-                                           v-model="filtros.nome_fantasia" 
+                                           v-model="filtros.jurisdicao_nome_fantasia" 
                                            @input="filtrarDados"
                                            placeholder="Nome Fantasia...">
                                     <label for="filtroNomeFantasia">Nome Fantasia</label>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-floating">
                                     <select class="form-select form-select-lg" 
                                             id="filtroTipoOrganizacao" 
                                             v-model="filtros.tipo_organizacao" 
                                             @change="filtrarDados">
                                         <option value="">Todos os tipos</option>
-                                        <option value="municipio">Município</option>
-                                        <option value="secretaria">Secretaria</option>
-                                        <option value="órgão">Órgão</option>
-                                        <option value="autarquia">Autarquia</option>
-                                        <option value="outros">Outros</option>
+                                        <option value="Unidade Federativa">Unidade Federativa</option>
+                                        <option value="Secretaria">Secretaria</option>
+                                        <option value="Órgão">Órgão</option>
+                                        <option value="Autarquia">Autarquia</option>
+                                        <option value="Consórcio">Consórcio</option>
+                                        <option value="S/A">S/A</option>
+                                        <option value="PJ">PJ</option>
+                                        <option value="PF">PF</option>
                                     </select>
-                                    <label for="filtroTipoOrganizacao">Tipo de Organização</label>
+                                    <label for="filtroTipoOrganizacao">Tipo</label>
                                 </div>
                             </div>
-                            <div class="col-md-3 d-flex align-items-end">
+                            <div class="col-md-2">
+                                <div class="form-floating">
+                                    <select class="form-select form-select-lg" 
+                                            id="filtroNivelAdministrativo" 
+                                            v-model="filtros.nivel_administrativo" 
+                                            @change="filtrarDados">
+                                        <option value="">Todos os níveis</option>
+                                        <option value="municipal">Municipal</option>
+                                        <option value="estadual">Estadual</option>
+                                        <option value="federal">Federal</option>
+                                    </select>
+                                    <label for="filtroNivelAdministrativo">Nível</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
                                 <button class="btn btn-outline-secondary w-100" 
                                         style="height: 58px; line-height: 1.5;" 
                                         @click="limparFiltros">
-                                    <i class="fas fa-times me-2"></i>Limpar Filtros
+                                    <i class="fas fa-times me-2"></i>Limpar
                                 </button>
                             </div>
                         </div>
@@ -98,53 +115,63 @@
                                 <th class="fw-semibold text-custom">Razão Social</th>
                                 <th class="fw-semibold text-custom">Nome Fantasia</th>
                                 <th class="fw-semibold text-custom" style="width: 120px;">Tipo</th>
-                                <th class="fw-semibold text-custom" style="width: 170px;">CNPJ</th>
-                                <th class="fw-semibold text-custom" style="width: 120px;">Telefone</th>
+                                <th class="fw-semibold text-custom" style="width: 80px;">Nível</th>
+                                <th class="fw-semibold text-custom" style="width: 60px;">UF</th>
+                                <th class="fw-semibold text-custom">Email</th>
                                 <th class="fw-semibold text-end text-custom" style="width: 150px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="item in items.data" :key="item.id" class="admin-row">
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="fw-medium">{{ item.razao_social }}</div>
+                                    <div class="fw-medium">{{ item.jurisdicao_razao_social }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-medium">{{ item.jurisdicao_nome_fantasia }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status badge-neutro">
+                                        <i class="fas fa-building me-1"></i>
+                                        {{ item.tipo_organizacao }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status" :class="{
+                                        'badge-municipal': item.nivel_administrativo === 'municipal',
+                                        'badge-estadual': item.nivel_administrativo === 'estadual',
+                                        'badge-federal': item.nivel_administrativo === 'federal'
+                                    }">
+                                        <i class="fas me-1" :class="{
+                                            'fa-city': item.nivel_administrativo === 'municipal',
+                                            'fa-landmark': item.nivel_administrativo === 'estadual',
+                                            'fa-flag': item.nivel_administrativo === 'federal'
+                                        }"></i>
+                                        {{ item.nivel_administrativo.toUpperCase() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ item.jurisdicao_uf }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ item.email }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end" v-if="permissoes.crud">
+                                        <button class="btn btn-sm btn-warning" 
+                                                @click="editarItem(item)" 
+                                                title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" 
+                                                @click="excluirItem(item)" 
+                                                title="Excluir">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div v-else class="text-muted small">
+                                        <i class="fas fa-eye me-1"></i>Apenas visualização
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="fw-medium">{{ item.nome_fantasia }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge" :class="{
-                                        'bg-primary': item.tipo_organizacao === 'municipio',
-                                        'bg-success': item.tipo_organizacao === 'secretaria',
-                                        'bg-info': item.tipo_organizacao === 'órgão',
-                                        'bg-warning': item.tipo_organizacao === 'autarquia',
-                                        'bg-secondary': item.tipo_organizacao === 'outros'
-                                    }">{{ item.tipo_organizacao }}</span>
-                                </td>
-                                <td>
-                                    <span class="">{{ item.cnpj || 'N/A' }}</span>
-                                </td>
-                                <td>
-                                    <span class="">{{ item.telefone }}</span>
-                                </td>
-                                                                    <td class="text-end">
-                                        <div class="d-flex gap-1 justify-content-end" v-if="permissoes.crud">
-                                            <button class="btn btn-sm btn-warning" 
-                                                    @click="editarItem(item)" 
-                                                    title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" 
-                                                    @click="excluirItem(item)" 
-                                                    title="Excluir">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                        <div v-else class="text-muted small">
-                                            <i class="fas fa-eye me-1"></i>Apenas visualização
-                                        </div>
-                                    </td>
                             </tr>
                         </tbody>
                     </table>
@@ -152,7 +179,7 @@
             </div>
         </div>
 
-        <!-- Paginação (Fora do Card - Padrão) -->
+        <!-- Paginação -->
         <div v-if="items.data && items.data.length > 0" class="paginacao-container mt-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="text-muted fw-medium">
@@ -160,37 +187,16 @@
                 </div>
                 <nav v-if="items.last_page > 1">
                     <ul class="pagination admin-pagination mb-0">
-                        <!-- Botão Anterior -->
                         <li class="page-item" :class="{ disabled: items.current_page === 1 }">
-                            <a class="page-link" href="#" @click.prevent="mudarPagina(items.current_page - 1)" aria-label="Anterior">
+                            <a class="page-link" href="#" @click.prevent="mudarPagina(items.current_page - 1)">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                         </li>
-
-                        <!-- Primeira Página -->
-                        <li v-if="paginas[0] > 1" class="page-item">
-                            <a class="page-link" href="#" @click.prevent="mudarPagina(1)">1</a>
-                        </li>
-                        <li v-if="paginas[0] > 2" class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-
-                        <!-- Páginas Numeradas -->
                         <li v-for="page in paginas" :key="page" class="page-item" :class="{ active: page === items.current_page }">
                             <a class="page-link" href="#" @click.prevent="mudarPagina(page)">{{ page }}</a>
                         </li>
-
-                        <!-- Última Página -->
-                        <li v-if="paginas[paginas.length - 1] < items.last_page - 1" class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                        <li v-if="paginas[paginas.length - 1] < items.last_page" class="page-item">
-                            <a class="page-link" href="#" @click.prevent="mudarPagina(items.last_page)">{{ items.last_page }}</a>
-                        </li>
-
-                        <!-- Botão Próximo -->
                         <li class="page-item" :class="{ disabled: items.current_page === items.last_page }">
-                            <a class="page-link" href="#" @click.prevent="mudarPagina(items.current_page + 1)" aria-label="Próximo">
+                            <a class="page-link" href="#" @click.prevent="mudarPagina(items.current_page + 1)">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
@@ -201,11 +207,11 @@
 
         <!-- Modal para Criar/Editar -->
         <div class="modal fade" id="modalEntidade" tabindex="-1" ref="modalRef">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content">
-                    <div class="modal-header custom-modal-header">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #18578A 0%, #5EA853 100%); color: white; border-bottom: none; padding: 1.5rem; border-radius: 0.5rem 0.5rem 0 0;">
                         <div class="d-flex align-items-center">
-                            <div class="header-icon">
+                            <div class="header-icon" style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.2rem; color: white;">
                                 <i class="fas fa-building"></i>
                             </div>
                             <h5 class="modal-title mb-0">{{ modalTitle }}</h5>
@@ -215,34 +221,7 @@
                     <div class="modal-body pt-3">
                         <form @submit.prevent="salvarItem">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.razao_social }"
-                                               id="razao_social" 
-                                               v-model="form.razao_social" 
-                                               placeholder="Razão Social">
-                                        <label for="razao_social">Razão Social *</label>
-                                        <div v-if="errors.razao_social" class="invalid-feedback">
-                                            {{ errors.razao_social[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.nome_fantasia }"
-                                               id="nome_fantasia" 
-                                               v-model="form.nome_fantasia" 
-                                               placeholder="Nome Fantasia">
-                                        <label for="nome_fantasia">Nome Fantasia *</label>
-                                        <div v-if="errors.nome_fantasia" class="invalid-feedback">
-                                            {{ errors.nome_fantasia[0] }}
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- CAMPOS OBRIGATÓRIOS -->
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <select class="form-select" 
@@ -250,11 +229,14 @@
                                                 id="tipo_organizacao" 
                                                 v-model="form.tipo_organizacao">
                                             <option value="">Selecione...</option>
-                                            <option value="municipio">Município</option>
-                                            <option value="secretaria">Secretaria</option>
-                                            <option value="órgão">Órgão</option>
-                                            <option value="autarquia">Autarquia</option>
-                                            <option value="outros">Outros</option>
+                                            <option value="Unidade Federativa">Unidade Federativa</option>
+                                            <option value="Secretaria">Secretaria</option>
+                                            <option value="Órgão">Órgão</option>
+                                            <option value="Autarquia">Autarquia</option>
+                                            <option value="Consórcio">Consórcio</option>
+                                            <option value="S/A">S/A</option>
+                                            <option value="PJ">PJ</option>
+                                            <option value="PF">PF</option>
                                         </select>
                                         <label for="tipo_organizacao">Tipo de Organização *</label>
                                         <div v-if="errors.tipo_organizacao" class="invalid-feedback">
@@ -263,6 +245,67 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select" 
+                                                :class="{ 'is-invalid': errors.nivel_administrativo }"
+                                                id="nivel_administrativo" 
+                                                v-model="form.nivel_administrativo">
+                                            <option value="">Selecione...</option>
+                                            <option value="municipal">Municipal</option>
+                                            <option value="estadual">Estadual</option>
+                                            <option value="federal">Federal</option>
+                                        </select>
+                                        <label for="nivel_administrativo">Nível Administrativo *</label>
+                                        <div v-if="errors.nivel_administrativo" class="invalid-feedback">
+                                            {{ errors.nivel_administrativo[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :class="{ 'is-invalid': errors.jurisdicao_razao_social }"
+                                               id="jurisdicao_razao_social" 
+                                               v-model="form.jurisdicao_razao_social" 
+                                               placeholder="Razão Social">
+                                        <label for="jurisdicao_razao_social">Razão Social *</label>
+                                        <div v-if="errors.jurisdicao_razao_social" class="invalid-feedback">
+                                            {{ errors.jurisdicao_razao_social[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :class="{ 'is-invalid': errors.jurisdicao_nome_fantasia }"
+                                               id="jurisdicao_nome_fantasia" 
+                                               v-model="form.jurisdicao_nome_fantasia" 
+                                               placeholder="Nome Fantasia">
+                                        <label for="jurisdicao_nome_fantasia">Nome Fantasia *</label>
+                                        <div v-if="errors.jurisdicao_nome_fantasia" class="invalid-feedback">
+                                            {{ errors.jurisdicao_nome_fantasia[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :class="{ 'is-invalid': errors.jurisdicao_uf }"
+                                               id="jurisdicao_uf" 
+                                               v-model="form.jurisdicao_uf" 
+                                               placeholder="UF"
+                                               maxlength="2"
+                                               style="text-transform: uppercase;">
+                                        <label for="jurisdicao_uf">UF *</label>
+                                        <div v-if="errors.jurisdicao_uf" class="invalid-feedback">
+                                            {{ errors.jurisdicao_uf[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
                                     <div class="form-floating">
                                         <input type="email" 
                                                class="form-control" 
@@ -276,95 +319,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-12">
-                                    <div class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.endereco }"
-                                               id="endereco" 
-                                               v-model="form.endereco" 
-                                               placeholder="Endereço">
-                                        <label for="endereco">Endereço</label>
-                                        <div v-if="errors.endereco" class="invalid-feedback">
-                                            {{ errors.endereco[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- NOVOS CAMPOS DE JURISDIÇÃO -->
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <select class="form-select" 
-                                                :class="{ 'is-invalid': errors.nivel_administrativo }"
-                                                id="nivel_administrativo" 
-                                                v-model="form.nivel_administrativo"
-                                                @change="onNivelChange">
-                                            <option value="">Selecione...</option>
-                                            <option value="municipal">Municipal</option>
-                                            <option value="estadual">Estadual</option>
-                                            <option value="federal">Federal</option>
-                                        </select>
-                                        <label for="nivel_administrativo">Nível Administrativo *</label>
-                                        <div v-if="errors.nivel_administrativo" class="invalid-feedback">
-                                            {{ errors.nivel_administrativo[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Campo de Jurisdição (simplificado) -->
-                                <div class="col-md-6">
-                                    <!-- Municipal - Select de Municípios do Paraná -->
-                                    <div v-if="form.nivel_administrativo === 'municipal'" class="form-floating">
-                                        <select class="form-select" 
-                                                :class="{ 'is-invalid': errors.jurisdicao_nome }"
-                                                id="jurisdicao_municipal" 
-                                                v-model="form.jurisdicao_nome"
-                                                @change="onMunicipioChange">
-                                            <option value="">Selecione um município...</option>
-                                            <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.nome">
-                                                {{ municipio.nome }}
-                                            </option>
-                                        </select>
-                                        <label for="jurisdicao_municipal">Município *</label>
-                                        <div v-if="errors.jurisdicao_nome" class="invalid-feedback">
-                                            {{ errors.jurisdicao_nome[0] }}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Estadual - Campo fixo "Paraná" -->
-                                    <div v-else-if="form.nivel_administrativo === 'estadual'" class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="jurisdicao_estadual" 
-                                               value="Paraná"
-                                               readonly
-                                               @input="form.jurisdicao_nome = 'Paraná'">
-                                        <label for="jurisdicao_estadual">Jurisdição *</label>
-                                    </div>
-                                    
-                                    <!-- Federal - Campo fixo "Brasil" -->
-                                    <div v-else-if="form.nivel_administrativo === 'federal'" class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="jurisdicao_federal" 
-                                               value="Brasil"
-                                               readonly
-                                               @input="form.jurisdicao_nome = 'Brasil'">
-                                        <label for="jurisdicao_federal">Jurisdição *</label>
-                                    </div>
-                                    
-                                    <!-- Placeholder quando nenhum nível selecionado -->
-                                    <div v-else class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               disabled
-                                               placeholder="Selecione o nível administrativo primeiro">
-                                        <label>Jurisdição *</label>
-                                    </div>
-                                </div>
-                                
-                                <!-- Código IBGE (só para municipal) -->
-                                <div v-if="form.nivel_administrativo === 'municipal'" class="col-md-4">
+
+                                <!-- CAMPOS OPCIONAIS -->
+                                <div class="col-md-4">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
@@ -372,23 +329,9 @@
                                                id="jurisdicao_codigo_ibge" 
                                                v-model="form.jurisdicao_codigo_ibge" 
                                                placeholder="Código IBGE">
-                                        <label for="jurisdicao_codigo_ibge">Código IBGE *</label>
+                                        <label for="jurisdicao_codigo_ibge">Código IBGE</label>
                                         <div v-if="errors.jurisdicao_codigo_ibge" class="invalid-feedback">
                                             {{ errors.jurisdicao_codigo_ibge[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-floating">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.populacao }"
-                                               id="populacao" 
-                                               v-model="form.populacao" 
-                                               placeholder="População">
-                                        <label for="populacao">População</label>
-                                        <div v-if="errors.populacao" class="invalid-feedback">
-                                            {{ errors.populacao[0] }}
                                         </div>
                                     </div>
                                 </div>
@@ -406,7 +349,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
@@ -414,9 +357,23 @@
                                                id="telefone" 
                                                v-model="form.telefone" 
                                                placeholder="Telefone">
-                                        <label for="telefone">Telefone *</label>
+                                        <label for="telefone">Telefone</label>
                                         <div v-if="errors.telefone" class="invalid-feedback">
                                             {{ errors.telefone[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :class="{ 'is-invalid': errors.endereco }"
+                                               id="endereco" 
+                                               v-model="form.endereco" 
+                                               placeholder="Endereço">
+                                        <label for="endereco">Endereço</label>
+                                        <div v-if="errors.endereco" class="invalid-feedback">
+                                            {{ errors.endereco[0] }}
                                         </div>
                                     </div>
                                 </div>
@@ -442,13 +399,13 @@
                                                id="responsavel" 
                                                v-model="form.responsavel" 
                                                placeholder="Responsável">
-                                        <label for="responsavel">Responsável *</label>
+                                        <label for="responsavel">Responsável</label>
                                         <div v-if="errors.responsavel" class="invalid-feedback">
                                             {{ errors.responsavel[0] }}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
@@ -456,37 +413,23 @@
                                                id="responsavel_cargo" 
                                                v-model="form.responsavel_cargo" 
                                                placeholder="Cargo do Responsável">
-                                        <label for="responsavel_cargo">Cargo do Responsável *</label>
+                                        <label for="responsavel_cargo">Cargo do Responsável</label>
                                         <div v-if="errors.responsavel_cargo" class="invalid-feedback">
                                             {{ errors.responsavel_cargo[0] }}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-floating">
-                                        <input type="text" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.responsavel_telefone }"
-                                               id="responsavel_telefone" 
-                                               v-model="form.responsavel_telefone" 
-                                               placeholder="Telefone do Responsável">
-                                        <label for="responsavel_telefone">Telefone do Responsável</label>
-                                        <div v-if="errors.responsavel_telefone" class="invalid-feedback">
-                                            {{ errors.responsavel_telefone[0] }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input type="email" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.responsavel_email }"
-                                               id="responsavel_email" 
-                                               v-model="form.responsavel_email" 
-                                               placeholder="Email do Responsável">
-                                        <label for="responsavel_email">Email do Responsável</label>
-                                        <div v-if="errors.responsavel_email" class="invalid-feedback">
-                                            {{ errors.responsavel_email[0] }}
+                                        <textarea class="form-control" 
+                                                  :class="{ 'is-invalid': errors.observacao }"
+                                                  id="observacao" 
+                                                  v-model="form.observacao" 
+                                                  placeholder="Observações"
+                                                  style="height: 100px;"></textarea>
+                                        <label for="observacao">Observações</label>
+                                        <div v-if="errors.observacao" class="invalid-feedback">
+                                            {{ errors.observacao[0] }}
                                         </div>
                                     </div>
                                 </div>
@@ -496,8 +439,9 @@
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-success" @click="salvarItem" :disabled="salvando">
-                            <span v-if="salvando" class="spinner-border spinner-border-sm" role="status"></span>
-                            <span v-else>{{ editando ? 'Atualizar' : 'Criar' }}</span>
+                            <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <i v-else class="fas fa-save me-2"></i>
+                            {{ salvando ? 'Salvando...' : (editando ? 'Atualizar' : 'Salvar') }}
                         </button>
                     </div>
                 </div>
@@ -519,7 +463,7 @@
         </div>
 
         <!-- Modal de Confirmação de Exclusão -->
-        <div class="modal fade" id="modalConfirmacaoExclusao" tabindex="-1" ref="modalConfirmacaoRef">
+        <div class="modal fade" id="modalConfirmacaoExclusao" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header border-0">
@@ -530,7 +474,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-0">Tem certeza que deseja excluir a entidade orçamentária <strong>"{{ itemParaExcluir?.razao_social }}"</strong>?</p>
+                        <p class="mb-0">Tem certeza que deseja excluir a entidade orçamentária <strong>"{{ itemParaExcluir?.jurisdicao_razao_social }}"</strong>?</p>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -553,8 +497,7 @@ export default {
             type: Object,
             default: () => ({
                 crud: true,
-                consultar: true,
-                importar: true
+                consultar: true
             })
         }
     },
@@ -562,27 +505,28 @@ export default {
         return {
             items: { data: [], current_page: 1, total: 0, last_page: 1, from: 0, to: 0 },
             filtros: {
-                razao_social: '',
-                nome_fantasia: '',
-                tipo_organizacao: ''
+                jurisdicao_razao_social: '',
+                jurisdicao_nome_fantasia: '',
+                tipo_organizacao: '',
+                nivel_administrativo: '',
+                jurisdicao_uf: ''
             },
             form: {
-                razao_social: '',
-                nome_fantasia: '',
                 tipo_organizacao: '',
-                email: '',
-                endereco: '',
                 nivel_administrativo: '',
-                jurisdicao_nome: '',
+                jurisdicao_razao_social: '',
+                jurisdicao_nome_fantasia: '',
+                jurisdicao_uf: '',
+                email: '',
                 jurisdicao_codigo_ibge: '',
-                populacao: '',
                 cep: '',
+                endereco: '',
                 telefone: '',
                 cnpj: '',
+                observacao: '',
                 responsavel: '',
                 responsavel_cargo: '',
-                responsavel_telefone: '',
-                responsavel_email: ''
+                ativo: true
             },
             errors: {},
             loading: false,
@@ -591,8 +535,6 @@ export default {
             itemEditando: null,
             filtrosVisiveis: false,
             modalRef: null,
-            municipios: [],
-            estados: [],
             toast: {
                 show: false,
                 type: 'success',
@@ -627,13 +569,11 @@ export default {
     mounted() {
         this.carregarDados();
         this.inicializarModal();
-        // Estados não precisam mais ser carregados (são fixos)
     },
     methods: {
         async carregarDados() {
             this.loading = true;
             try {
-                // Incluir a página atual nos parâmetros da requisição
                 const params = {
                     ...this.filtros,
                     page: this.items.current_page
@@ -646,7 +586,6 @@ export default {
                     this.mostrarToast('Erro', 'Erro ao carregar dados', 'error');
                 }
             } catch (error) {
-
                 this.mostrarToast('Erro', 'Erro ao carregar dados', 'error');
             } finally {
                 this.loading = false;
@@ -657,16 +596,16 @@ export default {
         },
         limparFiltros() {
             this.filtros = {
-                razao_social: '',
-                nome_fantasia: '',
-                tipo_organizacao: ''
+                jurisdicao_razao_social: '',
+                jurisdicao_nome_fantasia: '',
+                tipo_organizacao: '',
+                nivel_administrativo: '',
+                jurisdicao_uf: ''
             };
-            // Resetar para a primeira página ao limpar filtros
             this.items.current_page = 1;
             this.carregarDados();
         },
         filtrarDados() {
-            // Resetar para a primeira página ao aplicar filtros
             this.items.current_page = 1;
             this.carregarDados();
         },
@@ -683,22 +622,21 @@ export default {
             this.editando = false;
             this.itemEditando = null;
             this.form = {
-                razao_social: '',
-                nome_fantasia: '',
                 tipo_organizacao: '',
-                email: '',
-                endereco: '',
                 nivel_administrativo: '',
-                jurisdicao_nome: '',
+                jurisdicao_razao_social: '',
+                jurisdicao_nome_fantasia: '',
+                jurisdicao_uf: '',
+                email: '',
                 jurisdicao_codigo_ibge: '',
-                populacao: '',
                 cep: '',
+                endereco: '',
                 telefone: '',
                 cnpj: '',
+                observacao: '',
                 responsavel: '',
                 responsavel_cargo: '',
-                responsavel_telefone: '',
-                responsavel_email: ''
+                ativo: true
             };
             this.errors = {};
             this.modalRef.show();
@@ -746,7 +684,6 @@ export default {
                     this.mostrarToast('Erro', data.error || 'Erro ao salvar', 'error');
                 }
             } catch (error) {
-
                 this.mostrarToast('Erro', 'Erro ao salvar', 'error');
             } finally {
                 this.salvando = false;
@@ -770,7 +707,6 @@ export default {
                 });
 
                 if (response.ok) {
-                    // Fechar o modal de confirmação
                     const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacaoExclusao'));
                     modalConfirmacao.hide();
                     
@@ -781,12 +717,22 @@ export default {
                     this.mostrarToast('Erro', data.error || 'Erro ao excluir', 'error');
                 }
             } catch (error) {
-
                 this.mostrarToast('Erro', 'Erro ao excluir', 'error');
             } finally {
                 this.excluindo = false;
                 this.itemParaExcluir = null;
             }
+        },
+        mostrarToast(title, message, type = 'success') {
+            this.toast = {
+                show: true,
+                type: type,
+                title: title,
+                message: message
+            };
+            setTimeout(() => {
+                this.toast.show = false;
+            }, 5000);
         },
         async importarMunicipios() {
             this.loading = true;
@@ -801,130 +747,112 @@ export default {
                 const data = await response.json();
 
                 if (response.ok) {
-                    this.mostrarToast('Sucesso', data.message, 'success');
+                    this.mostrarToast('Sucesso', `Importação concluída! ${data.novos} novos municípios e ${data.atualizados} atualizados.`, 'success');
                     this.carregarDados();
                 } else {
-                    this.mostrarToast('Erro', data.error || 'Erro na importação', 'error');
+                    this.mostrarToast('Erro', data.message || 'Erro na importação', 'error');
                 }
             } catch (error) {
-
                 this.mostrarToast('Erro', 'Erro na importação', 'error');
             } finally {
                 this.loading = false;
-            }
-        },
-        mostrarToast(title, message, type = 'success') {
-            this.toast = {
-                show: true,
-                type: type,
-                title: title,
-                message: message
-            };
-            setTimeout(() => {
-                this.toast.show = false;
-            }, 5000);
-        },
-        
-        // Novos métodos para funcionalidade de jurisdição
-        async carregarEstados() {
-            try {
-                const response = await fetch('/api/administracao/entidades-orcamentarias/buscar-estados');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.estados = data.data;
-                }
-            } catch (error) {
-                console.error('Erro ao carregar estados:', error);
-            }
-        },
-        
-        async carregarMunicipios() {
-            try {
-                // Sempre carrega municípios do Paraná
-                const response = await fetch('/api/administracao/entidades-orcamentarias/buscar-municipios?estado=PR');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.municipios = data.data;
-                }
-            } catch (error) {
-                console.error('Erro ao carregar municípios:', error);
-            }
-        },
-        
-        onNivelChange() {
-            // Limpar campos relacionados quando mudar o nível
-            this.form.jurisdicao_nome = '';
-            this.form.jurisdicao_codigo_ibge = '';
-            
-            // Definir valores fixos para cada nível
-            if (this.form.nivel_administrativo === 'municipal') {
-                this.carregarMunicipios(); // Carrega municípios do Paraná
-            } else if (this.form.nivel_administrativo === 'estadual') {
-                this.form.jurisdicao_nome = 'Paraná';
-            } else if (this.form.nivel_administrativo === 'federal') {
-                this.form.jurisdicao_nome = 'Brasil';
-            }
-        },
-        
-        onMunicipioChange() {
-            // Quando selecionar um município, buscar automaticamente o código IBGE
-            if (this.form.jurisdicao_nome) {
-                const municipioSelecionado = this.municipios.find(m => m.nome === this.form.jurisdicao_nome);
-                if (municipioSelecionado) {
-                    this.form.jurisdicao_codigo_ibge = municipioSelecionado.codigo_ibge;
-                }
             }
         }
     }
 }
 </script>
 
-<style>
-/* Estilos específicos para altura dos campos de filtro */
-.form-floating .form-control-lg {
-    height: 58px !important;
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
+<style scoped>
+
+
+.filtros-aba-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
 }
 
-/* Corrigir conteúdo cortado no select */
-.form-floating .form-select-lg {
-    height: 58px !important;
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
+.admin-table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* Garantir que o label não corte o conteúdo */
-.form-floating .form-select-lg + label {
-    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem) !important;
+.admin-table th {
+    background: #f8f9fa;
+    border: none;
+    font-weight: 600;
+    color: #495057;
+    padding: 15px;
 }
 
-/* Ajustar espaçamento interno do select para evitar corte */
+.admin-row:hover {
+    background-color: #f8f9fa;
+}
+
+.text-custom {
+    color: #18578A !important;
+}
+
+.admin-pagination .page-link {
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    padding: 8px 12px;
+}
+
+.admin-pagination .page-item.active .page-link {
+    background-color: #5EA853;
+    border-color: #5EA853;
+    color: white;
+}
+
+.admin-pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #495057;
+}
+
+/* Ajustes de fonte nos filtros */
+.form-control-lg {
+    font-size: 0.9rem !important;
+}
+
 .form-select-lg {
-    padding-left: 1rem !important;
-    padding-right: 2.5rem !important;
+    font-size: 0.9rem !important;
 }
 
-/* Ajustes específicos para o select do filtro */
-#filtroTipoOrganizacao {
-    height: 58px !important;
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
-    font-size: 0.875rem !important;
+/* Badges discretos */
+.badge-status {
+    background-color: transparent !important;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 4px 8px;
 }
 
-/* Garantir que o texto do select seja visível */
-#filtroTipoOrganizacao option {
-    padding: 8px 12px !important;
-    font-size: 0.875rem !important;
+.badge-neutro {
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6;
+    color: #495057;
 }
 
-/* Ajustar o label específico do select */
-#filtroTipoOrganizacao + label {
-    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem) !important;
-    pointer-events: none !important;
+.badge-municipal {
+    background-color: #d4edda !important;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.badge-estadual {
+    background-color: #d1ecf1 !important;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+.badge-federal {
+    background-color: #fff3cd !important;
+    border-color: #ffeaa7;
+    color: #856404;
 }
 </style>

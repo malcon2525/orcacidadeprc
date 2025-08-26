@@ -13,31 +13,52 @@ return new class extends Migration
     {
         Schema::create('entidades_orcamentarias', function (Blueprint $table) {
             $table->id();
-            $table->string('razao_social', 255)->unique();
-            $table->string('nome_fantasia', 255)->unique();
-            $table->enum('tipo_organizacao', ['municipio', 'secretaria', 'órgão', 'autarquia', 'outros']);
-            $table->string('email', 255)->unique()->nullable();
+            
+            // Campos ENUM (que serão SELECT no frontend)
+            $table->enum('tipo_organizacao', [
+                'Unidade Federativa', 
+                'Secretaria', 
+                'Órgão', 
+                'Autarquia', 
+                'Consórcio', 
+                'S/A', 
+                'PJ', 
+                'PF'
+            ]);
+            
+            $table->enum('nivel_administrativo', ['municipal', 'estadual', 'federal']);
+            
+            // Campos de Jurisdição (OBRIGATÓRIOS)
+            $table->string('jurisdicao_razao_social', 255);
+            $table->string('jurisdicao_nome_fantasia', 255);
+            $table->string('jurisdicao_uf', 2);
+            $table->string('jurisdicao_codigo_ibge', 20)->nullable();
+            
+            // Campos de Endereço
+            $table->string('cep', 20)->nullable();
             $table->string('endereco', 255)->nullable();
+            $table->string('telefone', 20)->nullable();
             
-            // Campos de Jurisdição/Abrangência
-            $table->enum('nivel_administrativo', ['municipal', 'estadual', 'federal'])->default('municipal');
-            $table->string('jurisdicao_nome', 255); // "Curitiba", "Paraná", "Brasil"
-            $table->string('jurisdicao_codigo_ibge', 20)->nullable(); // só preenchido para municipal
+            // Email OBRIGATÓRIO
+            $table->string('email', 255);
             
-            $table->integer('populacao')->nullable();
-            $table->string('cep', 10)->nullable();
-            $table->string('telefone', 20);
-            $table->string('cnpj', 20)->unique()->nullable();
-            $table->string('responsavel', 255);
-            $table->string('responsavel_cargo', 100);
-            $table->string('responsavel_telefone', 20)->nullable();
-            $table->string('responsavel_email', 100)->nullable();
+            // CNPJ
+            $table->string('cnpj', 20)->nullable();
+            
+            // Status e Observação
             $table->boolean('ativo')->default(true);
+            $table->text('observacao')->nullable();
+            
+            // Responsável (OPCIONAL)
+            $table->string('responsavel', 255)->nullable();
+            $table->string('responsavel_cargo', 255)->nullable();
+            
             $table->timestamps();
             
             // Índices para performance
-            $table->index(['nivel_administrativo', 'jurisdicao_codigo_ibge'], 'idx_nivel_jurisdicao');
-            $table->index(['ativo', 'nivel_administrativo'], 'idx_ativo_nivel');
+            $table->index(['tipo_organizacao', 'nivel_administrativo'], 'idx_tipo_nivel');
+            $table->index(['ativo', 'jurisdicao_uf'], 'idx_ativo_uf');
+            $table->index(['jurisdicao_codigo_ibge'], 'idx_codigo_ibge');
         });
     }
 
@@ -48,4 +69,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('entidades_orcamentarias');
     }
-}; 
+};
