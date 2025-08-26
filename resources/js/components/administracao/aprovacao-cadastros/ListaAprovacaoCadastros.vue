@@ -35,7 +35,8 @@
                                            id="busca" 
                                            v-model="filtros.busca"
                                            placeholder="Buscar por nome ou email..."
-                                           @keyup.enter="filtrarDados">
+                                           @keyup.enter="filtrarDados"
+                                           @input="onBuscaInput">
                                     <label for="busca">Buscar</label>
                                 </div>
                             </div>
@@ -104,7 +105,7 @@
                 
                 <!-- Tabela -->
                 <div v-else-if="dados.length > 0" class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" style="min-width: 800px;">
                         <thead>
                             <tr>
                                 <th class="table-header">Solicitante</th>
@@ -112,6 +113,7 @@
                                 <th class="table-header">Entidade</th>
                                 <th class="table-header">Status</th>
                                 <th class="table-header">Data</th>
+                                <th class="table-header">Processado por</th>
                                 <th class="table-header text-end" style="width: 150px;">Ações</th>
                             </tr>
                         </thead>
@@ -137,6 +139,15 @@
                                     <div class="fw-medium">{{ formatarData(solicitacao.data_solicitacao) }}</div>
                                     <small class="text-muted" v-if="solicitacao.data_aprovacao">
                                         Processado: {{ formatarData(solicitacao.data_aprovacao) }}
+                                    </small>
+                                </td>
+                                <td class="table-cell">
+                                    <div v-if="solicitacao.aprovado_por?.name" style="max-width: 180px;">
+                                        <div class="fw-medium">{{ solicitacao.aprovado_por.name }}</div>
+                                        <small class="text-muted" v-if="solicitacao.aprovado_por.email">{{ solicitacao.aprovado_por.email }}</small>
+                                    </div>
+                                    <small v-else class="text-muted fst-italic">
+                                        Aguardando processamento
                                     </small>
                                 </td>
                                 <td class="table-cell text-end">
@@ -335,6 +346,35 @@
                                                readonly
                                                style="background-color: #f8f9fa; cursor: default;">
                                         <label>Data de Processamento</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações de Processamento -->
+                        <div v-if="solicitacaoSelecionada.aprovado_por || solicitacaoSelecionada.data_aprovacao" class="mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #5EA853;">
+                                <i class="fas fa-user-check me-2"></i>Informações do Processamento
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6" v-if="solicitacaoSelecionada.data_aprovacao">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="formatarData(solicitacaoSelecionada.data_aprovacao)"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Data do Processamento</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" v-if="solicitacaoSelecionada.aprovado_por">
+                                    <div class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               :value="solicitacaoSelecionada.aprovado_por.name + (solicitacaoSelecionada.aprovado_por.email ? ' (' + solicitacaoSelecionada.aprovado_por.email + ')' : '')"
+                                               readonly
+                                               style="background-color: #f8f9fa; cursor: default;">
+                                        <label>Processado por</label>
                                     </div>
                                 </div>
                             </div>
@@ -698,7 +738,22 @@ export default {
             // Toast
             toastTitle: '',
             toastMessage: '',
-            toastIcon: ''
+            toastIcon: '',
+            
+            // Busca com debounce
+            searchTimeout: null
+        }
+    },
+    watch: {
+        // Watchers para filtros automáticos
+        'filtros.status'() {
+            this.filtrarDados();
+        },
+        'filtros.municipio_id'() {
+            this.filtrarDados();
+        },
+        'filtros.entidade_id'() {
+            this.filtrarDados();
         }
     },
     mounted() {
@@ -709,14 +764,25 @@ export default {
         async carregarDados() {
             this.loading = true;
             try {
-                const params = new URLSearchParams({
-                    page: this.registros.current_page,
-                    per_page: this.registros.per_page,
-                    busca: this.filtros.busca,
-                    status: this.filtros.status,
-                    municipio_id: this.filtros.municipio_id,
-                    entidade_id: this.filtros.entidade_id
-                });
+                // Construir parâmetros apenas com valores não vazios
+                const params = new URLSearchParams();
+                params.append('page', this.registros.current_page);
+                params.append('per_page', this.registros.per_page);
+                
+                if (this.filtros.busca && this.filtros.busca.toString().trim()) {
+                    params.append('busca', this.filtros.busca.toString().trim());
+                }
+                if (this.filtros.status) {
+                    params.append('status', this.filtros.status);
+                }
+                if (this.filtros.municipio_id) {
+                    params.append('municipio_id', this.filtros.municipio_id);
+                }
+                if (this.filtros.entidade_id) {
+                    params.append('entidade_id', this.filtros.entidade_id);
+                }
+
+
 
                 const response = await fetch(`/api/administracao/aprovacao-cadastros?${params}`, {
                     headers: {
@@ -760,8 +826,8 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    this.municipios = data.municipios;
-                    this.entidades = data.entidades;
+                    this.municipios = data.municipios || [];
+                    this.entidades = data.entidades || [];
                 } else {
                     console.error('Erro ao carregar filtros:', data.message);
                 }
@@ -776,12 +842,30 @@ export default {
             this.filtrosVisiveis = !this.filtrosVisiveis;
         },
         
+        onBuscaInput() {
+            // Limpar timeout anterior
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+            
+            // Criar novo timeout com debounce de 500ms
+            this.searchTimeout = setTimeout(() => {
+                this.filtrarDados();
+            }, 500);
+        },
+        
         filtrarDados() {
             this.registros.current_page = 1;
             this.carregarDados();
         },
         
         limparFiltros() {
+            // Limpar timeout de busca se existir
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+                this.searchTimeout = null;
+            }
+            
             this.filtros = {
                 busca: '',
                 status: '',

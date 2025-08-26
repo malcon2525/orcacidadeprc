@@ -3,32 +3,20 @@
 namespace App\Http\Controllers\Web\Administracao\UsuariosPorEntidade;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class UsuariosPorEntidadeController extends Controller
 {
     /**
-     * Exibe a interface de gerenciamento de usuários por entidade
+     * Exibe a página de usuários por entidade
      */
-    public function index()
+    public function index(): View
     {
-        // Verificação de acesso conforme padrões
-        /** @var \App\Models\Administracao\User $user */
-        $user = Auth::user();
+        // Verificação de acesso
+        $this->checkAccess(['gerenciar_usuarios']);
         
-        // 1. É super admin? → Acesso total
-        if ($user->isSuperAdmin()) {
-            return view('administracao.usuarios-por-entidade.index');
-        }
-        
-        // 2. Tem permissão específica? → Acesso ao módulo
-        if ($user->hasPermission('aprovar-cadastros')) {
-            return view('administracao.usuarios-por-entidade.index');
-        }
-        
-        // 3. Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente para gerenciar usuários por entidade.');
+        return view('administracao.usuarios-por-entidade.index');
     }
 
     /**

@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Api\Administracao\UsuariosPorEntidade;
 use App\Http\Controllers\Controller;
 use App\Models\Administracao\User;
 use App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria;
-use Illuminate\Http\Request;
+use App\Models\Administracao\Municipio;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -14,18 +15,47 @@ use Illuminate\Support\Facades\Validator;
 class UsuariosPorEntidadeController extends Controller
 {
     /**
-     * Lista entidades orçamentárias para seleção
+     * Lista entidades com contador de usuários
      */
-    public function entidades(): JsonResponse
+    public function listarEntidades(Request $request): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['gerenciar_usuarios']);
 
         try {
-            $entidades = EntidadeOrcamentaria::select('id', 'nome', 'is_active')
-                ->where('is_active', true)
-                ->orderBy('nome')
-                ->get();
+            $query = EntidadeOrcamentaria::query()
+                ->select([
+                    'entidades_orcamentarias.id',
+                    'entidades_orcamentarias.nome_fantasia',
+                    'entidades_orcamentarias.ativo'
+                ])
+                ->with(['municipio:id,nome,codigo_ibge'])
+                ->withCount(['usuarios as usuarios_ativos_count' => function ($q) {
+                    $q->where('user_entidades_orcamentarias.ativo', true);
+                }])
+                ->withCount(['usuarios as usuarios_total_count']);
+
+            // Filtros
+            if ($request->filled('municipio_id')) {
+                $query->whereHas('municipio', function ($q) use ($request) {
+                    $q->where('id', $request->municipio_id);
+                });
+            }
+
+            if ($request->filled('ativo')) {
+                $query->where('entidades_orcamentarias.ativo', $request->ativo === 'true');
+            }
+
+            if ($request->filled('busca')) {
+                $busca = trim($request->busca);
+                $query->where('entidades_orcamentarias.nome_fantasia', 'LIKE', "%{$busca}%");
+            }
+
+            // Ordenação
+            $query->orderBy('entidades_orcamentarias.nome_fantasia');
+
+            // Paginação
+            $entidades = $query->paginate($request->get('per_page', 15));
 
             return response()->json($entidades);
 
@@ -38,42 +68,50 @@ class UsuariosPorEntidadeController extends Controller
     }
 
     /**
-     * Lista usuários vinculados a uma entidade específica
+     * Lista usuários de uma entidade específica
      */
-    public function usuariosPorEntidade(Request $request, int $entidadeId): JsonResponse
+    public function listarUsuariosPorEntidade(Request $request, int $entidadeId): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['gerenciar_usuarios']);
 
         try {
-            $entidade = EntidadeOrcamentaria::findOrFail($entidadeId);
+            $entidade = EntidadeOrcamentaria::with('municipio')->findOrFail($entidadeId);
 
-            $query = User::select('users.id', 'users.name', 'users.email', 'users.is_active', 'users.municipio_id')
-                ->with(['municipio:id,nome'])
-                ->whereHas('entidadesOrcamentarias', function ($q) use ($entidadeId) {
-                    $q->where('entidade_orcamentaria_id', $entidadeId);
-                })
-                ->withPivot('ativo', 'data_vinculacao', 'vinculado_por_user_id');
+            $query = User::query()
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    'users.is_active',
+                    'user_entidades_orcamentarias.ativo as vinculo_ativo',
+                    'user_entidades_orcamentarias.data_vinculacao',
+                    'vinculado_por.name as vinculado_por_nome'
+                ])
+                ->join('user_entidades_orcamentarias', 'users.id', '=', 'user_entidades_orcamentarias.user_id')
+                ->leftJoin('users as vinculado_por', 'user_entidades_orcamentarias.vinculado_por_user_id', '=', 'vinculado_por.id')
+                ->where('user_entidades_orcamentarias.entidade_orcamentaria_id', $entidadeId);
 
             // Filtros
-            if ($request->filled('busca')) {
-                $busca = $request->busca;
-                $query->where(function ($q) use ($busca) {
-                    $q->where('name', 'LIKE', "%{$busca}%")
-                      ->orWhere('email', 'LIKE', "%{$busca}%");
-                });
+            if ($request->filled('vinculo_ativo')) {
+                $query->where('user_entidades_orcamentarias.ativo', $request->vinculo_ativo === 'true');
             }
 
-            if ($request->filled('ativo')) {
-                $ativo = $request->boolean('ativo');
-                $query->whereHas('entidadesOrcamentarias', function ($q) use ($entidadeId, $ativo) {
-                    $q->where('entidade_orcamentaria_id', $entidadeId)
-                      ->where('user_entidades_orcamentarias.ativo', $ativo);
+            if ($request->filled('user_ativo')) {
+                $query->where('users.is_active', $request->user_ativo === 'true');
+            }
+
+            if ($request->filled('busca')) {
+                $busca = trim($request->busca);
+                $query->where(function ($q) use ($busca) {
+                    $q->where('users.name', 'LIKE', "%{$busca}%")
+                      ->orWhere('users.email', 'LIKE', "%{$busca}%");
                 });
             }
 
             // Ordenação
-            $query->orderBy('name');
+            $query->orderBy('user_entidades_orcamentarias.ativo', 'desc')
+                  ->orderBy('users.name');
 
             // Paginação
             $usuarios = $query->paginate($request->get('per_page', 15));
@@ -85,42 +123,42 @@ class UsuariosPorEntidadeController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Erro ao carregar usuários',
+                'error' => 'Erro ao carregar usuários da entidade',
                 'message' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Lista usuários disponíveis para vinculação (não vinculados à entidade)
+     * Lista usuários disponíveis para vincular à entidade
      */
-    public function usuariosDisponiveis(Request $request, int $entidadeId): JsonResponse
+    public function listarUsuariosDisponiveis(Request $request, int $entidadeId): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['gerenciar_usuarios']);
 
         try {
-            $query = User::select('id', 'name', 'email', 'municipio_id')
-                ->with(['municipio:id,nome'])
+            $query = User::query()
+                ->select('id', 'name', 'email', 'is_active')
                 ->where('is_active', true)
-                ->whereDoesntHave('entidadesOrcamentarias', function ($q) use ($entidadeId) {
-                    $q->where('entidade_orcamentaria_id', $entidadeId)
+                ->whereNotExists(function ($q) use ($entidadeId) {
+                    $q->select(DB::raw(1))
+                      ->from('user_entidades_orcamentarias')
+                      ->whereRaw('user_entidades_orcamentarias.user_id = users.id')
+                      ->where('user_entidades_orcamentarias.entidade_orcamentaria_id', $entidadeId)
                       ->where('user_entidades_orcamentarias.ativo', true);
                 });
 
-            // Filtro de busca
             if ($request->filled('busca')) {
-                $busca = $request->busca;
+                $busca = trim($request->busca);
                 $query->where(function ($q) use ($busca) {
                     $q->where('name', 'LIKE', "%{$busca}%")
                       ->orWhere('email', 'LIKE', "%{$busca}%");
                 });
             }
 
-            // Ordenação
             $query->orderBy('name');
 
-            // Paginação
             $usuarios = $query->paginate($request->get('per_page', 10));
 
             return response()->json($usuarios);
@@ -134,21 +172,20 @@ class UsuariosPorEntidadeController extends Controller
     }
 
     /**
-     * Vincula usuários a uma entidade
+     * Vincula um usuário à entidade
      */
-    public function vincularUsuarios(Request $request, int $entidadeId): JsonResponse
+    public function vincularUsuario(Request $request, int $entidadeId): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['gerenciar-usuarios']);
 
         $validator = Validator::make($request->all(), [
-            'user_ids' => 'required|array|min:1',
-            'user_ids.*' => 'exists:users,id'
+            'user_id' => 'required|exists:users,id'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'error' => 'Dados inválidos',
+                'message' => 'Dados inválidos',
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -156,69 +193,101 @@ class UsuariosPorEntidadeController extends Controller
         try {
             DB::beginTransaction();
 
+            // Verificar se a entidade existe
             $entidade = EntidadeOrcamentaria::findOrFail($entidadeId);
-            $userIds = $request->user_ids;
-            $vinculadorId = Auth::id();
 
-            // Preparar dados para inserção
-            $vinculacoes = [];
-            foreach ($userIds as $userId) {
-                $vinculacoes[$userId] = [
-                    'ativo' => true,
-                    'data_vinculacao' => now(),
-                    'vinculado_por_user_id' => $vinculadorId,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ];
+            // Verificar se o usuário existe
+            $usuario = User::findOrFail($request->user_id);
+
+            // Verificar se já existe vínculo ativo
+            $vinculoExistente = DB::table('user_entidades_orcamentarias')
+                ->where('user_id', $request->user_id)
+                ->where('entidade_orcamentaria_id', $entidadeId)
+                ->where('ativo', true)
+                ->first();
+
+            if ($vinculoExistente) {
+                return response()->json([
+                    'message' => 'Usuário já está vinculado a esta entidade'
+                ], 400);
             }
 
-            // Vincular usuários (sem remover existentes)
-            $entidade->users()->syncWithoutDetaching($vinculacoes);
+            // Verificar se existe vínculo inativo e reativar
+            $vinculoInativo = DB::table('user_entidades_orcamentarias')
+                ->where('user_id', $request->user_id)
+                ->where('entidade_orcamentaria_id', $entidadeId)
+                ->where('ativo', false)
+                ->first();
+
+            if ($vinculoInativo) {
+                // Reativar vínculo existente
+                DB::table('user_entidades_orcamentarias')
+                    ->where('id', $vinculoInativo->id)
+                    ->update([
+                        'ativo' => true,
+                        'data_vinculacao' => now(),
+                        'vinculado_por_user_id' => Auth::id(),
+                        'updated_at' => now()
+                    ]);
+            } else {
+                // Criar novo vínculo
+                DB::table('user_entidades_orcamentarias')->insert([
+                    'user_id' => $request->user_id,
+                    'entidade_orcamentaria_id' => $entidadeId,
+                    'ativo' => true,
+                    'data_vinculacao' => now(),
+                    'vinculado_por_user_id' => Auth::id(),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
 
             DB::commit();
 
             return response()->json([
-                'message' => 'Usuários vinculados com sucesso!',
-                'vinculados' => count($userIds)
+                'message' => 'Usuário vinculado com sucesso à entidade!'
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'error' => 'Erro ao vincular usuários',
-                'message' => $e->getMessage()
+                'message' => 'Erro ao vincular usuário',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Remove vinculação de um usuário com a entidade
+     * Desvincula um usuário da entidade
      */
-    public function desvincularUsuario(Request $request, int $entidadeId, int $userId): JsonResponse
+    public function desvincularUsuario(int $entidadeId, int $userId): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['gerenciar_usuarios']);
 
         try {
             DB::beginTransaction();
 
-            $entidade = EntidadeOrcamentaria::findOrFail($entidadeId);
-            $user = User::findOrFail($userId);
+            // Verificar se o vínculo existe
+            $vinculo = DB::table('user_entidades_orcamentarias')
+                ->where('user_id', $userId)
+                ->where('entidade_orcamentaria_id', $entidadeId)
+                ->where('ativo', true)
+                ->first();
 
-            // Verificar se existe vinculação
-            $vinculacao = $entidade->users()->where('user_id', $userId)->first();
-            
-            if (!$vinculacao) {
+            if (!$vinculo) {
                 return response()->json([
-                    'error' => 'Usuário não está vinculado a esta entidade'
-                ], 400);
+                    'message' => 'Vínculo não encontrado ou já inativo'
+                ], 404);
             }
 
-            // Desativar vinculação (não remove historicamente)
-            $entidade->users()->updateExistingPivot($userId, [
-                'ativo' => false,
-                'updated_at' => now()
-            ]);
+            // Desativar vínculo
+            DB::table('user_entidades_orcamentarias')
+                ->where('id', $vinculo->id)
+                ->update([
+                    'ativo' => false,
+                    'updated_at' => now()
+                ]);
 
             DB::commit();
 
@@ -229,52 +298,81 @@ class UsuariosPorEntidadeController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'error' => 'Erro ao desvincular usuário',
-                'message' => $e->getMessage()
+                'message' => 'Erro ao desvincular usuário',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Reativa vinculação de um usuário com a entidade
+     * Reativa um vínculo inativo
      */
-    public function reativarUsuario(Request $request, int $entidadeId, int $userId): JsonResponse
+    public function reativarVinculo(int $entidadeId, int $userId): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['gerenciar_usuarios']);
 
         try {
             DB::beginTransaction();
 
-            $entidade = EntidadeOrcamentaria::findOrFail($entidadeId);
-            $user = User::findOrFail($userId);
+            // Verificar se existe vínculo inativo
+            $vinculo = DB::table('user_entidades_orcamentarias')
+                ->where('user_id', $userId)
+                ->where('entidade_orcamentaria_id', $entidadeId)
+                ->where('ativo', false)
+                ->first();
 
-            // Verificar se existe vinculação inativa
-            $vinculacao = $entidade->users()->where('user_id', $userId)->first();
-            
-            if (!$vinculacao) {
+            if (!$vinculo) {
                 return response()->json([
-                    'error' => 'Usuário nunca foi vinculado a esta entidade'
-                ], 400);
+                    'message' => 'Vínculo inativo não encontrado'
+                ], 404);
             }
 
-            // Reativar vinculação
-            $entidade->users()->updateExistingPivot($userId, [
-                'ativo' => true,
-                'vinculado_por_user_id' => Auth::id(),
-                'updated_at' => now()
-            ]);
+            // Reativar vínculo
+            DB::table('user_entidades_orcamentarias')
+                ->where('id', $vinculo->id)
+                ->update([
+                    'ativo' => true,
+                    'data_vinculacao' => now(),
+                    'vinculado_por_user_id' => Auth::id(),
+                    'updated_at' => now()
+                ]);
 
             DB::commit();
 
             return response()->json([
-                'message' => 'Usuário reativado com sucesso!'
+                'message' => 'Vínculo reativado com sucesso!'
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'error' => 'Erro ao reativar usuário',
+                'message' => 'Erro ao reativar vínculo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Dados para filtros
+     */
+    public function filtros(): JsonResponse
+    {
+        // Verificação de acesso
+        $this->checkAccess(['gerenciar-usuarios']);
+
+        try {
+            $municipios = Municipio::select('id', 'nome')
+                ->orderBy('nome')
+                ->get();
+
+            return response()->json([
+                'municipios' => $municipios
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao carregar filtros',
                 'message' => $e->getMessage()
             ], 500);
         }

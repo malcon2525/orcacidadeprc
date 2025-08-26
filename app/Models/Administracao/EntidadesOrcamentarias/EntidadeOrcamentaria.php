@@ -53,4 +53,33 @@ class EntidadeOrcamentaria extends Model
         'created_at',
         'updated_at'
     ];
+
+    /**
+     * Relacionamento com município
+     */
+    public function municipio()
+    {
+        return $this->belongsTo(\App\Models\Administracao\Municipio::class, 'codigo_ibge', 'codigo_ibge');
+    }
+
+    /**
+     * Relacionamento com usuários através da tabela pivot
+     */
+    public function usuarios()
+    {
+        return $this->belongsToMany(\App\Models\Administracao\User::class, 'user_entidades_orcamentarias', 'entidade_orcamentaria_id', 'user_id')
+                    ->withPivot(['ativo', 'data_vinculacao', 'vinculado_por_user_id'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Relacionamento com usuários ativos
+     */
+    public function usuariosAtivos()
+    {
+        return $this->belongsToMany(\App\Models\Administracao\User::class, 'user_entidades_orcamentarias', 'entidade_orcamentaria_id', 'user_id')
+                    ->wherePivot('ativo', true)
+                    ->withPivot(['ativo', 'data_vinculacao', 'vinculado_por_user_id'])
+                    ->withTimestamps();
+    }
 }

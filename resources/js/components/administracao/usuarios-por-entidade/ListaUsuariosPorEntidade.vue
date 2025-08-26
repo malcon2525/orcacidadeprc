@@ -1,121 +1,133 @@
 <template>
-    <div>
-        <!-- Header com Seleção de Entidade -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="text-custom mb-0">
-                <i class="fas fa-users-cog me-2"></i>Usuários por Entidade
-            </h5>
-            <div class="d-flex gap-2">
-                <button class="btn btn-success btn-sm" @click="abrirModalVincular" :disabled="!entidadeSelecionada">
-                    <i class="fas fa-plus me-1"></i>Vincular Usuários
-                </button>
-                <button class="btn btn-outline-primary btn-sm" @click="carregarUsuarios">
-                    <i class="fas fa-sync-alt me-1"></i>Atualizar
-                </button>
+    <div class="container-fluid px-4">
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+            <!-- Cabeçalho Padrão -->
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold" style="color: #5EA853; font-size: 1.2rem; padding: 5px 0;">
+                    <i class="fas fa-users me-2"></i>Usuários por Entidade
+                </h6>
+                <div class="d-flex gap-2">
+                    <!-- Botão Filtros -->
+                    <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" @click="toggleFiltros">
+                        <i class="fas fa-filter"></i>
+                        <span>Filtros</span>
+                        <i class="fas" :class="filtrosVisiveis ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    <!-- Botão Atualizar -->
+                    <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" @click="carregarEntidades">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Atualizar</span>
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- Seleção de Entidade -->
-        <div class="card mb-4">
+            <!-- Corpo do Card -->
             <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            <select class="form-control" id="entidadeSelect" v-model="entidadeSelecionada" @change="onEntidadeChange">
-                                <option value="">Selecione uma entidade...</option>
-                                <option v-for="entidade in entidades" :key="entidade.id" :value="entidade.id">
-                                    {{ entidade.nome }}
-                                </option>
-                            </select>
-                            <label for="entidadeSelect">Entidade Orçamentária</label>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-floating">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="busca" 
-                                   v-model="filtros.busca"
-                                   placeholder="Buscar usuários..."
-                                   @keyup.enter="carregarUsuarios"
-                                   :disabled="!entidadeSelecionada">
-                            <label for="busca">Buscar</label>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-floating">
-                            <select class="form-control" id="filtroAtivo" v-model="filtros.ativo" @change="carregarUsuarios">
-                                <option value="">Todos</option>
-                                <option value="true">Ativos</option>
-                                <option value="false">Inativos</option>
-                            </select>
-                            <label for="filtroAtivo">Status</label>
+                <!-- Filtros Colapsáveis -->
+                <div class="filtros-aba-container mb-3" v-if="filtrosVisiveis">
+                    <div class="filtros-aba-content" :class="{ 'show': filtrosVisiveis }">
+                        <div class="row g-3 align-items-end">
+                            <!-- Campo de Busca -->
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="busca" 
+                                           v-model="filtros.busca"
+                                           placeholder="Buscar por nome da entidade..."
+                                           @keyup.enter="filtrarEntidades"
+                                           @input="onBuscaInput">
+                                    <label for="busca">Buscar</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtro de Município -->
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-control" id="filtroMunicipio" v-model="filtros.municipio_id">
+                                        <option value="">Todos os municípios</option>
+                                        <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.id">
+                                            {{ municipio.nome }}
+                                        </option>
+                                    </select>
+                                    <label for="filtroMunicipio">Município</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtro de Status -->
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-control" id="filtroAtivo" v-model="filtros.ativo">
+                                        <option value="">Todas</option>
+                                        <option value="true">Ativas</option>
+                                        <option value="false">Inativas</option>
+                                    </select>
+                                    <label for="filtroAtivo">Status da Entidade</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Botões de Ação dos Filtros -->
+                            <div class="col-md-2">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" @click="filtrarEntidades">
+                                        <i class="fas fa-search me-2"></i>Filtrar
+                                    </button>
+                                    <button class="btn btn-secondary" @click="limparFiltros">
+                                        <i class="fas fa-times me-2"></i>Limpar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Tabela de Usuários -->
-        <div class="card" v-if="entidadeSelecionada">
-            <div class="card-body p-0">
                 <!-- Loading State -->
                 <div v-if="loading" class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Carregando...</span>
                     </div>
-                    <p class="mt-2 text-muted">Carregando usuários...</p>
+                    <p class="mt-2 text-muted">Carregando entidades...</p>
                 </div>
                 
-                <!-- Tabela -->
-                <div v-else-if="dados.length > 0" class="table-responsive">
-                    <table class="table table-hover align-middle table-admin">
+                <!-- Tabela de Entidades -->
+                <div v-else-if="entidades.length > 0" class="table-responsive">
+                    <table class="table table-hover align-middle" style="min-width: 700px;">
                         <thead>
                             <tr>
-                                <th class="fw-semibold text-custom">Usuário</th>
-                                <th class="fw-semibold text-custom">Município</th>
-                                <th class="fw-semibold text-custom">Status Usuário</th>
-                                <th class="fw-semibold text-custom">Status Vinculação</th>
-                                <th class="fw-semibold text-custom">Data Vinculação</th>
-                                <th class="fw-semibold text-custom text-end w-180px">Ações</th>
+                                <th class="table-header">Entidade</th>
+                                <th class="table-header">Município</th>
+                                <th class="table-header">Status</th>
+                                <th class="table-header">Usuários Ativos</th>
+                                <th class="table-header">Total Usuários</th>
+                                <th class="table-header text-end" style="width: 120px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="usuario in dados" :key="usuario.id" class="table-admin-row">
-                                <td class="align-middle">
-                                    <div class="fw-medium">{{ usuario.name }}</div>
-                                    <small class="text-muted">{{ usuario.email }}</small>
+                            <tr v-for="entidade in entidades" :key="entidade.id" class="table-row">
+                                <td class="table-cell">
+                                    <div class="fw-medium">{{ entidade.nome_fantasia }}</div>
                                 </td>
-                                <td class="align-middle">
-                                    <div class="fw-medium">{{ usuario.municipio?.nome || 'N/A' }}</div>
+                                <td class="table-cell">
+                                    <div class="fw-medium">{{ entidade.municipio?.nome || '—' }}</div>
                                 </td>
-                                <td class="align-middle">
-                                    <span class="badge badge-status" :class="usuario.is_active ? 'badge-ativo' : 'badge-inativo'">
-                                        <i class="fas" :class="usuario.is_active ? 'fa-check-circle' : 'fa-times-circle'"></i>
-                                        {{ usuario.is_active ? 'ATIVO' : 'INATIVO' }}
+                                <td class="table-cell">
+                                    <span class="badge badge-status" :class="entidade.ativo ? 'badge-ativo' : 'badge-inativo'">
+                                        <i class="fas" :class="entidade.ativo ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                                        {{ entidade.ativo ? 'ATIVA' : 'INATIVA' }}
                                     </span>
                                 </td>
-                                <td class="align-middle">
-                                    <span class="badge badge-status" :class="usuario.pivot?.ativo ? 'badge-ativo' : 'badge-inativo'">
-                                        <i class="fas" :class="usuario.pivot?.ativo ? 'fa-link' : 'fa-unlink'"></i>
-                                        {{ usuario.pivot?.ativo ? 'VINCULADO' : 'DESVINCULADO' }}
-                                    </span>
+                                <td class="table-cell">
+                                    <div class="fw-medium text-success">{{ entidade.usuarios_ativos_count }}</div>
                                 </td>
-                                <td class="align-middle">
-                                    <div class="fw-medium">{{ formatarData(usuario.pivot?.data_vinculacao) }}</div>
+                                <td class="table-cell">
+                                    <div class="fw-medium">{{ entidade.usuarios_total_count }}</div>
                                 </td>
-                                <td class="text-end">
+                                <td class="table-cell text-end">
                                     <div class="d-flex gap-1 justify-content-end">
-                                        <template v-if="usuario.pivot?.ativo">
-                                            <button class="btn btn-sm btn-warning" @click="desvinculerUsuario(usuario)" title="Desvincular">
-                                                <i class="fas fa-unlink"></i>
-                                            </button>
-                                        </template>
-                                        <template v-else>
-                                            <button class="btn btn-sm btn-success" @click="reativarUsuario(usuario)" title="Reativar">
-                                                <i class="fas fa-link"></i>
-                                            </button>
-                                        </template>
+                                        <!-- Botão Gerenciar Usuários -->
+                                        <button class="btn btn-sm btn-primary" @click="gerenciarUsuarios(entidade)" title="Gerenciar Usuários">
+                                            <i class="fas fa-users"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -125,175 +137,267 @@
                 
                 <!-- Estado Vazio -->
                 <div v-else class="text-center py-5">
-                    <i class="fas fa-users text-muted" style="font-size: 3rem;"></i>
-                    <h6 class="mt-3 text-muted">Nenhum usuário encontrado</h6>
-                    <p class="text-muted">Esta entidade ainda não possui usuários vinculados.</p>
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhuma entidade encontrada</h5>
+                    <p class="text-muted">Não há entidades cadastradas ou que atendam aos filtros aplicados.</p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Estado Inicial -->
-        <div v-else class="text-center py-5">
-            <i class="fas fa-building text-muted" style="font-size: 3rem;"></i>
-            <h6 class="mt-3 text-muted">Selecione uma entidade</h6>
-            <p class="text-muted">Escolha uma entidade orçamentária para visualizar os usuários vinculados.</p>
-        </div>
-
-        <!-- Paginação -->
-        <div v-if="registros.last_page > 1" class="paginacao-container mt-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted fw-medium">
-                    Mostrando {{ ((registros.current_page - 1) * registros.per_page) + 1 }} 
-                    até {{ Math.min(registros.current_page * registros.per_page, registros.total) }} 
-                    de {{ registros.total }} registros
-                </div>
-                <nav>
-                    <ul class="pagination pagination-generic mb-0">
-                        <li class="page-item" :class="{ disabled: registros.current_page === 1 }">
-                            <button class="page-link" @click="mudarPagina(registros.current_page - 1)" :disabled="registros.current_page === 1">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                        </li>
-                        <li v-for="page in getPaginasVisiveis()" :key="page" class="page-item" :class="{ active: page === registros.current_page }">
-                            <button class="page-link" @click="mudarPagina(page)">{{ page }}</button>
-                        </li>
-                        <li class="page-item" :class="{ disabled: registros.current_page === registros.last_page }">
-                            <button class="page-link" @click="mudarPagina(registros.current_page + 1)" :disabled="registros.current_page === registros.last_page">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Modal de Vinculação -->
-        <div class="modal fade" id="modalVincular" tabindex="-1" ref="modalVincularRef">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header custom-modal-header">
-                        <div class="d-flex align-items-center">
-                            <div class="header-icon">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <h5 class="modal-title mb-0">Vincular Usuários</h5>
+                <!-- Paginação -->
+                <div v-if="entidades.length > 0" class="paginacao-container mt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <!-- Informações de Registros -->
+                        <div class="text-muted fw-medium">
+                            Mostrando {{ ((registrosEntidades.current_page - 1) * registrosEntidades.per_page) + 1 }} até {{ Math.min(registrosEntidades.current_page * registrosEntidades.per_page, registrosEntidades.total) }} de {{ registrosEntidades.total }} entidades
                         </div>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        
+                        <!-- Navegação -->
+                        <nav v-if="registrosEntidades.last_page > 1">
+                            <ul class="pagination pagination-generic mb-0">
+                                <!-- Primeira página -->
+                                <li class="page-item" :class="{ 'disabled': registrosEntidades.current_page === 1 }">
+                                    <button class="page-link" @click="mudarPaginaEntidades(1)" :disabled="registrosEntidades.current_page === 1">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </button>
+                                </li>
+                                
+                                <!-- Página anterior -->
+                                <li class="page-item" :class="{ 'disabled': registrosEntidades.current_page === 1 }">
+                                    <button class="page-link" @click="mudarPaginaEntidades(registrosEntidades.current_page - 1)" :disabled="registrosEntidades.current_page === 1">
+                                        <i class="fas fa-angle-left"></i>
+                                    </button>
+                                </li>
+                                
+                                <!-- Páginas numeradas -->
+                                <li v-for="page in getPaginasVisiveisEntidades()" :key="page" class="page-item" :class="{ 'active': page === registrosEntidades.current_page }">
+                                    <button class="page-link" @click="mudarPaginaEntidades(page)">{{ page }}</button>
+                                </li>
+                                
+                                <!-- Próxima página -->
+                                <li class="page-item" :class="{ 'disabled': registrosEntidades.current_page === registrosEntidades.last_page }">
+                                    <button class="page-link" @click="mudarPaginaEntidades(registrosEntidades.current_page + 1)" :disabled="registrosEntidades.current_page === registrosEntidades.last_page">
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                </li>
+                                
+                                <!-- Última página -->
+                                <li class="page-item" :class="{ 'disabled': registrosEntidades.current_page === registrosEntidades.last_page }">
+                                    <button class="page-link" @click="mudarPaginaEntidades(registrosEntidades.last_page)" :disabled="registrosEntidades.current_page === registrosEntidades.last_page">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <div class="form-floating">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="buscaModal" 
-                                       v-model="buscaModal"
-                                       placeholder="Buscar usuários..."
-                                       @input="carregarUsuariosDisponiveis">
-                                <label for="buscaModal">Buscar usuários disponíveis</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Gerenciar Usuários -->
+        <div class="modal fade" id="modalGerenciarUsuarios" tabindex="-1" ref="modalGerenciarUsuariosRef">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <!-- Header do Modal -->
+                    <div class="modal-header" style="background: linear-gradient(135deg, #18578A 0%, #5EA853 100%); color: white; border-bottom: none; padding: 1.5rem; border-radius: 0.5rem 0.5rem 0 0;">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon" style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.2rem; color: white;">
+                                <i class="fas fa-users"></i>
                             </div>
+                            <h5 class="modal-title mb-0">Gerenciar Usuários - {{ entidadeSelecionada?.nome_fantasia }}</h5>
                         </div>
-                        
-                        <!-- Loading -->
-                        <div v-if="loadingDisponiveis" class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Carregando...</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Lista de usuários disponíveis -->
-                        <div v-else class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
-                            <div v-if="usuariosDisponiveis.length === 0" class="text-center text-muted">
-                                Nenhum usuário disponível para vinculação
-                            </div>
-                            <div v-else>
-                                <div class="form-check mb-2" v-for="usuario in usuariosDisponiveis" :key="usuario.id">
-                                    <input class="form-check-input" 
-                                           type="checkbox" 
-                                           :value="usuario.id" 
-                                           :id="`user-${usuario.id}`"
-                                           v-model="usuariosSelecionados">
-                                    <label class="form-check-label w-100" :for="`user-${usuario.id}`">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="fw-medium">{{ usuario.name }}</div>
-                                                <small class="text-muted">{{ usuario.email }}</small>
-                                            </div>
-                                            <small class="text-muted">{{ usuario.municipio?.nome || 'N/A' }}</small>
-                                        </div>
-                                    </label>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+                    </div>
+                    
+                    <!-- Body do Modal -->
+                    <div class="modal-body" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+                        <!-- Informações da Entidade -->
+                        <div class="mb-4 p-3 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #5EA853;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong style="color: #18578A;">Entidade:</strong> {{ entidadeSelecionada?.nome_fantasia }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong style="color: #18578A;">Município:</strong> {{ entidadeSelecionada?.municipio?.nome }}
                                 </div>
                             </div>
                         </div>
-                        
-                        <div v-if="usuariosSelecionados.length > 0" class="mt-3">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                {{ usuariosSelecionados.length }} usuário(s) selecionado(s) para vinculação.
+
+                        <!-- Botão Vincular Usuário -->
+                        <div class="mb-4">
+                            <button class="btn btn-success" @click="abrirModalVincular">
+                                <i class="fas fa-user-plus me-2"></i>Vincular Usuário
+                            </button>
+                        </div>
+
+                        <!-- Loading State dos Usuários -->
+                        <div v-if="loadingUsuarios" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando usuários...</span>
                             </div>
                         </div>
+
+                        <!-- Tabela de Usuários da Entidade -->
+                        <div v-else-if="usuariosEntidade.length > 0" class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th class="table-header">Usuário</th>
+                                        <th class="table-header">Status do Usuário</th>
+                                        <th class="table-header">Status do Vínculo</th>
+                                        <th class="table-header">Vinculado em</th>
+                                        <th class="table-header">Vinculado por</th>
+                                        <th class="table-header text-end" style="width: 150px;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="usuario in usuariosEntidade" :key="usuario.id" class="table-row">
+                                        <td class="table-cell">
+                                            <div class="fw-medium">{{ usuario.name }}</div>
+                                            <small class="text-muted">{{ usuario.email }}</small>
+                                        </td>
+                                        <td class="table-cell">
+                                            <span class="badge badge-status" :class="usuario.is_active ? 'badge-ativo' : 'badge-inativo'">
+                                                <i class="fas" :class="usuario.is_active ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                                                {{ usuario.is_active ? 'ATIVO' : 'INATIVO' }}
+                                            </span>
+                                        </td>
+                                        <td class="table-cell">
+                                            <span class="badge badge-status" :class="usuario.vinculo_ativo ? 'badge-ativo' : 'badge-inativo'">
+                                                <i class="fas" :class="usuario.vinculo_ativo ? 'fa-link' : 'fa-unlink'"></i>
+                                                {{ usuario.vinculo_ativo ? 'VINCULADO' : 'DESVINCULADO' }}
+                                            </span>
+                                        </td>
+                                        <td class="table-cell">
+                                            <div class="fw-medium">{{ formatarData(usuario.data_vinculacao) }}</div>
+                                        </td>
+                                        <td class="table-cell">
+                                            <div class="fw-medium" v-if="usuario.vinculado_por_nome">{{ usuario.vinculado_por_nome }}</div>
+                                            <small v-else class="text-muted">—</small>
+                                        </td>
+                                        <td class="table-cell text-end">
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                <!-- Botão Desvincular (se vinculado) -->
+                                                <button v-if="usuario.vinculo_ativo" class="btn btn-sm btn-danger" @click="desvincularUsuario(usuario)" title="Desvincular">
+                                                    <i class="fas fa-unlink"></i>
+                                                </button>
+                                                <!-- Botão Reativar (se desvinculado) -->
+                                                <button v-else class="btn btn-sm btn-success" @click="reativarVinculo(usuario)" title="Reativar Vínculo">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Estado Vazio dos Usuários -->
+                        <div v-else class="text-center py-4">
+                            <i class="fas fa-user-slash fa-2x text-muted mb-3"></i>
+                            <h6 class="text-muted">Nenhum usuário vinculado</h6>
+                            <p class="text-muted">Esta entidade ainda não possui usuários vinculados.</p>
+                        </div>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    
+                    <!-- Footer do Modal -->
+                    <div class="modal-footer" style="background: transparent; border: none; padding: 1.5rem; justify-content: center;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 0.375rem; font-weight: 500; padding: 0.75rem 1.5rem; border: none; font-size: 1rem;">
+                            <i class="fas fa-times me-2"></i>Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Vincular Usuário -->
+        <div class="modal fade" id="modalVincularUsuario" tabindex="-1" ref="modalVincularUsuarioRef">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <!-- Header do Modal -->
+                    <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #5EA853 100%); color: white; border-bottom: none; padding: 1.5rem; border-radius: 0.5rem 0.5rem 0 0;">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon" style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.2rem; color: white;">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h5 class="modal-title mb-0">Vincular Usuário</h5>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+                    </div>
+                    
+                    <!-- Body do Modal -->
+                    <div class="modal-body" style="padding: 1.5rem;">
+                        <!-- Busca de Usuários -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="buscaUsuario"
+                                       v-model="buscaUsuario"
+                                       placeholder="Buscar usuário por nome ou email..."
+                                       @input="buscarUsuariosDisponiveis">
+                                <label for="buscaUsuario">Buscar usuário por nome ou email</label>
+                            </div>
+                        </div>
+
+                        <!-- Loading State dos Usuários Disponíveis -->
+                        <div v-if="loadingUsuariosDisponiveis" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando usuários...</span>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Usuários Disponíveis -->
+                        <div v-else-if="usuariosDisponiveis.length > 0" style="max-height: 300px; overflow-y: auto;">
+                            <div v-for="usuario in usuariosDisponiveis" :key="usuario.id" 
+                                 class="d-flex justify-content-between align-items-center p-3 border rounded mb-2" 
+                                 style="cursor: pointer; transition: all 0.2s ease;"
+                                 :style="{ backgroundColor: usuarioSelecionado?.id === usuario.id ? '#e3f2fd' : '#f8f9fa' }"
+                                 @click="selecionarUsuario(usuario)">
+                                <div>
+                                    <div class="fw-medium">{{ usuario.name }}</div>
+                                    <small class="text-muted">{{ usuario.email }}</small>
+                                </div>
+                                <div>
+                                    <input type="radio" 
+                                           :checked="usuarioSelecionado?.id === usuario.id"
+                                           class="form-check-input"
+                                           style="pointer-events: none;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado Vazio dos Usuários Disponíveis -->
+                        <div v-else class="text-center py-4">
+                            <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                            <h6 class="text-muted">Nenhum usuário encontrado</h6>
+                            <p class="text-muted">Digite no campo de busca para encontrar usuários disponíveis para vinculação.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer do Modal -->
+                    <div class="modal-footer" style="background: transparent; border: none; padding: 1.5rem; justify-content: center;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 0.375rem; font-weight: 500; padding: 0.75rem 1.5rem; border: none; font-size: 1rem;">
                             <i class="fas fa-times me-2"></i>Cancelar
                         </button>
-                        <button type="button" 
-                                class="btn btn-success" 
-                                @click="confirmarVinculacao" 
-                                :disabled="vinculando || usuariosSelecionados.length === 0">
-                            <span v-if="vinculando" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <button type="button" class="btn btn-success" @click="confirmarVinculacao" :disabled="!usuarioSelecionado || vinculando" style="border-radius: 0.375rem; font-weight: 500; padding: 0.75rem 1.5rem; border: none; font-size: 1rem;">
+                            <span v-if="vinculando" class="spinner-border spinner-border-sm me-2"></span>
                             <i v-else class="fas fa-link me-2"></i>
-                            {{ vinculando ? 'Vinculando...' : `Vincular ${usuariosSelecionados.length} Usuário(s)` }}
+                            {{ vinculando ? 'Vinculando...' : 'Vincular Usuário' }}
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Modal de Confirmação para Desvinculação -->
-        <div class="modal fade modal-confirmacao" id="modalConfirmacaoDesvinculacao" tabindex="-1" ref="modalConfirmacaoRef">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="d-flex align-items-center">
-                            <div class="header-icon" aria-hidden="true">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <h5 class="modal-title mb-0">Confirmar Desvinculação</h5>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <p class="confirm-text mb-1">Tem certeza que deseja desvincular o usuário</p>
-                        <p class="target-entity fs-5 mb-3">
-                            <span>"{{ usuarioParaDesvincular?.name }}"</span>
-                        </p>
-                        <div class="irreversible mb-1" role="status" aria-live="polite">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <span>O usuário ficará inativo nesta entidade mas o histórico será mantido.</span>
-                        </div>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-warning" @click="confirmarDesvinculacao" :disabled="desvinculando">
-                            <span v-if="desvinculando" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <i v-else class="fas fa-unlink me-2"></i>
-                            {{ desvinculando ? 'Desvinculando...' : 'Desvincular' }}
-                        </button>
-                    </div>
-                </div>
+    </div>
+    
+    <!-- Toast de Notificação -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast" ref="toastRef" role="alert">
+            <div class="toast-header">
+                <i :class="toastIcon + ' me-2'"></i>
+                <strong class="me-auto">{{ toastTitle }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
-        </div>
-
-        <!-- Toast de Notificação -->
-        <div class="toast-container position-fixed top-0 end-0 p-3">
-            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <i :class="toastIcon + ' me-2'"></i>
-                    <strong class="me-auto">{{ toastTitle }}</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                </div>
-                <div class="toast-body">{{ toastMessage }}</div>
-            </div>
+            <div class="toast-body">{{ toastMessage }}</div>
         </div>
     </div>
 </template>
@@ -303,55 +407,72 @@ export default {
     name: 'ListaUsuariosPorEntidade',
     data() {
         return {
-            // Dados principais
+            loading: true,
             entidades: [],
-            entidadeSelecionada: '',
-            dados: [],
-            registros: {
-                data: [],
+            municipios: [],
+            registrosEntidades: {
                 current_page: 1,
                 last_page: 1,
                 per_page: 15,
                 total: 0
             },
-            
-            // Estados
-            loading: false,
-            loadingDisponiveis: false,
-            vinculando: false,
-            desvinculando: false,
-            
-            // Filtros
             filtros: {
                 busca: '',
+                municipio_id: '',
                 ativo: ''
             },
+            filtrosVisiveis: false,
+            searchTimeout: null,
             
-            // Modal de vinculação
+            // Modal de gerenciar usuários
+            entidadeSelecionada: null,
+            usuariosEntidade: [],
+            loadingUsuarios: false,
+            
+            // Modal de vincular usuário
             usuariosDisponiveis: [],
-            usuariosSelecionados: [],
-            buscaModal: '',
-            
-            // Modal de confirmação
-            usuarioParaDesvincular: null,
+            loadingUsuariosDisponiveis: false,
+            buscaUsuario: '',
+            usuarioSelecionado: null,
+            vinculando: false,
             
             // Toast
             toastTitle: '',
             toastMessage: '',
-            toastIcon: '',
-            toast: null
+            toastIcon: ''
         }
     },
-    
-    mounted() {
-        this.carregarEntidades();
-        this.toast = new bootstrap.Toast(document.getElementById('toast'));
+    watch: {
+        'filtros.municipio_id'() {
+            this.filtrarEntidades();
+        },
+        'filtros.ativo'() {
+            this.filtrarEntidades();
+        }
     },
-    
+    mounted() {
+        this.carregarFiltros();
+        this.carregarEntidades();
+    },
     methods: {
         async carregarEntidades() {
+            this.loading = true;
             try {
-                const response = await fetch('/api/administracao/usuarios-por-entidade/entidades', {
+                const params = new URLSearchParams();
+                params.append('page', this.registrosEntidades.current_page);
+                params.append('per_page', this.registrosEntidades.per_page);
+                
+                if (this.filtros.busca && this.filtros.busca.toString().trim()) {
+                    params.append('busca', this.filtros.busca.toString().trim());
+                }
+                if (this.filtros.municipio_id) {
+                    params.append('municipio_id', this.filtros.municipio_id);
+                }
+                if (this.filtros.ativo) {
+                    params.append('ativo', this.filtros.ativo);
+                }
+
+                const response = await fetch(`/api/administracao/usuarios-por-entidade/entidades?${params}`, {
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
@@ -361,63 +482,29 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    this.entidades = data;
+                    this.entidades = data.data || [];
+                    this.registrosEntidades = {
+                        current_page: data.current_page || 1,
+                        last_page: data.last_page || 1,
+                        per_page: data.per_page || 15,
+                        total: data.total || 0
+                    };
                 } else {
-                    throw new Error(data.message || 'Erro ao carregar entidades');
+                    console.error('Erro ao carregar entidades:', data.message);
+                    this.mostrarToast('Erro', 'Erro ao carregar entidades', 'fa-exclamation-circle text-danger');
                 }
                 
             } catch (error) {
                 console.error('Erro ao carregar entidades:', error);
                 this.mostrarToast('Erro', 'Erro ao carregar entidades', 'fa-exclamation-circle text-danger');
-            }
-        },
-        
-        async carregarUsuarios() {
-            if (!this.entidadeSelecionada) return;
-            
-            this.loading = true;
-            try {
-                const params = new URLSearchParams({
-                    page: this.registros.current_page,
-                    per_page: this.registros.per_page,
-                    ...this.filtros
-                });
-                
-                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada}/usuarios?${params}`, {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    this.registros = data.usuarios;
-                    this.dados = data.usuarios.data;
-                } else {
-                    throw new Error(data.message || 'Erro ao carregar usuários');
-                }
-                
-            } catch (error) {
-                console.error('Erro ao carregar usuários:', error);
-                this.mostrarToast('Erro', 'Erro ao carregar usuários', 'fa-exclamation-circle text-danger');
             } finally {
                 this.loading = false;
             }
         },
         
-        async carregarUsuariosDisponiveis() {
-            if (!this.entidadeSelecionada) return;
-            
-            this.loadingDisponiveis = true;
+        async carregarFiltros() {
             try {
-                const params = new URLSearchParams({
-                    busca: this.buscaModal,
-                    per_page: 50
-                });
-                
-                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada}/usuarios-disponiveis?${params}`, {
+                const response = await fetch('/api/administracao/usuarios-por-entidade/filtros', {
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
@@ -427,116 +514,202 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    this.usuariosDisponiveis = data.data;
+                    this.municipios = data.municipios || [];
                 } else {
-                    throw new Error(data.message || 'Erro ao carregar usuários disponíveis');
+                    console.error('Erro ao carregar filtros:', data.message);
                 }
                 
             } catch (error) {
-                console.error('Erro ao carregar usuários disponíveis:', error);
-                this.mostrarToast('Erro', 'Erro ao carregar usuários disponíveis', 'fa-exclamation-circle text-danger');
-            } finally {
-                this.loadingDisponiveis = false;
+                console.error('Erro ao carregar filtros:', error);
             }
         },
         
-        onEntidadeChange() {
-            this.dados = [];
-            this.registros.current_page = 1;
-            this.filtros.busca = '';
-            this.filtros.ativo = '';
+        // Filtros
+        toggleFiltros() {
+            this.filtrosVisiveis = !this.filtrosVisiveis;
+        },
+        
+        onBuscaInput() {
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
             
-            if (this.entidadeSelecionada) {
-                this.carregarUsuarios();
+            this.searchTimeout = setTimeout(() => {
+                this.filtrarEntidades();
+            }, 500);
+        },
+        
+        filtrarEntidades() {
+            this.registrosEntidades.current_page = 1;
+            this.carregarEntidades();
+        },
+        
+        limparFiltros() {
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+                this.searchTimeout = null;
+            }
+            
+            this.filtros = {
+                busca: '',
+                municipio_id: '',
+                ativo: ''
+            };
+            this.filtrarEntidades();
+        },
+        
+        // Paginação
+        mudarPaginaEntidades(page) {
+            if (page >= 1 && page <= this.registrosEntidades.last_page) {
+                this.registrosEntidades.current_page = page;
+                this.carregarEntidades();
             }
         },
         
-        mudarPagina(page) {
-            this.registros.current_page = page;
-            this.carregarUsuarios();
+        getPaginasVisiveisEntidades() {
+            const pages = [];
+            const start = Math.max(1, this.registrosEntidades.current_page - 2);
+            const end = Math.min(this.registrosEntidades.last_page, this.registrosEntidades.current_page + 2);
+            
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            return pages;
         },
         
-        getPaginasVisiveis() {
-            const total = this.registros.last_page;
-            const atual = this.registros.current_page;
-            const delta = 2;
+        // Gerenciar usuários
+        async gerenciarUsuarios(entidade) {
+            this.entidadeSelecionada = entidade;
+            this.carregarUsuariosEntidade();
             
-            let inicio = Math.max(1, atual - delta);
-            let fim = Math.min(total, atual + delta);
-            
-            if (fim - inicio < 4) {
-                if (inicio === 1) {
-                    fim = Math.min(total, inicio + 4);
-                } else {
-                    inicio = Math.max(1, fim - 4);
-                }
-            }
-            
-            const paginas = [];
-            for (let i = inicio; i <= fim; i++) {
-                paginas.push(i);
-            }
-            
-            return paginas;
-        },
-        
-        abrirModalVincular() {
-            this.usuariosSelecionados = [];
-            this.buscaModal = '';
-            this.carregarUsuariosDisponiveis();
-            const modal = new bootstrap.Modal(document.getElementById('modalVincular'));
+            const modal = new bootstrap.Modal(document.getElementById('modalGerenciarUsuarios'));
             modal.show();
         },
         
+        async carregarUsuariosEntidade() {
+            this.loadingUsuarios = true;
+            try {
+                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada.id}/usuarios`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    this.usuariosEntidade = data.usuarios.data || [];
+                } else {
+                    console.error('Erro ao carregar usuários:', data.message);
+                    this.mostrarToast('Erro', 'Erro ao carregar usuários da entidade', 'fa-exclamation-circle text-danger');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                this.mostrarToast('Erro', 'Erro ao carregar usuários da entidade', 'fa-exclamation-circle text-danger');
+            } finally {
+                this.loadingUsuarios = false;
+            }
+        },
+        
+        // Vincular usuário
+        abrirModalVincular() {
+            this.buscaUsuario = '';
+            this.usuarioSelecionado = null;
+            this.usuariosDisponiveis = [];
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalVincularUsuario'));
+            modal.show();
+        },
+        
+        async buscarUsuariosDisponiveis() {
+            if (!this.buscaUsuario || this.buscaUsuario.trim().length < 2) {
+                this.usuariosDisponiveis = [];
+                return;
+            }
+            
+            this.loadingUsuariosDisponiveis = true;
+            try {
+                const params = new URLSearchParams();
+                params.append('busca', this.buscaUsuario.trim());
+                
+                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada.id}/usuarios-disponiveis?${params}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    this.usuariosDisponiveis = data.data || [];
+                } else {
+                    console.error('Erro ao buscar usuários:', data.message);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao buscar usuários:', error);
+            } finally {
+                this.loadingUsuariosDisponiveis = false;
+            }
+        },
+        
+        selecionarUsuario(usuario) {
+            this.usuarioSelecionado = usuario;
+        },
+        
         async confirmarVinculacao() {
-            if (this.usuariosSelecionados.length === 0) return;
+            if (!this.usuarioSelecionado) return;
             
             this.vinculando = true;
             try {
-                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada}/vincular`, {
+                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada.id}/vincular`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        user_ids: this.usuariosSelecionados
+                        user_id: this.usuarioSelecionado.id
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (response.ok) {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalVincular'));
-                    modal.hide();
+                    this.mostrarToast('Sucesso', data.message, 'fa-check-circle text-success');
                     
-                    this.mostrarToast('Sucesso', `${data.vinculados} usuário(s) vinculado(s) com sucesso!`, 'fa-check-circle text-success');
-                    this.carregarUsuarios();
+                    // Fechar modal
+                    bootstrap.Modal.getInstance(document.getElementById('modalVincularUsuario')).hide();
+                    
+                    // Recarregar usuários da entidade
+                    this.carregarUsuariosEntidade();
+                    
+                    // Recarregar entidades para atualizar contadores
+                    this.carregarEntidades();
                 } else {
-                    throw new Error(data.error || 'Erro ao vincular usuários');
+                    this.mostrarToast('Erro', data.message || 'Erro ao vincular usuário', 'fa-exclamation-circle text-danger');
                 }
                 
             } catch (error) {
-                console.error('Erro ao vincular:', error);
-                this.mostrarToast('Erro', error.message, 'fa-exclamation-circle text-danger');
+                console.error('Erro ao vincular usuário:', error);
+                this.mostrarToast('Erro', 'Erro ao vincular usuário', 'fa-exclamation-circle text-danger');
             } finally {
                 this.vinculando = false;
             }
         },
         
-        desvinculerUsuario(usuario) {
-            this.usuarioParaDesvincular = usuario;
-            const modal = new bootstrap.Modal(document.getElementById('modalConfirmacaoDesvinculacao'));
-            modal.show();
-        },
-        
-        async confirmarDesvinculacao() {
-            if (!this.usuarioParaDesvincular) return;
+        // Desvincular usuário
+        async desvincularUsuario(usuario) {
+            if (!confirm(`Tem certeza que deseja desvincular o usuário "${usuario.name}" desta entidade?`)) {
+                return;
+            }
             
-            this.desvinculando = true;
             try {
-                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada}/desvincular/${this.usuarioParaDesvincular.id}`, {
+                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada.id}/desvincular/${usuario.id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -547,27 +720,31 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacaoDesvinculacao'));
-                    modal.hide();
+                    this.mostrarToast('Sucesso', data.message, 'fa-check-circle text-success');
                     
-                    this.mostrarToast('Sucesso', 'Usuário desvinculado com sucesso!', 'fa-check-circle text-success');
-                    this.carregarUsuarios();
+                    // Recarregar usuários da entidade
+                    this.carregarUsuariosEntidade();
+                    
+                    // Recarregar entidades para atualizar contadores
+                    this.carregarEntidades();
                 } else {
-                    throw new Error(data.error || 'Erro ao desvincular usuário');
+                    this.mostrarToast('Erro', data.message || 'Erro ao desvincular usuário', 'fa-exclamation-circle text-danger');
                 }
                 
             } catch (error) {
-                console.error('Erro ao desvincular:', error);
-                this.mostrarToast('Erro', error.message, 'fa-exclamation-circle text-danger');
-            } finally {
-                this.desvinculando = false;
-                this.usuarioParaDesvincular = null;
+                console.error('Erro ao desvincular usuário:', error);
+                this.mostrarToast('Erro', 'Erro ao desvincular usuário', 'fa-exclamation-circle text-danger');
             }
         },
         
-        async reativarUsuario(usuario) {
+        // Reativar vínculo
+        async reativarVinculo(usuario) {
+            if (!confirm(`Tem certeza que deseja reativar o vínculo do usuário "${usuario.name}" com esta entidade?`)) {
+                return;
+            }
+            
             try {
-                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada}/reativar/${usuario.id}`, {
+                const response = await fetch(`/api/administracao/usuarios-por-entidade/${this.entidadeSelecionada.id}/reativar/${usuario.id}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -578,114 +755,94 @@ export default {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    this.mostrarToast('Sucesso', 'Usuário reativado com sucesso!', 'fa-check-circle text-success');
-                    this.carregarUsuarios();
+                    this.mostrarToast('Sucesso', data.message, 'fa-check-circle text-success');
+                    
+                    // Recarregar usuários da entidade
+                    this.carregarUsuariosEntidade();
+                    
+                    // Recarregar entidades para atualizar contadores
+                    this.carregarEntidades();
                 } else {
-                    throw new Error(data.error || 'Erro ao reativar usuário');
+                    this.mostrarToast('Erro', data.message || 'Erro ao reativar vínculo', 'fa-exclamation-circle text-danger');
                 }
                 
             } catch (error) {
-                console.error('Erro ao reativar:', error);
-                this.mostrarToast('Erro', error.message, 'fa-exclamation-circle text-danger');
+                console.error('Erro ao reativar vínculo:', error);
+                this.mostrarToast('Erro', 'Erro ao reativar vínculo', 'fa-exclamation-circle text-danger');
             }
         },
         
+        // Utilitários
         formatarData(data) {
             if (!data) return '';
-            return new Date(data).toLocaleDateString('pt-BR');
+            
+            const date = new Date(data);
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
         },
         
         mostrarToast(title, message, icon) {
             this.toastTitle = title;
             this.toastMessage = message;
             this.toastIcon = icon;
-            this.toast.show();
+            
+            const toast = new bootstrap.Toast(this.$refs.toastRef);
+            toast.show();
         }
     }
 }
 </script>
 
 <style scoped>
-/* Reutiliza os mesmos estilos do componente anterior */
-.form-floating .form-control {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-    line-height: 1.5 !important;
-    min-height: 58px !important;
-}
-
-.form-floating .form-control:focus {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-.form-floating .form-control:not(:placeholder-shown) {
-    padding-top: 1.625rem !important;
-    padding-bottom: 0.625rem !important;
-}
-
-.row.g-3 {
-    align-items: end;
-}
-
-.custom-modal-header {
-    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%);
-    color: white;
-    border-bottom: none;
-    padding: 1.5rem;
-    border-radius: 0.5rem 0.5rem 0 0;
-}
-
-.header-icon {
-    width: 40px;
-    height: 40px;
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1rem;
-    font-size: 1.2rem;
-    color: white;
-}
-
-.custom-modal-header .modal-title {
-    color: white;
+/* Estilos específicos do componente */
+.table-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
     font-weight: 600;
-    font-size: 1.25rem;
+    color: #18578A;
+    padding: 12px;
 }
 
-.custom-modal-header .btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
+.table-cell {
+    padding: 12px;
+    vertical-align: middle;
 }
 
-.w-180px { width: 180px !important; }
-.text-custom { color: #18578A !important; font-weight: 600; }
+.table-row:hover {
+    background-color: #f8f9fa;
+}
+
+.badge-status {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: 0.375rem;
+}
 
 .badge-ativo {
-    background-color: #d1edcc !important;
-    color: #155724 !important;
-    border: 1px solid #c3e6cb !important;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 .badge-inativo {
-    background-color: #f8d7da !important;
-    color: #721c24 !important;
-    border: 1px solid #f1aeb5 !important;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
-.paginacao-container {
-    border-top: 1px solid #dee2e6;
-    padding-top: 1rem;
+.filtros-aba-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
 }
 
 .pagination-generic .page-link {
-    border: 1px solid #dee2e6;
-    color: #6c757d;
-    padding: 0.5rem 0.75rem;
-    margin: 0 0.125rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
+    color: #18578A;
+    border-color: #dee2e6;
 }
 
 .pagination-generic .page-item.active .page-link {
@@ -695,102 +852,13 @@ export default {
 }
 
 .pagination-generic .page-link:hover {
+    color: #5EA853;
     background-color: #e9ecef;
-    border-color: #adb5bd;
-    color: #495057;
+    border-color: #dee2e6;
 }
 
-/* Estilo específico para modal de confirmação */
-.modal-confirmacao {
-    border-radius: 0.75rem !important;
-    overflow: hidden !important;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
-}
-
-.modal-confirmacao .modal-header {
-    background: linear-gradient(135deg, #18578A 0%, #5EA853 100%) !important;
-    color: white !important;
-    border-bottom: none !important;
-    padding: 1.5rem !important;
-    border-radius: 0.5rem 0.5rem 0 0 !important;
-}
-
-.modal-confirmacao .header-icon {
-    width: 40px !important;
-    height: 40px !important;
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-right: 1rem !important;
-    font-size: 1.2rem !important;
-    color: white !important;
-}
-
-.modal-confirmacao .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%) !important;
-}
-
-.modal-confirmacao .modal-body {
-    background: white !important;
-    padding: 1.25rem 1.25rem 0 1.25rem !important;
-    text-align: center !important;
-}
-
-.modal-confirmacao .confirm-text {
-    color: #3E4653 !important;
-    font-size: 1.1rem !important;
-    margin: 0 0 1rem 0 !important;
-    line-height: 1.6 !important;
-}
-
-.modal-confirmacao .target-entity {
-    color: #2E77D0 !important;
-    font-weight: 700 !important;
-    font-size: 1.25rem !important;
-    display: block !important;
-    margin: 0.5rem 0 1.5rem 0 !important;
-}
-
-.modal-confirmacao .irreversible {
-    background: #FFF5F5 !important;
-    border: 1px solid #FAD4D4 !important;
-    color: #5f6b7a !important;
-    border-radius: 0.75rem !important;
-    padding: 0.75rem 0.9rem !important;
-    margin: 0 0 2rem 0 !important;
-    display: flex !important;
-    gap: 0.5rem !important;
-    align-items: flex-start !important;
-    text-align: left !important;
-}
-
-.modal-confirmacao .irreversible i {
-    color: #007bff !important;
-    font-size: 1.2rem !important;
-    flex-shrink: 0 !important;
-}
-
-.modal-confirmacao .irreversible span {
-    color: #5f6b7a !important;
-    font-size: 0.95rem !important;
-    font-weight: 500 !important;
-}
-
-.modal-confirmacao .modal-footer {
-    background: transparent !important;
-    border: none !important;
-    padding: 1.5rem 1.25rem 1.25rem 1.25rem !important;
-    gap: 0.6rem !important;
-    justify-content: center !important;
-}
-
-.modal-confirmacao .btn {
-    border-radius: 0.375rem !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border: none !important;
-    font-size: 0.875rem !important;
+.paginacao-container {
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
 }
 </style>

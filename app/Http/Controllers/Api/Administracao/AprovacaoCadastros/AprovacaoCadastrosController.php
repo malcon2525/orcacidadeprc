@@ -29,7 +29,7 @@ class AprovacaoCadastrosController extends Controller
                 'user:id,name,email',
                 'municipio:id,nome',
                 'entidadeOrcamentaria:id,nome_fantasia',
-                'aprovadoPor:id,name'
+                'aprovadoPor:id,name,email'
             ]);
 
             // Filtros
@@ -46,7 +46,7 @@ class AprovacaoCadastrosController extends Controller
             }
 
             if ($request->filled('busca')) {
-                $busca = $request->busca;
+                $busca = trim($request->busca);
                 $query->whereHas('user', function ($q) use ($busca) {
                     $q->where('name', 'LIKE', "%{$busca}%")
                       ->orWhere('email', 'LIKE', "%{$busca}%");

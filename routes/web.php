@@ -48,10 +48,10 @@ Route::prefix('andamento-projeto')->group(function () {
 });
 
 // ===== ROTAS DE DOCUMENTAÇÃO =====
-Route::prefix('andamento-projeto/documentacao')->group(function () {
-    Route::get('/', [\App\Http\Controllers\AndamentoProjeto\DocumentacaoController::class, 'index'])->name('documentacao.index');
-    Route::get('/{modulo}', [\App\Http\Controllers\AndamentoProjeto\DocumentacaoController::class, 'show'])->name('documentacao.show');
-});
+// Route::prefix('andamento-projeto/documentacao')->group(function () {
+//     Route::get('/', [\App\Http\Controllers\AndamentoProjeto\DocumentacaoController::class, 'index'])->name('documentacao.index');
+//     Route::get('/{modulo}', [\App\Http\Controllers\AndamentoProjeto\DocumentacaoController::class, 'show'])->name('documentacao.show');
+// });
 
 // ===== ROTA PARA PROTÓTIPO DA PLANILHA ORÇAMENTÁRIA =====
 Route::get('/planilha-prototipo', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'planilhaPrototipo'])->name('planilha-prototipo');
@@ -336,12 +336,13 @@ Route::middleware(['auth'])->group(function () {
         
         // Usuários por Entidade
         Route::prefix('usuarios-por-entidade')->name('usuarios-por-entidade.')->group(function () {
-            Route::get('/entidades', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'entidades'])->name('entidades');
-            Route::get('/{entidadeId}/usuarios', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'usuariosPorEntidade'])->name('usuarios');
-            Route::get('/{entidadeId}/usuarios-disponiveis', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'usuariosDisponiveis'])->name('usuarios-disponiveis');
-            Route::post('/{entidadeId}/vincular', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'vincularUsuarios'])->name('vincular');
+            Route::get('/entidades', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'listarEntidades'])->name('listar-entidades');
+            Route::get('/{entidadeId}/usuarios', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'listarUsuariosPorEntidade'])->name('listar-usuarios');
+            Route::get('/{entidadeId}/usuarios-disponiveis', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'listarUsuariosDisponiveis'])->name('usuarios-disponiveis');
+            Route::post('/{entidadeId}/vincular', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'vincularUsuario'])->name('vincular');
             Route::delete('/{entidadeId}/desvincular/{userId}', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'desvincularUsuario'])->name('desvincular');
-            Route::post('/{entidadeId}/reativar/{userId}', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'reativarUsuario'])->name('reativar');
+            Route::post('/{entidadeId}/reativar/{userId}', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'reativarVinculo'])->name('reativar');
+            Route::get('/filtros', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'filtros'])->name('filtros');
         });
     });
 
