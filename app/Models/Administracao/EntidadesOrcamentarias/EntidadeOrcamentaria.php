@@ -24,7 +24,9 @@ class EntidadeOrcamentaria extends Model
         'tipo_organizacao',
         'email',
         'endereco',
-        'codigo_ibge',
+        'nivel_administrativo',
+        'jurisdicao_nome',
+        'jurisdicao_codigo_ibge',
         'populacao',
         'cep',
         'telefone',
@@ -42,6 +44,8 @@ class EntidadeOrcamentaria extends Model
      * @var array
      */
     protected $casts = [
+        'ativo' => 'boolean',
+        'populacao' => 'integer'
     ];
 
     /**
@@ -55,11 +59,11 @@ class EntidadeOrcamentaria extends Model
     ];
 
     /**
-     * Relacionamento com município
+     * Relacionamento com município (apenas para entidades municipais)
      */
     public function municipio()
     {
-        return $this->belongsTo(\App\Models\Administracao\Municipio::class, 'codigo_ibge', 'codigo_ibge');
+        return $this->belongsTo(\App\Models\Administracao\Municipio::class, 'jurisdicao_codigo_ibge', 'codigo_ibge');
     }
 
     /**
@@ -81,5 +85,98 @@ class EntidadeOrcamentaria extends Model
                     ->wherePivot('ativo', true)
                     ->withPivot(['ativo', 'data_vinculacao', 'vinculado_por_user_id'])
                     ->withTimestamps();
+    }
+
+    /**
+     * Verifica se a entidade é municipal
+     */
+    public function isMunicipal(): bool
+    {
+        return $this->nivel_administrativo === 'municipal';
+    }
+
+    /**
+     * Verifica se a entidade é estadual
+     */
+    public function isEstadual(): bool
+    {
+        return $this->nivel_administrativo === 'estadual';
+    }
+
+    /**
+     * Verifica se a entidade é federal
+     */
+    public function isFederal(): bool
+    {
+        return $this->nivel_administrativo === 'federal';
+    }
+
+    /**
+     * Retorna a jurisdição formatada para exibição
+     */
+    public function getJurisdicaoFormatadaAttribute(): string
+    {
+        if ($this->isMunicipal() && $this->municipio) {
+            return $this->municipio->nome . ' - PR';
+        }
+        
+        return $this->jurisdicao_nome;
+    }
+
+    /**
+     * Retorna o tipo formatado para exibição
+     */
+    public function getTipoFormatadoAttribute(): string
+    {
+        $tipos = [
+            'municipio' => 'MUNICÍPIO',
+            'secretaria' => 'SECRETARIA',
+            'órgão' => 'ÓRGÃO',
+            'autarquia' => 'AUTARQUIA',
+            'outros' => 'OUTROS'
+        ];
+
+        return $tipos[$this->tipo_organizacao] ?? strtoupper($this->tipo_organizacao);
+    }
+
+    /**
+     * Retorna o nível administrativo formatado
+     */
+    public function getNivelFormatadoAttribute(): string
+    {
+        $niveis = [
+            'municipal' => 'MUNICIPAL',
+            'estadual' => 'ESTADUAL',
+            'federal' => 'FEDERAL'
+        ];
+
+        return $niveis[$this->nivel_administrativo] ?? strtoupper($this->nivel_administrativo);
+    }
+
+    /**
+     * Scope para filtrar por nível administrativo
+     */
+    public function scopeDoNivel($query, string $nivel)
+    {
+        return $query->where('nivel_administrativo', $nivel);
+    }
+
+    /**
+     * Scope para filtrar por jurisdição (código IBGE)
+     */
+    public function scopeDaJurisdicao($query, string $codigoIbge)
+    {
+        return $query->where('jurisdicao_codigo_ibge', $codigoIbge);
+    }
+
+    /**
+     * Scope para entidades municipais de um município específico
+     */
+    public function scopeDoMunicipio($query, int $municipioId)
+    {
+        return $query->where('nivel_administrativo', 'municipal')
+                    ->whereHas('municipio', function ($q) use ($municipioId) {
+                        $q->where('id', $municipioId);
+                    });
     }
 }

@@ -299,10 +299,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('municipios/listar-simples', [\App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class, 'listarSimples'])->name('municipios.listar-simples');
         Route::post('municipios/importar', [\App\Http\Controllers\Api\Administracao\Municipios\MunicipioController::class, 'importar'])->name('municipios.importar');
         
-        // Entidades Orçamentárias
-        Route::apiResource('entidades-orcamentarias', \App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class);
-        Route::get('entidades-orcamentarias/listar-select', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'listarSelect'])->name('entidades-orcamentarias.listar-select');
-        Route::post('entidades-orcamentarias/importar-municipios', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'importarMunicipios'])->name('entidades-orcamentarias.importar-municipios');
+        // Entidades Orçamentárias - Rotas manuais para controle total
+        Route::prefix('entidades-orcamentarias')->name('entidades-orcamentarias.')->group(function () {
+            // Rotas específicas primeiro
+            Route::get('listar-select', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'listarSelect'])->name('listar-select');
+            Route::post('importar-municipios', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'importarMunicipios'])->name('importar-municipios');
+            Route::get('buscar-municipios', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'buscarMunicipios'])->name('buscar-municipios');
+            Route::get('buscar-estados', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'buscarEstados'])->name('buscar-estados');
+            
+            // Rotas CRUD manuais
+            Route::get('/', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'listar'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'store'])->name('store');
+            Route::get('{id}', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'show'])->name('show');
+            Route::put('{id}', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'update'])->name('update');
+            Route::delete('{id}', [\App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias\EntidadeOrcamentariaController::class, 'destroy'])->name('destroy');
+        });
         
         // Estrutura de Orçamento
         Route::prefix('estrutura-orcamento')->name('estrutura-orcamento.')->group(function () {

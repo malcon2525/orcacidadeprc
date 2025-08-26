@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api\Administracao\EntidadesOrcamentarias;
 
 use App\Http\Controllers\Controller;
 use App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria;
+use App\Models\Administracao\Municipio;
 use App\Services\Logging\EntidadesOrcamentariasLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class EntidadeOrcamentariaController extends Controller
 {
@@ -34,29 +36,52 @@ class EntidadeOrcamentariaController extends Controller
     public function listar(Request $request)
     {
         try {
+            Log::info('=== LISTAR ENTIDADES - INÍCIO ===', [
+                'user_id' => Auth::id(),
+                'filtros' => $request->all(),
+                'request_url' => $request->fullUrl()
+            ]);
+
             $query = EntidadeOrcamentaria::query();
 
             // Aplicar filtros
             if ($request->has('razao_social') && !empty($request->razao_social)) {
+                Log::info('Aplicando filtro razao_social', ['valor' => $request->razao_social]);
                 $query->where('razao_social', 'like', '%' . $request->razao_social . '%');
             }
 
             if ($request->has('nome_fantasia') && !empty($request->nome_fantasia)) {
+                Log::info('Aplicando filtro nome_fantasia', ['valor' => $request->nome_fantasia]);
                 $query->where('nome_fantasia', 'like', '%' . $request->nome_fantasia . '%');
             }
 
             if ($request->has('tipo_organizacao') && !empty($request->tipo_organizacao)) {
+                Log::info('Aplicando filtro tipo_organizacao', ['valor' => $request->tipo_organizacao]);
                 $query->where('tipo_organizacao', $request->tipo_organizacao);
             }
 
             // Ordenação padrão
             $query->orderBy('razao_social', 'asc');
 
+            Log::info('Executando paginação...');
             $registros = $query->paginate(15);
             
-            // Log apenas se for uma operação crítica ou se falhar
+            Log::info('Resultados encontrados', [
+                'total' => $registros->total(),
+                'por_pagina' => $registros->perPage(),
+                'pagina_atual' => $registros->currentPage()
+            ]);
+            
             return response()->json($registros);
         } catch (\Exception $e) {
+            Log::error('=== ERRO EM LISTAR ENTIDADES ===', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'filtros' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             $this->logger->erroCritico('LISTAGEM_ENTIDADES', $e->getMessage(), [
                 'filtros' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
             ]);
@@ -90,13 +115,21 @@ class EntidadeOrcamentariaController extends Controller
     public function store(Request $request)
     {
         try {
+            Log::info('=== STORE ENTIDADE - INÍCIO ===', [
+                'user_id' => Auth::id(),
+                'dados_recebidos' => $request->all(),
+                'request_url' => $request->fullUrl()
+            ]);
+
             $validator = Validator::make($request->all(), [
                 'razao_social' => 'required|string|max:255|unique:entidades_orcamentarias',
                 'nome_fantasia' => 'required|string|max:255|unique:entidades_orcamentarias',
                 'tipo_organizacao' => 'required|in:municipio,secretaria,órgão,autarquia,outros',
                 'email' => 'required|email|max:255|unique:entidades_orcamentarias',
                 'endereco' => 'nullable|string|max:255',
-                'codigo_ibge' => 'nullable|string|max:20|unique:entidades_orcamentarias',
+                'nivel_administrativo' => 'required|in:municipal,estadual,federal',
+                'jurisdicao_nome' => 'required|string|max:255',
+                'jurisdicao_codigo_ibge' => 'nullable|string|max:20',
                 'populacao' => 'nullable|integer',
                 'cep' => 'nullable|string|max:10',
                 'telefone' => 'required|string|max:20',
@@ -125,6 +158,7 @@ class EntidadeOrcamentariaController extends Controller
             ]);
 
             if ($validator->fails()) {
+                Log::warning('Validação falhou no store', ['errors' => $validator->errors()]);
                 $this->logger->erroValidacao('CRIACAO_ENTIDADE', $validator->errors()->toArray(), [
                     'dados' => $request->only(['razao_social', 'nome_fantasia', 'tipo_organizacao'])
                 ]);
@@ -132,7 +166,10 @@ class EntidadeOrcamentariaController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
+            Log::info('Validação passou, criando registro...');
             $registro = EntidadeOrcamentaria::create($request->all());
+            
+            Log::info('Registro criado com sucesso', ['id' => $registro->id]);
             
             $this->logger->sucessoCriacao($registro->id, $request->all(), [
                 'criado_por' => Auth::id()
@@ -140,8 +177,37 @@ class EntidadeOrcamentariaController extends Controller
 
             return response()->json($registro, 201);
         } catch (\Exception $e) {
+            Log::error('=== ERRO EM STORE ENTIDADE ===', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'dados_enviados' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             $this->logger->erroCritico('CRIACAO_ENTIDADE', $e->getMessage(), [
                 'dados' => $request->all()
+            ]);
+            
+            return response()->json(['error' => 'Erro interno do servidor'], 500);
+        }
+    }
+
+    /**
+     * Exibe um registro específico
+     */
+    public function show($id)
+    {
+        try {
+            $this->checkAccess(['gerenciar_entidades_orcamentarias']);
+
+            $entidade = EntidadeOrcamentaria::findOrFail($id);
+
+            return response()->json(['data' => $entidade]);
+        } catch (\Exception $e) {
+            $this->logger->erroCritico('VISUALIZACAO_ENTIDADE', $e->getMessage(), [
+                'entidade_id' => $id,
+                'visualizado_por' => Auth::id()
             ]);
             
             return response()->json(['error' => 'Erro interno do servidor'], 500);
@@ -379,5 +445,113 @@ class EntidadeOrcamentariaController extends Controller
                 'message' => 'Erro ao importar municípios: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Retorna municípios para seleção (filtrado por estado)
+     */
+    public function buscarMunicipios(Request $request)
+    {
+        try {
+            Log::info('=== BUSCAR MUNICÍPIOS - INÍCIO ===', [
+                'user_id' => Auth::id(),
+                'estado' => $request->estado,
+                'request_url' => $request->fullUrl()
+            ]);
+
+            $query = Municipio::select('id', 'nome', 'codigo_ibge')
+                ->orderBy('nome');
+
+            // Todos os municípios são do Paraná, não é necessário filtrar por estado
+            Log::info('Carregando todos os municípios (todos são do Paraná)');
+
+            Log::info('Executando query SQL', ['sql' => $query->toSql()]);
+            $municipios = $query->get();
+            
+            Log::info('Municípios encontrados', [
+                'total' => $municipios->count(),
+                'primeiros_3' => $municipios->take(3)->pluck('nome')
+            ]);
+
+            return response()->json([
+                'data' => $municipios
+            ]);
+        } catch (\Exception $e) {
+            Log::error('=== ERRO EM BUSCAR MUNICÍPIOS ===', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Erro ao buscar municípios',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Retorna estados para seleção (simplificado - apenas Paraná)
+     */
+    public function buscarEstados()
+    {
+        try {
+            $estados = [
+                ['sigla' => 'PR', 'nome' => 'Paraná']
+            ];
+
+            return response()->json([
+                'data' => $estados
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao buscar estados',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Verifica se o usuário tem as permissões necessárias
+     */
+    private function checkAccess($permissions, $requireAll = false)
+    {
+        /** @var \App\Models\Administracao\User $user */
+        $user = Auth::user();
+        
+        // 1. É super admin? → Acesso total
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+        
+        // 2. Verificação flexível de permissões
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
+        }
+        
+        if ($requireAll) {
+            // Todas as permissões são obrigatórias (AND)
+            foreach ($permissions as $permission) {
+                if (!$user->hasPermission($permission)) {
+                    abort(403, "Permissão obrigatória: {$permission}");
+                }
+            }
+        } else {
+            // Pelo menos uma permissão é suficiente (OR)
+            $hasAnyPermission = false;
+            foreach ($permissions as $permission) {
+                if ($user->hasPermission($permission)) {
+                    $hasAnyPermission = true;
+                    break;
+                }
+            }
+            
+            if (!$hasAnyPermission) {
+                abort(403, 'Acesso negado. Permissão insuficiente.');
+            }
+        }
+        
+        return true;
     }
 }

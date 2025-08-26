@@ -41,28 +41,41 @@
                                 </div>
                             </div>
                             
-                            <!-- Filtro de Município -->
+                            <!-- Filtro de Nível Administrativo -->
                             <div class="col-md-3">
                                 <div class="form-floating">
-                                    <select class="form-control" id="filtroMunicipio" v-model="filtros.municipio_id">
-                                        <option value="">Todos os municípios</option>
-                                        <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.id">
-                                            {{ municipio.nome }}
+                                    <select class="form-control" id="filtroNivel" v-model="filtros.nivel_administrativo">
+                                        <option value="">Todos os níveis</option>
+                                        <option v-for="nivel in niveisAdministrativos" :key="nivel.value" :value="nivel.value">
+                                            {{ nivel.label }}
                                         </option>
                                     </select>
-                                    <label for="filtroMunicipio">Município</label>
+                                    <label for="filtroNivel">Nível</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtro de Tipo de Organização -->
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-control" id="filtroTipo" v-model="filtros.tipo_organizacao">
+                                        <option value="">Todos os tipos</option>
+                                        <option v-for="tipo in tiposOrganizacao" :key="tipo.value" :value="tipo.value">
+                                            {{ tipo.label }}
+                                        </option>
+                                    </select>
+                                    <label for="filtroTipo">Tipo</label>
                                 </div>
                             </div>
                             
                             <!-- Filtro de Status -->
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-floating">
                                     <select class="form-control" id="filtroAtivo" v-model="filtros.ativo">
                                         <option value="">Todas</option>
                                         <option value="true">Ativas</option>
                                         <option value="false">Inativas</option>
                                     </select>
-                                    <label for="filtroAtivo">Status da Entidade</label>
+                                    <label for="filtroAtivo">Status</label>
                                 </div>
                             </div>
                             
@@ -95,7 +108,8 @@
                         <thead>
                             <tr>
                                 <th class="table-header">Entidade</th>
-                                <th class="table-header">Município</th>
+                                <th class="table-header">Tipo</th>
+                                <th class="table-header">Jurisdição</th>
                                 <th class="table-header">Status</th>
                                 <th class="table-header">Usuários Ativos</th>
                                 <th class="table-header">Total Usuários</th>
@@ -108,7 +122,15 @@
                                     <div class="fw-medium">{{ entidade.nome_fantasia }}</div>
                                 </td>
                                 <td class="table-cell">
-                                    <div class="fw-medium">{{ entidade.municipio?.nome || '—' }}</div>
+                                    <span class="badge" :class="getTipoClass(entidade.tipo_organizacao)">
+                                        {{ formatarTipo(entidade.tipo_organizacao) }}
+                                    </span>
+                                </td>
+                                <td class="table-cell">
+                                    <div class="fw-medium">{{ formatarJurisdicao(entidade) }}</div>
+                                    <small v-if="entidade.nivel_administrativo" class="text-muted">
+                                        {{ formatarNivel(entidade.nivel_administrativo) }}
+                                    </small>
                                 </td>
                                 <td class="table-cell">
                                     <span class="badge badge-status" :class="entidade.ativo ? 'badge-ativo' : 'badge-inativo'">
@@ -410,6 +432,8 @@ export default {
             loading: true,
             entidades: [],
             municipios: [],
+            niveisAdministrativos: [],
+            tiposOrganizacao: [],
             registrosEntidades: {
                 current_page: 1,
                 last_page: 1,
@@ -419,6 +443,8 @@ export default {
             filtros: {
                 busca: '',
                 municipio_id: '',
+                nivel_administrativo: '',
+                tipo_organizacao: '',
                 ativo: ''
             },
             filtrosVisiveis: false,
@@ -446,6 +472,12 @@ export default {
         'filtros.municipio_id'() {
             this.filtrarEntidades();
         },
+        'filtros.nivel_administrativo'() {
+            this.filtrarEntidades();
+        },
+        'filtros.tipo_organizacao'() {
+            this.filtrarEntidades();
+        },
         'filtros.ativo'() {
             this.filtrarEntidades();
         }
@@ -467,6 +499,12 @@ export default {
                 }
                 if (this.filtros.municipio_id) {
                     params.append('municipio_id', this.filtros.municipio_id);
+                }
+                if (this.filtros.nivel_administrativo) {
+                    params.append('nivel_administrativo', this.filtros.nivel_administrativo);
+                }
+                if (this.filtros.tipo_organizacao) {
+                    params.append('tipo_organizacao', this.filtros.tipo_organizacao);
                 }
                 if (this.filtros.ativo) {
                     params.append('ativo', this.filtros.ativo);
@@ -515,6 +553,8 @@ export default {
                 
                 if (response.ok) {
                     this.municipios = data.municipios || [];
+                    this.niveisAdministrativos = data.niveis_administrativos || [];
+                    this.tiposOrganizacao = data.tipos_organizacao || [];
                 } else {
                     console.error('Erro ao carregar filtros:', data.message);
                 }
@@ -553,6 +593,8 @@ export default {
             this.filtros = {
                 busca: '',
                 municipio_id: '',
+                nivel_administrativo: '',
+                tipo_organizacao: '',
                 ativo: ''
             };
             this.filtrarEntidades();
@@ -791,6 +833,45 @@ export default {
             
             const toast = new bootstrap.Toast(this.$refs.toastRef);
             toast.show();
+        },
+
+        // Métodos de formatação
+        formatarTipo(tipo) {
+            const tipos = {
+                'municipio': 'MUNICÍPIO',
+                'secretaria': 'SECRETARIA',
+                'órgão': 'ÓRGÃO',
+                'autarquia': 'AUTARQUIA',
+                'outros': 'OUTROS'
+            };
+            return tipos[tipo] || tipo?.toUpperCase();
+        },
+
+        formatarNivel(nivel) {
+            const niveis = {
+                'municipal': 'MUNICIPAL',
+                'estadual': 'ESTADUAL',
+                'federal': 'FEDERAL'
+            };
+            return niveis[nivel] || nivel?.toUpperCase();
+        },
+
+        formatarJurisdicao(entidade) {
+            if (entidade.nivel_administrativo === 'municipal' && entidade.municipio) {
+                return entidade.municipio.nome + ' - PR';
+            }
+            return entidade.jurisdicao_nome || '—';
+        },
+
+        getTipoClass(tipo) {
+            const classes = {
+                'municipio': 'badge-primary',
+                'secretaria': 'badge-info',
+                'órgão': 'badge-warning',
+                'autarquia': 'badge-success',
+                'outros': 'badge-secondary'
+            };
+            return classes[tipo] || 'badge-secondary';
         }
     }
 }
@@ -860,5 +941,31 @@ export default {
 .paginacao-container {
     padding-top: 1rem;
     border-top: 1px solid #e9ecef;
+}
+
+/* Badge colors for entity types */
+.badge-primary {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.badge-info {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: black;
+}
+
+.badge-success {
+    background-color: #198754;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
 }
 </style>

@@ -27,6 +27,10 @@ class UsuariosPorEntidadeController extends Controller
                 ->select([
                     'entidades_orcamentarias.id',
                     'entidades_orcamentarias.nome_fantasia',
+                    'entidades_orcamentarias.tipo_organizacao',
+                    'entidades_orcamentarias.nivel_administrativo',
+                    'entidades_orcamentarias.jurisdicao_nome',
+                    'entidades_orcamentarias.jurisdicao_codigo_ibge',
                     'entidades_orcamentarias.ativo'
                 ])
                 ->with(['municipio:id,nome,codigo_ibge'])
@@ -42,13 +46,24 @@ class UsuariosPorEntidadeController extends Controller
                 });
             }
 
+            if ($request->filled('nivel_administrativo')) {
+                $query->where('entidades_orcamentarias.nivel_administrativo', $request->nivel_administrativo);
+            }
+
+            if ($request->filled('tipo_organizacao')) {
+                $query->where('entidades_orcamentarias.tipo_organizacao', $request->tipo_organizacao);
+            }
+
             if ($request->filled('ativo')) {
                 $query->where('entidades_orcamentarias.ativo', $request->ativo === 'true');
             }
 
             if ($request->filled('busca')) {
                 $busca = trim($request->busca);
-                $query->where('entidades_orcamentarias.nome_fantasia', 'LIKE', "%{$busca}%");
+                $query->where(function ($q) use ($busca) {
+                    $q->where('entidades_orcamentarias.nome_fantasia', 'LIKE', "%{$busca}%")
+                      ->orWhere('entidades_orcamentarias.jurisdicao_nome', 'LIKE', "%{$busca}%");
+                });
             }
 
             // Ordenação
@@ -366,8 +381,24 @@ class UsuariosPorEntidadeController extends Controller
                 ->orderBy('nome')
                 ->get();
 
+            $niveisAdministrativos = [
+                ['value' => 'municipal', 'label' => 'Municipal'],
+                ['value' => 'estadual', 'label' => 'Estadual'],
+                ['value' => 'federal', 'label' => 'Federal']
+            ];
+
+            $tiposOrganizacao = [
+                ['value' => 'municipio', 'label' => 'Município'],
+                ['value' => 'secretaria', 'label' => 'Secretaria'],
+                ['value' => 'órgão', 'label' => 'Órgão'],
+                ['value' => 'autarquia', 'label' => 'Autarquia'],
+                ['value' => 'outros', 'label' => 'Outros']
+            ];
+
             return response()->json([
-                'municipios' => $municipios
+                'municipios' => $municipios,
+                'niveis_administrativos' => $niveisAdministrativos,
+                'tipos_organizacao' => $tiposOrganizacao
             ]);
 
         } catch (\Exception $e) {

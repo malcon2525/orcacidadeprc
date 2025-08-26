@@ -290,17 +290,91 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                
+                                <!-- NOVOS CAMPOS DE JURISDIÇÃO -->
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select" 
+                                                :class="{ 'is-invalid': errors.nivel_administrativo }"
+                                                id="nivel_administrativo" 
+                                                v-model="form.nivel_administrativo"
+                                                @change="onNivelChange">
+                                            <option value="">Selecione...</option>
+                                            <option value="municipal">Municipal</option>
+                                            <option value="estadual">Estadual</option>
+                                            <option value="federal">Federal</option>
+                                        </select>
+                                        <label for="nivel_administrativo">Nível Administrativo *</label>
+                                        <div v-if="errors.nivel_administrativo" class="invalid-feedback">
+                                            {{ errors.nivel_administrativo[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Campo de Jurisdição (simplificado) -->
+                                <div class="col-md-6">
+                                    <!-- Municipal - Select de Municípios do Paraná -->
+                                    <div v-if="form.nivel_administrativo === 'municipal'" class="form-floating">
+                                        <select class="form-select" 
+                                                :class="{ 'is-invalid': errors.jurisdicao_nome }"
+                                                id="jurisdicao_municipal" 
+                                                v-model="form.jurisdicao_nome"
+                                                @change="onMunicipioChange">
+                                            <option value="">Selecione um município...</option>
+                                            <option v-for="municipio in municipios" :key="municipio.id" :value="municipio.nome">
+                                                {{ municipio.nome }}
+                                            </option>
+                                        </select>
+                                        <label for="jurisdicao_municipal">Município *</label>
+                                        <div v-if="errors.jurisdicao_nome" class="invalid-feedback">
+                                            {{ errors.jurisdicao_nome[0] }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Estadual - Campo fixo "Paraná" -->
+                                    <div v-else-if="form.nivel_administrativo === 'estadual'" class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="jurisdicao_estadual" 
+                                               value="Paraná"
+                                               readonly
+                                               @input="form.jurisdicao_nome = 'Paraná'">
+                                        <label for="jurisdicao_estadual">Jurisdição *</label>
+                                    </div>
+                                    
+                                    <!-- Federal - Campo fixo "Brasil" -->
+                                    <div v-else-if="form.nivel_administrativo === 'federal'" class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="jurisdicao_federal" 
+                                               value="Brasil"
+                                               readonly
+                                               @input="form.jurisdicao_nome = 'Brasil'">
+                                        <label for="jurisdicao_federal">Jurisdição *</label>
+                                    </div>
+                                    
+                                    <!-- Placeholder quando nenhum nível selecionado -->
+                                    <div v-else class="form-floating">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               disabled
+                                               placeholder="Selecione o nível administrativo primeiro">
+                                        <label>Jurisdição *</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Código IBGE (só para municipal) -->
+                                <div v-if="form.nivel_administrativo === 'municipal'" class="col-md-4">
                                     <div class="form-floating">
                                         <input type="text" 
                                                class="form-control" 
-                                               :class="{ 'is-invalid': errors.codigo_ibge }"
-                                               id="codigo_ibge" 
-                                               v-model="form.codigo_ibge" 
+                                               :class="{ 'is-invalid': errors.jurisdicao_codigo_ibge }"
+                                               id="jurisdicao_codigo_ibge" 
+                                               v-model="form.jurisdicao_codigo_ibge" 
                                                placeholder="Código IBGE">
-                                        <label for="codigo_ibge">Código IBGE</label>
-                                        <div v-if="errors.codigo_ibge" class="invalid-feedback">
-                                            {{ errors.codigo_ibge[0] }}
+                                        <label for="jurisdicao_codigo_ibge">Código IBGE *</label>
+                                        <div v-if="errors.jurisdicao_codigo_ibge" class="invalid-feedback">
+                                            {{ errors.jurisdicao_codigo_ibge[0] }}
                                         </div>
                                     </div>
                                 </div>
@@ -498,7 +572,9 @@ export default {
                 tipo_organizacao: '',
                 email: '',
                 endereco: '',
-                codigo_ibge: '',
+                nivel_administrativo: '',
+                jurisdicao_nome: '',
+                jurisdicao_codigo_ibge: '',
                 populacao: '',
                 cep: '',
                 telefone: '',
@@ -515,6 +591,8 @@ export default {
             itemEditando: null,
             filtrosVisiveis: false,
             modalRef: null,
+            municipios: [],
+            estados: [],
             toast: {
                 show: false,
                 type: 'success',
@@ -549,6 +627,7 @@ export default {
     mounted() {
         this.carregarDados();
         this.inicializarModal();
+        // Estados não precisam mais ser carregados (são fixos)
     },
     methods: {
         async carregarDados() {
@@ -609,7 +688,9 @@ export default {
                 tipo_organizacao: '',
                 email: '',
                 endereco: '',
-                codigo_ibge: '',
+                nivel_administrativo: '',
+                jurisdicao_nome: '',
+                jurisdicao_codigo_ibge: '',
                 populacao: '',
                 cep: '',
                 telefone: '',
@@ -742,6 +823,57 @@ export default {
             setTimeout(() => {
                 this.toast.show = false;
             }, 5000);
+        },
+        
+        // Novos métodos para funcionalidade de jurisdição
+        async carregarEstados() {
+            try {
+                const response = await fetch('/api/administracao/entidades-orcamentarias/buscar-estados');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.estados = data.data;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estados:', error);
+            }
+        },
+        
+        async carregarMunicipios() {
+            try {
+                // Sempre carrega municípios do Paraná
+                const response = await fetch('/api/administracao/entidades-orcamentarias/buscar-municipios?estado=PR');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.municipios = data.data;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar municípios:', error);
+            }
+        },
+        
+        onNivelChange() {
+            // Limpar campos relacionados quando mudar o nível
+            this.form.jurisdicao_nome = '';
+            this.form.jurisdicao_codigo_ibge = '';
+            
+            // Definir valores fixos para cada nível
+            if (this.form.nivel_administrativo === 'municipal') {
+                this.carregarMunicipios(); // Carrega municípios do Paraná
+            } else if (this.form.nivel_administrativo === 'estadual') {
+                this.form.jurisdicao_nome = 'Paraná';
+            } else if (this.form.nivel_administrativo === 'federal') {
+                this.form.jurisdicao_nome = 'Brasil';
+            }
+        },
+        
+        onMunicipioChange() {
+            // Quando selecionar um município, buscar automaticamente o código IBGE
+            if (this.form.jurisdicao_nome) {
+                const municipioSelecionado = this.municipios.find(m => m.nome === this.form.jurisdicao_nome);
+                if (municipioSelecionado) {
+                    this.form.jurisdicao_codigo_ibge = municipioSelecionado.codigo_ibge;
+                }
+            }
         }
     }
 }
