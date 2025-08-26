@@ -56,6 +56,20 @@ Route::prefix('andamento-projeto/documentacao')->group(function () {
 // ===== ROTA PARA PROTÓTIPO DA PLANILHA ORÇAMENTÁRIA =====
 Route::get('/planilha-prototipo', [\App\Http\Controllers\AndamentoProjeto\AndamentoProjetoController::class, 'planilhaPrototipo'])->name('planilha-prototipo');
 
+// ===== ROTAS PÚBLICAS - SOLICITAÇÃO DE CADASTRO =====
+Route::prefix('solicitar-cadastro')->name('publico.solicitar-cadastro.')->group(function () {
+    Route::get('/', function () {
+        return view('publico.solicitar-cadastro-simple');
+    })->name('index');
+});
+
+// ===== ROTAS API PÚBLICAS - SOLICITAÇÃO DE CADASTRO =====
+Route::prefix('api/publico/solicitar-cadastro')->name('api.publico.solicitar-cadastro.')->group(function () {
+    Route::get('/dados-formulario', [\App\Http\Controllers\Web\Publico\SolicitacaoCadastro\SolicitacaoCadastroController::class, 'dadosFormulario'])->name('dados-formulario');
+    Route::post('/', [\App\Http\Controllers\Web\Publico\SolicitacaoCadastro\SolicitacaoCadastroController::class, 'store'])->name('store');
+    Route::get('/consultar-status', [\App\Http\Controllers\Web\Publico\SolicitacaoCadastro\SolicitacaoCadastroController::class, 'consultarStatus'])->name('consultar-status');
+});
+
 
 
 // ===================================================================
@@ -101,6 +115,16 @@ Route::middleware(['auth'])->group(function () {
         // Estrutura de Orçamento
         Route::prefix('estrutura-orcamento')->name('estrutura-orcamento.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Web\Administracao\EstruturaOrcamento\EstruturaOrcamentoController::class, 'index'])->name('index');
+        });
+        
+        // Aprovação de Cadastros
+        Route::prefix('aprovacao-cadastros')->name('aprovacao-cadastros.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Web\Administracao\AprovacaoCadastros\AprovacaoCadastrosController::class, 'index'])->name('index');
+        });
+        
+        // Usuários por Entidade
+        Route::prefix('usuarios-por-entidade')->name('usuarios-por-entidade.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Web\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'index'])->name('index');
         });
     });
     
@@ -300,6 +324,24 @@ Route::middleware(['auth'])->group(function () {
             
             // Limpar Estrutura
             Route::delete('limpar/{tipoOrcamentoId}', [\App\Http\Controllers\Api\Administracao\EstruturaOrcamento\LimparEstruturaController::class, 'limpar'])->name('limpar');
+        });
+        
+        // Aprovação de Cadastros
+        Route::prefix('aprovacao-cadastros')->name('aprovacao-cadastros.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Administracao\AprovacaoCadastros\AprovacaoCadastrosController::class, 'listar'])->name('listar');
+            Route::post('/{id}/aprovar', [\App\Http\Controllers\Api\Administracao\AprovacaoCadastros\AprovacaoCadastrosController::class, 'aprovar'])->name('aprovar');
+            Route::post('/{id}/rejeitar', [\App\Http\Controllers\Api\Administracao\AprovacaoCadastros\AprovacaoCadastrosController::class, 'rejeitar'])->name('rejeitar');
+            Route::get('/filtros', [\App\Http\Controllers\Api\Administracao\AprovacaoCadastros\AprovacaoCadastrosController::class, 'filtros'])->name('filtros');
+        });
+        
+        // Usuários por Entidade
+        Route::prefix('usuarios-por-entidade')->name('usuarios-por-entidade.')->group(function () {
+            Route::get('/entidades', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'entidades'])->name('entidades');
+            Route::get('/{entidadeId}/usuarios', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'usuariosPorEntidade'])->name('usuarios');
+            Route::get('/{entidadeId}/usuarios-disponiveis', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'usuariosDisponiveis'])->name('usuarios-disponiveis');
+            Route::post('/{entidadeId}/vincular', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'vincularUsuarios'])->name('vincular');
+            Route::delete('/{entidadeId}/desvincular/{userId}', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'desvincularUsuario'])->name('desvincular');
+            Route::post('/{entidadeId}/reativar/{userId}', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'reativarUsuario'])->name('reativar');
         });
     });
 

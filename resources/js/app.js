@@ -23,6 +23,7 @@ import ListaUsuarios from './components/administracao/usuarios/ListaUsuarios.vue
 import BuscaGlobal from './components/administracao/usuarios/BuscaGlobal.vue';
 import ListaMunicipios from './components/administracao/municipios/ListaMunicipios.vue';
 import ListaEntidadesOrcamentariasAdmin from './components/administracao/entidades-orcamentarias/ListaEntidadesOrcamentariasAdmin.vue';
+import ListaAprovacaoCadastros from './components/administracao/aprovacao-cadastros/ListaAprovacaoCadastros.vue';
 import GestaoEstruturaOrcamento from './components/administracao/estrutura-orcamento/GestaoEstruturaOrcamento.vue';
 import ListaTipoOrcamento from './components/administracao/estrutura-orcamento/ListaTipoOrcamento.vue';
 import EstruturaOrcamento from './components/administracao/estrutura-orcamento/EstruturaOrcamento.vue';
@@ -51,6 +52,7 @@ app.component('lista-usuarios', ListaUsuarios);
 app.component('busca-global', BuscaGlobal);
 app.component('lista-municipios', ListaMunicipios);
 app.component('lista-entidades-orcamentarias-admin', ListaEntidadesOrcamentariasAdmin);
+app.component('lista-aprovacao-cadastros', ListaAprovacaoCadastros);
 app.component('gestao-estrutura-orcamento', GestaoEstruturaOrcamento);
 app.component('lista-tipo-orcamento', ListaTipoOrcamento);
 app.component('estrutura-orcamento', EstruturaOrcamento);

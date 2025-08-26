@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -164,5 +166,129 @@ class User extends Authenticatable
     public function isLocalUser(): bool
     {
         return $this->login_type === 'local';
+    }
+
+    // ===== NOVOS RELACIONAMENTOS PARA APROVAÇÃO DE CADASTROS =====
+
+    /**
+     * Relacionamento com Município (através das entidades orçamentárias)
+     * Retorna o primeiro município das entidades vinculadas
+     */
+    public function municipio(): ?object
+    {
+        return $this->entidadesOrcamentarias()->first()?->municipio;
+    }
+
+    /**
+     * Relacionamento many-to-many com Entidades Orçamentárias
+     */
+    public function entidadesOrcamentarias(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria::class,
+            'user_entidades_orcamentarias',
+            'user_id',
+            'entidade_orcamentaria_id'
+        )
+        ->withPivot('ativo', 'data_vinculacao', 'vinculado_por_user_id')
+        ->withTimestamps()
+        ->wherePivot('ativo', true);
+    }
+
+    /**
+     * Relacionamento many-to-many com Entidades Orçamentárias (incluindo inativas)
+     */
+    public function todasEntidadesOrcamentarias(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria::class,
+            'user_entidades_orcamentarias',
+            'user_id',
+            'entidade_orcamentaria_id'
+        )
+        ->withPivot('ativo', 'data_vinculacao', 'vinculado_por_user_id')
+        ->withTimestamps();
+    }
+
+    /**
+     * Relacionamento com Solicitações de Cadastro
+     */
+    public function solicitacoesCadastro(): HasMany
+    {
+        return $this->hasMany(SolicitacaoCadastro::class, 'user_id');
+    }
+
+    /**
+     * Relacionamento com Solicitações de Cadastro aprovadas por este usuário
+     */
+    public function solicitacoesAprovadas(): HasMany
+    {
+        return $this->hasMany(SolicitacaoCadastro::class, 'aprovado_por_user_id');
+    }
+
+    /**
+     * Relacionamento com vinculações de usuários a entidades feitas por este usuário
+     */
+    public function vinculacoesFeitas(): HasMany
+    {
+        return $this->hasMany(
+            \App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria::class,
+            'vinculado_por_user_id',
+            'id'
+        )->join('user_entidades_orcamentarias', 'entidades_orcamentarias.id', '=', 'user_entidades_orcamentarias.entidade_orcamentaria_id');
+    }
+
+    // ===== MÉTODOS AUXILIARES PARA APROVAÇÃO DE CADASTROS =====
+
+    /**
+     * Verifica se o usuário pode aprovar cadastros
+     */
+    public function podeAprovarCadastros(): bool
+    {
+        return $this->isSuperAdmin() || $this->hasPermission('aprovar-cadastros');
+    }
+
+    /**
+     * Verifica se o usuário está vinculado a uma entidade específica
+     */
+    public function estaVinculadoAEntidade(int $entidadeId): bool
+    {
+        return $this->entidadesOrcamentarias()->where('entidade_orcamentaria_id', $entidadeId)->exists();
+    }
+
+    /**
+     * Retorna as entidades ativas do usuário
+     */
+    public function getEntidadesAtivasAttribute()
+    {
+        return $this->entidadesOrcamentarias;
+    }
+
+    /**
+     * Retorna o nome do município do usuário
+     */
+    public function getNomeMunicipioAttribute(): ?string
+    {
+        return $this->municipio?->nome;
+    }
+
+    /**
+     * Scope para usuários vinculados a uma entidade específica
+     */
+    public function scopeVinculadosAEntidade($query, int $entidadeId)
+    {
+        return $query->whereHas('entidadesOrcamentarias', function ($q) use ($entidadeId) {
+            $q->where('entidade_orcamentaria_id', $entidadeId);
+        });
+    }
+
+    /**
+     * Scope para usuários de um município específico (através das entidades)
+     */
+    public function scopeDoMunicipio($query, int $municipioId)
+    {
+        return $query->whereHas('entidadesOrcamentarias.municipio', function ($q) use ($municipioId) {
+            $q->where('id', $municipioId);
+        });
     }
 }

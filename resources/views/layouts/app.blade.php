@@ -210,6 +210,20 @@
                         <span>Estrutura de Orçamentos</span>
                     </a>
                     @endif
+
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('aprovar-cadastros'))
+                    <a href="{{ route('admin.aprovacao-cadastros.index') }}" class="menu-link">
+                        <i class="fas fa-user-check"></i>
+                        <span>Aprovação de Cadastros</span>
+                    </a>
+                    @endif
+
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('aprovar-cadastros'))
+                    <a href="{{ route('admin.usuarios-por-entidade.index') }}" class="menu-link">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Usuários por Entidade</span>
+                    </a>
+                    @endif
                 </div>
             </div>
             @endif
