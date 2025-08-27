@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Orcamento\ComposicaoPropria;
 use App\Models\Orcamento\ComposicaoPropriaItem;
 use App\Models\Administracao\User;
+use App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,34 @@ class ComposicaoPropriaController extends Controller
         }
         
         return true;
+    }
+
+    /**
+     * Lista as entidades orçamentárias ativas para o select
+     */
+    public function listarEntidadesOrcamentarias()
+    {
+        $this->checkAccess(['gerenciar_composicoes_proprias', 'visualizar_composicoes_proprias']);
+        
+        try {
+            $entidades = EntidadeOrcamentaria::where('ativo', true)
+                ->select('id', 'jurisdicao_razao_social', 'jurisdicao_nome_fantasia', 'tipo_organizacao')
+                ->orderBy('jurisdicao_razao_social')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $entidades
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao listar entidades orçamentárias: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno do servidor'
+            ], 500);
+        }
     }
 
     /**
@@ -113,6 +142,7 @@ class ComposicaoPropriaController extends Controller
 
         try {
             $validator = Validator::make($request->all(), [
+                'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id',
                 'codigo' => 'nullable|string|max:20',
                 'descricao' => 'required|string|max:255',
                 'unidade' => 'required|string|max:10',
@@ -187,6 +217,7 @@ class ComposicaoPropriaController extends Controller
             $composicao = ComposicaoPropria::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
+                'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id',
                 'codigo' => 'nullable|string|max:20',
                 'descricao' => 'required|string|max:255',
                 'unidade' => 'required|string|max:10',

@@ -1,6 +1,6 @@
 <template>
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-composicao-dialog">
             <div class="modal-content">
                 <!-- Header com Gradiente -->
                 <div class="modal-header custom-modal-header">
@@ -19,7 +19,27 @@
                     <form @submit.prevent="salvarFormulario">
                         <!-- Dados da Composição -->
                         <div class="row g-3 mb-4">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <div class="form-floating">
+                                    <select class="form-select" 
+                                            :class="{ 'is-invalid': errors.entidade_orcamentaria_id }"
+                                            id="entidade_orcamentaria_id" 
+                                            v-model="form.entidade_orcamentaria_id"
+                                            required>
+                                        <option value="">Selecione a Entidade Orçamentária</option>
+                                        <option v-for="entidade in entidadesOrcamentarias" 
+                                                :key="entidade.id" 
+                                                :value="entidade.id">
+                                            {{ entidade.jurisdicao_razao_social }}
+                                        </option>
+                                    </select>
+                                    <label for="entidade_orcamentaria_id">Entidade Orçamentária *</label>
+                                </div>
+                                <div class="invalid-feedback" v-if="errors.entidade_orcamentaria_id">
+                                    {{ errors.entidade_orcamentaria_id[0] }}
+                                </div>
+                            </div>
+                            <div class="col-md-2">
                                 <div class="form-floating">
                                     <input type="text" 
                                            class="form-control" 
@@ -34,7 +54,7 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-6">
+                            <div class="col-md-7">
                                 <div class="form-floating">
                                     <input type="text" 
                                            class="form-control" 
@@ -50,7 +70,7 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-3">
+                            <div class="col-md-1">
                                 <div class="form-floating">
                                     <input type="text" 
                                            class="form-control" 
@@ -67,228 +87,248 @@
                             </div>
                         </div>
 
-                        <!-- Tabela de Itens -->
-                        <div class="itens-container mb-4">
+                        <!-- Header com Busca de Itens -->
+                        <div class="itens-header mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0 fw-semibold text-custom">
                                     <i class="fas fa-list me-2"></i>Itens da Composição
                                 </h6>
-                                <button v-if="permissoes.crud" type="button" class="btn btn-sm btn-primary" @click="adicionarItem">
+                                <button v-if="permissoes.crud" type="button" class="btn btn-primary" @click="adicionarItem">
                                     <i class="fas fa-plus me-2"></i>Adicionar Item
                                 </button>
                             </div>
+                            
+                            <!-- <div class="row g-3 align-items-center" v-if="form.itens.length > 0">
+                                <div class="col-md-8">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-search text-muted"></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               placeholder="Buscar itens..."
+                                               v-model="buscaItens">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">{{ itensFiltrados.length }} {{ itensFiltrados.length === 1 ? 'item' : 'itens' }}</small>
+                                </div>
+                            </div> -->
+                        </div>
 
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th class="text-center" style="width: 80px;">#</th>
-                                            <th style="width: 120px;">Referência</th>
-                                            <th style="width: 100px;">Código</th>
-                                            <th>Descrição</th>
-                                            <th style="width: 80px;">Unidade</th>
-                                            <th style="width: 100px;">Coeficiente</th>
-                                            <th style="width: 120px;">Valor Mat/Equip</th>
-                                            <th style="width: 120px;">Valor M.O.</th>
-                                            <th style="width: 120px;">Valor Total</th>
-                                            <th style="width: 120px;">Valor Ajustado</th>
-                                            <th v-if="permissoes.crud" style="width: 80px;">Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="(item, index) in form.itens" :key="index" class="item-row">
-                                            <td class="text-center align-middle">
-                                                <span class="badge badge-status badge-ativo">{{ index + 1 }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <select v-if="permissoes.crud" 
-                                                        class="form-select form-select-sm" 
-                                                        :class="{ 'is-invalid': errors[`itens.${index}.referencia`] }"
-                                                        v-model="item.referencia"
-                                                        @change="onReferenciaChange(index)"
-                                                        required>
-                                                    <option value="">Selecione</option>
-                                                    <option value="SINAPI">SINAPI</option>
-                                                    <option value="DERPR">DERPR</option>
-                                                    <option value="PERSONALIZADA">PERSONALIZADA</option>
-                                                </select>
-                                                <span v-else class="badge badge-status badge-ativo">{{ item.referencia }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <div class="input-group input-group-sm">
-                                                    <input v-if="permissoes.crud" 
-                                                           type="text" 
-                                                           class="form-control" 
-                                                           :class="{ 'is-invalid': errors[`itens.${index}.codigo_item`] }"
-                                                           v-model="item.codigo_item"
-                                                           placeholder="Código"
-                                                           required>
-                                                    <button v-if="permissoes.crud && item.referencia !== 'PERSONALIZADA'" 
-                                                            type="button" 
-                                                            class="btn btn-outline-secondary btn-sm" 
-                                                            @click="abrirZoomServico(index)">
-                                                        <i class="fas fa-search"></i>
-                                                    </button>
-                                                    <span v-else class="form-control-plaintext">{{ item.codigo_item }}</span>
-                                                </div>
-                                            </td>
-                                            
-                                            <td>
-                                                <input v-if="permissoes.crud" 
-                                                       type="text" 
-                                                       class="form-control form-control-sm" 
-                                                       :class="{ 'is-invalid': errors[`itens.${index}.descricao`] }"
-                                                       v-model="item.descricao"
-                                                       placeholder="Descrição do item"
-                                                       required>
-                                                <span v-else class="form-control-plaintext">{{ item.descricao }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <input v-if="permissoes.crud" 
-                                                       type="text" 
-                                                       class="form-control form-control-sm" 
-                                                       :class="{ 'is-invalid': errors[`itens.${index}.unidade`] }"
-                                                       v-model="item.unidade"
-                                                       placeholder="Unidade"
-                                                       required>
-                                                <span v-else class="form-control-plaintext">{{ item.unidade }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <input v-if="permissoes.crud" 
-                                                       type="number" 
-                                                       class="form-control form-control-sm" 
-                                                       :class="{ 'is-invalid': errors[`itens.${index}.coeficiente`] }"
-                                                       v-model="item.coeficiente"
-                                                       step="0.00001"
-                                                       min="0"
-                                                       placeholder="1.00000"
-                                                       @input="calcularValoresAjustados(index)"
-                                                       required>
-                                                <span v-else class="form-control-plaintext">{{ formatarCoeficiente(item.coeficiente) }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <input v-if="permissoes.crud" 
-                                                       type="number" 
-                                                       class="form-control form-control-sm" 
-                                                       :class="{ 'is-invalid': errors[`itens.${index}.valor_mat_equip`] }"
-                                                       v-model="item.valor_mat_equip"
-                                                       step="0.01"
-                                                       min="0"
-                                                       placeholder="0.00"
-                                                       @input="calcularValoresAjustados(index)"
-                                                       required>
-                                                <span v-else class="form-control-plaintext">R$ {{ formatarValor(item.valor_mat_equip) }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <input v-if="permissoes.crud" 
-                                                       type="number" 
-                                                       class="form-control form-control-sm" 
-                                                       :class="{ 'is-invalid': errors[`itens.${index}.valor_mao_obra`] }"
-                                                       v-model="item.valor_mao_obra"
-                                                       step="0.01"
-                                                       min="0"
-                                                       placeholder="0.00"
-                                                       @input="calcularValoresAjustados(index)"
-                                                       required>
-                                                <span v-else class="form-control-plaintext">R$ {{ formatarValor(item.valor_mao_obra) }}</span>
-                                            </td>
-                                            
-                                            <td>
-                                                <input v-if="permissoes.crud" 
-                                                       type="number" 
-                                                       class="form-control form-control-sm" 
-                                                       :class="{ 'is-invalid': errors[`itens.${index}.valor_total`] }"
-                                                       v-model="item.valor_total"
-                                                       step="0.01"
-                                                       min="0"
-                                                       placeholder="0.00"
-                                                       @input="calcularValoresAjustados(index)"
-                                                       required>
-                                                <span v-else class="form-control-plaintext">R$ {{ formatarValor(item.valor_total) }}</span>
-                                            </td>
-                                            
-                                            <td class="text-end">
-                                                <span class="fw-semibold">R$ {{ formatarValor(item.valor_total_ajustado) }}</span>
-                                            </td>
-                                            
-                                            <td v-if="permissoes.crud" class="text-center">
-                                                <button type="button" class="btn btn-sm btn-danger" @click="removerItem(index)" title="Remover">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        <!-- Lista de Itens -->
+                        <div class="itens-container mb-4">
+                            <!-- Estado Vazio -->
+                            <div v-if="form.itens.length === 0" class="empty-state-modern">
+                                <div class="empty-icon">
+                                    <i class="fas fa-inbox"></i>
+                                </div>
+                                <h5 class="empty-title">Nenhum item adicionado</h5>
+                                <p class="empty-text">Comece adicionando itens à sua composição</p>
+                                <button v-if="permissoes.crud" 
+                                        type="button" 
+                                        class="btn btn-primary" 
+                                        @click="adicionarItem">
+                                    <i class="fas fa-plus me-2"></i>Adicionar Primeiro Item
+                                </button>
                             </div>
 
-                            <!-- Estado Vazio dos Itens -->
-                            <div v-if="form.itens.length === 0" class="text-center py-4">
-                                <div class="empty-state">
-                                    <i class="fas fa-list fa-2x text-muted mb-2"></i>
-                                    <p class="text-muted mb-0">Nenhum item adicionado</p>
-                                    <small class="text-muted">Clique em "Adicionar Item" para começar</small>
+                            <!-- Lista de Cards -->
+                            <div v-else class="itens-cards">
+                                <div v-for="(item, index) in itensFiltrados" :key="index" class="item-card-modern">
+                                    <!-- Header do Card -->
+                                    <div class="item-header">
+                                        <div class="item-numero">
+                                            <span class="numero-badge">{{ index + 1 }}</span>
+                                        </div>
+                                        <div class="item-referencia-select">
+                                            <select v-if="permissoes.crud" 
+                                                    class="form-select form-select-sm" 
+                                                    v-model="item.referencia"
+                                                    @change="onReferenciaChange(index)"
+                                                    required>
+                                                <option value="">Selecionar</option>
+                                                <option value="SINAPI">SINAPI</option>
+                                                <option value="DERPR">DERPR</option>
+                                                <option value="PERSONALIZADA">PERSONALIZADA</option>
+                                            </select>
+                                            <span v-else class="referencia-badge">{{ item.referencia }}</span>
+                                        </div>
+                                        <div class="item-actions">
+                                            <button v-if="permissoes.crud" 
+                                                    type="button" 
+                                                    class="btn btn-outline-danger btn-sm" 
+                                                    @click="removerItem(index)"
+                                                    title="Remover item">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Corpo do Card -->
+                                    <div class="item-body">
+                                        <!-- Linha 1: Identificação -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-md-3">
+                                                <label class="field-label">Código</label>
+                                                <div v-if="permissoes.crud" class="input-group">
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           v-model="item.codigo_item"
+                                                           placeholder="Ex: 74209/1"
+                                                           required>
+                                                    <button v-if="item.referencia !== 'PERSONALIZADA'" 
+                                                            type="button" 
+                                                            class="btn btn-zoom-search" 
+                                                            @click="abrirZoomServico(index)"
+                                                            title="Buscar serviço">
+                                                        <i class="fas fa-search"></i>
+                                                    </button>
+                                                </div>
+                                                <div v-else class="field-static">{{ item.codigo_item || '-' }}</div>
+                                            </div>
+                                            <div class="col-md-7">
+                                                <label class="field-label">Descrição</label>
+                                                <input v-if="permissoes.crud" 
+                                                       type="text" 
+                                                       class="form-control" 
+                                                       v-model="item.descricao"
+                                                       placeholder="Descrição detalhada do item"
+                                                       required>
+                                                <div v-else class="field-static">{{ item.descricao || '-' }}</div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="field-label">Unidade</label>
+                                                <input v-if="permissoes.crud" 
+                                                       type="text" 
+                                                       class="form-control" 
+                                                       v-model="item.unidade"
+                                                       placeholder="m², kg, un"
+                                                       required>
+                                                <div v-else class="field-static">{{ item.unidade || '-' }}</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Linha 2: Valores -->
+                                        <div class="row g-2">
+                                            <div class="col-md-2">
+                                                <label class="field-label">Coeficiente</label>
+                                                <input v-if="permissoes.crud" 
+                                                       type="number" 
+                                                       step="0.00001" 
+                                                       class="form-control text-end" 
+                                                       v-model="item.coeficiente"
+                                                       @input="calcularValoresAjustados(index)"
+                                                       placeholder="1,00000"
+                                                       required>
+                                                <div v-else class="field-static text-end">{{ formatarCoeficiente(item.coeficiente) }}</div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="field-label">Mat/Equip</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">R$</span>
+                                                    <input v-if="permissoes.crud" 
+                                                           type="number" 
+                                                           step="0.01" 
+                                                           class="form-control text-end" 
+                                                           v-model="item.valor_mat_equip"
+                                                           @input="calcularValoresAjustados(index)"
+                                                           placeholder="0,00"
+                                                           required>
+                                                    <div v-else class="form-control text-end bg-light">{{ formatarValor(item.valor_mat_equip) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="field-label">Mão de Obra</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">R$</span>
+                                                    <input v-if="permissoes.crud" 
+                                                           type="number" 
+                                                           step="0.01" 
+                                                           class="form-control text-end" 
+                                                           v-model="item.valor_mao_obra"
+                                                           @input="calcularValoresAjustados(index)"
+                                                           placeholder="0,00"
+                                                           required>
+                                                    <div v-else class="form-control text-end bg-light">{{ formatarValor(item.valor_mao_obra) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="field-label">Total</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">R$</span>
+                                                    <input v-if="permissoes.crud" 
+                                                           type="number" 
+                                                           step="0.01" 
+                                                           class="form-control text-end" 
+                                                           v-model="item.valor_total"
+                                                           @input="calcularValoresAjustados(index)"
+                                                           placeholder="0,00"
+                                                           required>
+                                                    <div v-else class="form-control text-end bg-light">{{ formatarValor(item.valor_total) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="field-label text-success">Valor Ajustado</label>
+                                                <div class="valor-ajustado-final">
+                                                    R$ {{ formatarValor(item.valor_total_ajustado) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Totais -->
-                        <div class="totais-container mb-4">
+                        <!-- Cards de Totais Modernos -->
+                        <div class="totais-modernos mb-4">
                             <div class="row g-3">
-                                <div class="col-md-3">
-                                    <div class="form-floating">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.valor_total_mat_equip }"
-                                               id="valor_total_mat_equip" 
-                                               v-model="form.valor_total_mat_equip"
-                                               step="0.01"
-                                               min="0"
-                                               placeholder="0.00"
-                                               readonly>
-                                        <label for="valor_total_mat_equip">Total Mat/Equip</label>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="total-card-modern mat-equip">
+                                        <div class="total-icon">
+                                            <i class="fas fa-tools"></i>
+                                        </div>
+                                        <div class="total-content">
+                                            <div class="total-label">Total Mat/Equip</div>
+                                            <div class="total-valor">R$ {{ formatarValor(form.valor_total_mat_equip) }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div class="col-md-3">
-                                    <div class="form-floating">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.valor_total_mao_obra }"
-                                               id="valor_total_mao_obra" 
-                                               v-model="form.valor_total_mao_obra"
-                                               step="0.01"
-                                               min="0"
-                                               placeholder="0.00"
-                                               readonly>
-                                        <label for="valor_total_mao_obra">Total M.O.</label>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="total-card-modern mao-obra">
+                                        <div class="total-icon">
+                                            <i class="fas fa-hard-hat"></i>
+                                        </div>
+                                        <div class="total-content">
+                                            <div class="total-label">Total M.O.</div>
+                                            <div class="total-valor">R$ {{ formatarValor(form.valor_total_mao_obra) }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div class="col-md-3">
-                                    <div class="form-floating">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               :class="{ 'is-invalid': errors.valor_total_geral }"
-                                               id="valor_total_geral" 
-                                               v-model="form.valor_total_geral"
-                                               step="0.01"
-                                               min="0"
-                                               placeholder="0.00"
-                                               readonly>
-                                        <label for="valor_total_geral">Total Geral</label>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="total-card-modern geral">
+                                        <div class="total-icon">
+                                            <i class="fas fa-calculator"></i>
+                                        </div>
+                                        <div class="total-content">
+                                            <div class="total-label">Total Geral</div>
+                                            <div class="total-valor">R$ {{ formatarValor(form.valor_total_geral) }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div class="col-md-3 d-flex align-items-end">
-                                    <button type="button" class="btn btn-outline-primary w-100" @click="calcularTotais">
-                                        <i class="fas fa-calculator me-2"></i>Calcular Totais
-                                    </button>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="total-card-modern final">
+                                        <div class="total-content-final">
+                                            <div class="total-label-final">Valor Final</div>
+                                            <div class="total-valor-final">R$ {{ formatarValor(form.valor_total_geral) }}</div>
+                                            <!-- <button v-if="permissoes.crud" 
+                                                    type="button" 
+                                                    class="btn btn-sm btn-light mt-2" 
+                                                    @click="calcularTotais">
+                                                <i class="fas fa-sync-alt me-1"></i>Calcular Totais
+                                            </button> -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -482,6 +522,7 @@ export default {
     data() {
         return {
             form: {
+                entidade_orcamentaria_id: '',
                 codigo: '',
                 descricao: '',
                 unidade: '',
@@ -490,8 +531,10 @@ export default {
                 valor_total_geral: 0,
                 itens: []
             },
+            entidadesOrcamentarias: [],
             errors: {},
             salvando: false,
+            buscaItens: '',
             modalZoom: false,
             servicoZoomSelecionado: null,
             servicosZoom: [],
@@ -507,6 +550,22 @@ export default {
         };
     },
     computed: {
+        itensFiltrados() {
+            if (!this.buscaItens) {
+                return this.form.itens;
+            }
+            
+            const busca = this.buscaItens.toLowerCase();
+            return this.form.itens.filter(item => {
+                return (
+                    (item.codigo_item && item.codigo_item.toLowerCase().includes(busca)) ||
+                    (item.descricao && item.descricao.toLowerCase().includes(busca)) ||
+                    (item.referencia && item.referencia.toLowerCase().includes(busca)) ||
+                    (item.unidade && item.unidade.toLowerCase().includes(busca))
+                );
+            });
+        },
+        
         paginasVisiveisZoom() {
             const paginas = [];
             const inicio = Math.max(1, this.paginaAtualZoom - 2);
@@ -520,9 +579,25 @@ export default {
         }
     },
     mounted() {
+        this.buscarEntidadesOrcamentarias();
         this.inicializarFormulario();
     },
     methods: {
+        async buscarEntidadesOrcamentarias() {
+            try {
+                const response = await fetch('/api/orcamento/composicao-propria/entidades-orcamentarias');
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.entidadesOrcamentarias = data.data;
+                } else {
+                    console.error('Erro ao buscar entidades:', data.message);
+                }
+            } catch (error) {
+                console.error('Erro na requisição de entidades:', error);
+            }
+        },
+
         inicializarFormulario() {
             if (this.composicao) {
                 // Modo edição
@@ -879,10 +954,10 @@ export default {
 }
 
 .servico-item-compact {
-    border-bottom: 1px solid #f0f0f0;
-    padding: 8px 12px;
-    transition: all 0.15s ease;
-    cursor: pointer;
+          border-bottom: 1px solid #f0f0f0;
+      padding: 8px 12px;
+      transition: all 0.15s ease;
+      cursor: pointer;
 }
 
 .servico-item-compact:hover {
@@ -1078,6 +1153,307 @@ export default {
     .paginacao-container .d-flex {
         flex-direction: column;
         gap: 8px;
+    }
+}
+
+/* ===== MODAL CONFIGURADO PARA NOTEBOOKS ===== */
+.modal-composicao-dialog {
+    max-width: 95vw;
+    height: 90vh;
+    margin: 5vh auto;
+}
+
+.modal-composicao-dialog .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-composicao-dialog .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+}
+
+/* ===== LAYOUT MODERNO DOS ITENS ===== */
+.empty-state-modern {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.empty-title {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.empty-text {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+/* Cards dos Itens */
+.itens-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.item-card-modern {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.item-card-modern:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    border-color: #5EA853;
+}
+
+/* Header do Card Item */
+.item-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.numero-badge {
+    background: #18578A;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 28px;
+    text-align: center;
+}
+
+.item-referencia-select {
+    min-width: 140px;
+}
+
+.referencia-badge {
+    background: #5EA853;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.item-actions {
+    margin-left: auto;
+}
+
+/* Corpo do Card Item */
+.item-body {
+    padding: 0.75rem;
+}
+
+.field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.field-static {
+    background: #f8f9fa;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    color: #495057;
+}
+
+.valor-ajustado-final {
+    background: linear-gradient(135deg, #d1e7dd 0%, #f8d7da 100%);
+    color: #0f5132;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid #badbcc;
+}
+
+/* Cards de Totais Modernos */
+.totais-modernos {
+    margin-top: 1rem;
+}
+
+.total-card-modern {
+    background: #fff;
+    border-radius: 6px;
+    padding: 0.75rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    border: 1px solid #e0e0e0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.total-card-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.total-card-modern.mat-equip {
+    border-left: 4px solid #18578A;
+}
+
+.total-card-modern.mao-obra {
+    border-left: 4px solid #6f42c1;
+}
+
+.total-card-modern.geral {
+    border-left: 4px solid #fd7e14;
+}
+
+.total-card-modern.final {
+    background: linear-gradient(135deg, #5EA853 0%, #18578A 100%);
+    color: white;
+    text-align: center;
+    display: block;
+}
+
+.total-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.mat-equip .total-icon {
+    background: rgba(24, 87, 138, 0.1);
+    color: #18578A;
+}
+
+.mao-obra .total-icon {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+}
+
+.geral .total-icon {
+    background: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.total-content {
+    flex: 1;
+    text-align: left;
+}
+
+.total-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.total-valor {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #495057;
+}
+
+.total-content-final {
+    text-align: center;
+}
+
+.total-label-final {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+}
+
+.total-valor-final {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Botão Zoom Search - Cores Padrão */
+.btn-zoom-search {
+    background-color: #5EA853;
+    border-color: #5EA853;
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.btn-zoom-search:hover {
+    background-color: #18578A;
+    border-color: #18578A;
+    color: white;
+}
+
+.btn-zoom-search:focus {
+    background-color: #18578A;
+    border-color: #18578A;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(24, 87, 138, 0.25);
+}
+
+.btn-zoom-search:active {
+    background-color: #18578A !important;
+    border-color: #18578A !important;
+    color: white !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .item-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .item-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .item-actions .btn-group {
+        width: 100%;
+    }
+    
+    .item-actions .btn {
+        flex: 1;
+    }
+    
+    .total-card-modern {
+        text-align: center;
+        flex-direction: column;
+    }
+    
+    .total-content {
+        text-align: center;
     }
 }
 </style>

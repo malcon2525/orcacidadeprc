@@ -404,6 +404,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Composições Próprias
         Route::prefix('composicao-propria')->name('composicao-propria.')->group(function () {
+            Route::get('/entidades-orcamentarias', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'listarEntidadesOrcamentarias'])->name('entidades-orcamentarias');
             Route::get('/', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'listar'])->name('listar');
             Route::post('/', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'edit'])->name('edit');

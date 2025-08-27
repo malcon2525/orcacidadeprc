@@ -2,8 +2,10 @@
 
 namespace App\Models\Orcamento;
 
+use App\Models\Administracao\EntidadesOrcamentarias\EntidadeOrcamentaria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ComposicaoPropria extends Model
@@ -19,6 +21,7 @@ class ComposicaoPropria extends Model
      * Campos preenchíveis
      */
     protected $fillable = [
+        'entidade_orcamentaria_id',
         'codigo',
         'descricao',
         'unidade',
@@ -78,6 +81,25 @@ class ComposicaoPropria extends Model
     {
         if ($codigo) {
             return $query->where('codigo', 'like', "%{$codigo}%");
+        }
+        return $query;
+    }
+
+    /**
+     * Relacionamento com Entidade Orçamentária
+     */
+    public function entidadeOrcamentaria(): BelongsTo
+    {
+        return $this->belongsTo(EntidadeOrcamentaria::class, 'entidade_orcamentaria_id');
+    }
+
+    /**
+     * Escopo para filtrar por entidade orçamentária
+     */
+    public function scopePorEntidade($query, $entidadeId)
+    {
+        if ($entidadeId) {
+            return $query->where('entidade_orcamentaria_id', $entidadeId);
         }
         return $query;
     }

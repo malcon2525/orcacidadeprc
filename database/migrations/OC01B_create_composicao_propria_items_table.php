@@ -22,9 +22,9 @@ return new class extends Migration
             $table->decimal('valor_mao_obra', 12, 2)->comment('Valor de mão de obra');
             $table->decimal('valor_total', 12, 2)->comment('Valor total do item');
             $table->decimal('coeficiente', 12, 5)->comment('Coeficiente de ajuste');
-            $table->decimal('valor_mat_equip_ajustado', 12, 2)->comment('Valor ajustado de materiais e equipamentos');
-            $table->decimal('valor_mao_obra_ajustado', 12, 2)->comment('Valor ajustado de mão de obra');
-            $table->decimal('valor_total_ajustado', 12, 2)->comment('Valor total ajustado do item');
+            $table->decimal('valor_mat_equip_ajustado', 12, 2)->comment('Valor ajustado de materiais e equipamentos após aplicação do coeficiente');
+            $table->decimal('valor_mao_obra_ajustado', 12, 2)->comment('Valor ajustado de mão de obra após aplicação do coeficiente');
+            $table->decimal('valor_total_ajustado', 12, 2)->comment('Valor total ajustado do item após aplicação do coeficiente');
             $table->timestamps();
             
             // Índices para performance

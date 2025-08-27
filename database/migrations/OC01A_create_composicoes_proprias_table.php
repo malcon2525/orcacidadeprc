@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('OC01A_composicoes_proprias', function (Blueprint $table) {
             $table->id();
+            
+            // VINCULAÇÃO OBRIGATÓRIA COM ENTIDADE ORÇAMENTÁRIA
+            $table->unsignedBigInteger('entidade_orcamentaria_id')->comment('ID da entidade orçamentária proprietária');
+            $table->foreign('entidade_orcamentaria_id')->references('id')->on('entidades_orcamentarias');
+            
             $table->string('codigo', 20)->nullable()->comment('Código da composição');
             $table->string('descricao', 255)->comment('Descrição da composição');
             $table->string('unidade', 10)->comment('Unidade de medida');
@@ -22,8 +27,10 @@ return new class extends Migration
             $table->timestamps();
             
             // Índices para performance
+            $table->index('entidade_orcamentaria_id');
             $table->index('codigo');
             $table->index('descricao');
+            $table->index(['entidade_orcamentaria_id', 'codigo']); // Busca por entidade + código
         });
     }
 
