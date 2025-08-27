@@ -26,7 +26,7 @@ class GrandeItemController extends Controller
     public function listarPorTipoOrcamento(Request $request, $tipoOrcamentoId)
     {
         try {
-            $grandesItens = GrandeItem::with(['subGrupos' => function($query) {
+            $grandesItens = GrandeItem::with(['subItens' => function($query) {
                     $query->orderBy('ordem');
                 }])
                 ->where('eo_tipo_orcamento_id', $tipoOrcamentoId)

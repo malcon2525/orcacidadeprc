@@ -37,7 +37,7 @@ class GrandeItem extends Model
     /**
      * Obtém os sub grupos associados ao grande item.
      */
-    public function subGrupos(): HasMany
+    public function subItens(): HasMany
     {
         return $this->hasMany(SubGrupo::class, 'eo_grande_item_id');
     }

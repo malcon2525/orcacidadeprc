@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('eo_sub_grupos', function (Blueprint $table) {
+        Schema::create('eo_sub_itens', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('eo_grande_item_id');
             $table->string('descricao', 100);
@@ -26,6 +26,6 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('eo_sub_grupos');
+        Schema::dropIfExists('eo_sub_itens');
     }
 }; 

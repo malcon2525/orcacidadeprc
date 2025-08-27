@@ -210,7 +210,7 @@ class SubGrupoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'itens' => 'required|array',
-            'itens.*.id' => 'required|exists:eo_sub_grupos,id',
+            'itens.*.id' => 'required|exists:eo_sub_itens,id',
             'itens.*.ordem' => 'required|integer|min:0'
         ]);
 

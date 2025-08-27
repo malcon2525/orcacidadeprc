@@ -100,8 +100,8 @@
                                     <th style="width: 50px;">
                                         <i class="fas fa-grip-vertical text-muted"></i>
                                     </th>
-                                    <th>Grande Item</th>
-                                    <th style="width: 80px;">Subgrupos</th>
+                                    <th>&nbsp; <!--Grande Item -->  </th>
+                                    <th style="width: 80px;">Sub Itens</th>
                                     <th style="width: 120px;">Ações</th>
                                 </tr>
                             </thead>
@@ -125,7 +125,7 @@
                                             </div>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-info">{{ grandeItem.subgrupos?.length || 0 }}</span>
+                                            <span class="badge bg-info">{{ grandeItem.sub_itens?.length || 0 }}</span>
                                         </td>
                                                                 <td>
                             <div class="d-flex gap-1 justify-content-end" v-if="permissoes.crud">
@@ -139,7 +139,7 @@
                         </td>
                                     </tr>
                                     
-                                    <!-- Linhas dos Subgrupos - SEMPRE VISÍVEL -->
+                                    <!-- Linhas dos Sub Itens - SEMPRE VISÍVEL -->
                                     <tr class="subgrupos-expanded">
                                         <td colspan="4" class="p-0">
                                             <!-- Header dos Subgrupos -->
@@ -148,10 +148,10 @@
                                                     <div class="d-flex align-items-center">
                                                         <i class="fas fa-chevron-down text-muted me-2"></i>
                                                         <span class="text-muted fw-medium">
-                                                            Subgrupos ({{ grandeItem.sub_grupos?.length || 0 }})
+                                                            Sub Itens ({{ grandeItem.sub_itens?.length || 0 }})
                                                         </span>
                                                     </div>
-                                                    <button v-if="permissoes.crud" class="btn btn-sm btn-outline-success" @click="adicionarSubgrupo(grandeItem)" title="Adicionar Subgrupo">
+                                                    <button v-if="permissoes.crud" class="btn btn-sm btn-outline-success" @click="adicionarSubItem(grandeItem)" title="Adicionar Sub Item">
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
@@ -159,19 +159,19 @@
                                             
                                             <!-- Conteúdo dos Subgrupos -->
                                             <div class="subgrupos-content">
-                                                <!-- Se não há subgrupos, mostrar mensagem -->
-                                                <div v-if="!grandeItem.sub_grupos || grandeItem.sub_grupos.length === 0" 
+                                                <!-- Se não há sub itens, mostrar mensagem -->
+                                                <div v-if="!grandeItem.sub_itens || grandeItem.sub_itens.length === 0" 
                                                      class="subgrupos-empty text-center py-3">
                                                     <i class="fas fa-folder-open text-muted mb-2" style="font-size: 1.5rem;"></i>
-                                                    <p class="text-muted mb-2">Nenhum subgrupo criado</p>
-                                                    <small class="text-muted">Clique no botão + para adicionar o primeiro subgrupo</small>
+                                                    <p class="text-muted mb-2">Nenhum sub item criado</p>
+                                                    <small class="text-muted">Clique no botão + para adicionar o primeiro sub item</small>
                                                 </div>
                                                 
                                                 <!-- Tabela de Subgrupos (quando existem) -->
                                                 <div v-else class="subgrupos-table-container">
                                                 <table class="table table-sm mb-0">
                                                     <tbody>
-                                                            <tr v-for="subgrupo in grandeItem.sub_grupos" 
+                                                            <tr v-for="subgrupo in grandeItem.sub_itens" 
                                                             :key="subgrupo.id"
                                                             class="subgrupo-row"
                                                             draggable="true"
@@ -191,10 +191,10 @@
                                                             </td>
                                                                                                                             <td style="width: 120px;">
                                                                     <div class="d-flex gap-1 justify-content-end" v-if="permissoes.crud">
-                                                                        <button class="btn btn-sm btn-outline-warning subgrupo-action-btn" @click="editarSubgrupo(subgrupo)" title="Editar Subgrupo">
+                                                                        <button class="btn btn-sm btn-outline-warning subgrupo-action-btn" @click="editarSubItem(subgrupo)" title="Editar Sub Item">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                        <button class="btn btn-sm btn-outline-danger subgrupo-action-btn" @click="excluirSubgrupo(subgrupo)" title="Excluir Subgrupo">
+                                                                        <button class="btn btn-sm btn-outline-danger subgrupo-action-btn" @click="excluirSubItem(subgrupo)" title="Excluir Sub Item">
                                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                     </div>
@@ -320,8 +320,8 @@
             </div>
         </div>
 
-        <!-- Modal de Subgrupo -->
-        <div class="modal fade" id="modalSubgrupo" tabindex="-1" ref="modalSubgrupoRef">
+        <!-- Modal de Sub Item -->
+        <div class="modal fade" id="modalSubItem" tabindex="-1" ref="modalSubItemRef">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <!-- Header com Gradiente -->
@@ -331,7 +331,7 @@
                                 <i class="fas" :class="modoEdicao ? 'fa-edit' : 'fa-plus'"></i>
                             </div>
                             <h5 class="modal-title mb-0">
-                                {{ modoEdicao ? 'Editar Subgrupo' : 'Novo Subgrupo' }}
+                                {{ modoEdicao ? 'Editar Sub Item' : 'Novo Sub Item' }}
                             </h5>
                         </div>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -339,7 +339,7 @@
 
                     <!-- Corpo do Modal -->
                     <div class="modal-body">
-                        <form @submit.prevent="salvarSubgrupo">
+                        <form @submit.prevent="salvarSubItem">
                             <div class="row g-3">
                                 <!-- Campo Grande Item ID (Readonly) -->
                                 <div class="col-12">
@@ -352,7 +352,7 @@
                                                disabled>
                                         <label for="grandeItemIdSubgrupo">Grande Item Pai</label>
                                     </div>
-                                    <small class="text-muted">Este subgrupo será criado dentro do grande item selecionado</small>
+                                    <small class="text-muted">Este sub item será criado dentro do grande item selecionado</small>
                                 </div>
                                 
                                 <!-- Campo Descrição -->
@@ -363,9 +363,9 @@
                                                :class="{ 'is-invalid': errors.descricao }"
                                                id="descricaoSubgrupo" 
                                                v-model="form.descricao"
-                                               placeholder="Descrição do subgrupo"
+                                               placeholder="Descrição do sub item"
                                                required>
-                                        <label for="descricaoSubgrupo">Descrição do Subgrupo</label>
+                                        <label for="descricaoSubgrupo">Descrição do Sub Item</label>
                                     </div>
                                     <div class="invalid-feedback" v-if="errors.descricao">
                                         {{ errors.descricao[0] }}
@@ -398,7 +398,7 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times me-2"></i>Cancelar
                         </button>
-                        <button type="button" class="btn btn-success" @click="salvarSubgrupo" :disabled="salvando">
+                        <button type="button" class="btn btn-success" @click="salvarSubItem" :disabled="salvando">
                             <span v-if="salvando" class="spinner-border spinner-border-sm me-2" role="status"></span>
                             <i v-else class="fas fa-save me-2"></i>
                             {{ salvando ? 'Salvando...' : 'Salvar' }}
@@ -426,7 +426,7 @@
                     <!-- Corpo do Modal -->
                     <div class="modal-body text-center py-4">
                         <i class="fas fa-question-circle text-warning mb-3" style="font-size: 3rem;"></i>
-                        <h6 class="mb-3">Tem certeza que deseja excluir este {{ tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'subgrupo' }}?</h6>
+                        <h6 class="mb-3">Tem certeza que deseja excluir este {{ tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'sub item' }}?</h6>
                         <p class="text-muted mb-0">
                             <strong>{{ itemParaExcluir?.descricao }}</strong>
                         </p>
@@ -531,8 +531,8 @@
                                         <div class="col-md-6">
                                             <div class="card bg-light">
                                                 <div class="card-body text-center">
-                                                    <h4 class="text-success mb-1">{{ resumoImportacao.subgrupos }}</h4>
-                                                    <small class="text-muted">Subgrupos</small>
+                                                    <h4 class="text-success mb-1">{{ resumoImportacao.subItens }}</h4>
+                                                    <small class="text-muted">Sub Itens</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -613,7 +613,7 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>Serão removidos:</strong><br>
                                 • {{ grandesItens.length }} Grande(s) Item(ns)<br>
-                                • {{ totalSubgrupos }} Subgrupo(s)
+                                • {{ totalSubItens }} Sub Item(s)
                             </small>
                         </div>
                         <small class="text-danger d-block mt-3">
@@ -688,7 +688,7 @@ export default {
             
             // Refs dos modais
             grandeItemModal: null,
-            subgrupoModal: null,
+            subItemModal: null,
             modalConfirmacao: null,
             modalImportacao: null,
             modalLimparEstrutura: null,
@@ -706,7 +706,7 @@ export default {
             dadosExcel: null,
             resumoImportacao: {
                 grandesItens: 0,
-                subgrupos: 0
+                subItens: 0
             },
             previewEstrutura: [],
             progressoImportacao: 0,
@@ -719,10 +719,10 @@ export default {
     },
     
     computed: {
-        // Calcula o total de subgrupos
-        totalSubgrupos() {
+        // Calcula o total de sub itens
+        totalSubItens() {
             return this.grandesItens.reduce((total, item) => {
-                return total + (item.sub_grupos ? item.sub_grupos.length : 0);
+                return total + (item.sub_itens ? item.sub_itens.length : 0);
             }, 0);
         }
     },
@@ -796,8 +796,8 @@ export default {
                 if (this.$refs.grandeItemModalRef) {
                     this.grandeItemModal = new bootstrap.Modal(this.$refs.grandeItemModalRef);
                 }
-                if (this.$refs.modalSubgrupoRef) {
-                    this.subgrupoModal = new bootstrap.Modal(this.$refs.modalSubgrupoRef);
+                if (this.$refs.modalSubItemRef) {
+                    this.subItemModal = new bootstrap.Modal(this.$refs.modalSubItemRef);
                 }
                 if (this.$refs.modalConfirmacaoRef) {
                     this.modalConfirmacao = new bootstrap.Modal(this.$refs.modalConfirmacaoRef);
@@ -830,33 +830,33 @@ export default {
             }
         },
         
-        // Adicionar subgrupo
-        adicionarSubgrupo(grandeItem) {
+        // Adicionar sub item
+        adicionarSubItem(grandeItem) {
             this.modoEdicao = false;
             this.itemSelecionado = grandeItem;
             this.form.eo_grande_item_id = grandeItem.id;
             this.limparFormulario();
-            if (this.subgrupoModal) {
-                this.subgrupoModal.show();
+            if (this.subItemModal) {
+                this.subItemModal.show();
             }
         },
         
-        // Editar subgrupo
-        editarSubgrupo(subgrupo) {
+        // Editar sub item
+        editarSubItem(subgrupo) {
             this.modoEdicao = true;
             this.itemSelecionado = subgrupo;
             this.form = { ...subgrupo };
             
             // Encontrar o grande item pai
             const grandeItem = this.grandesItens.find(gi => 
-                gi.sub_grupos && gi.sub_grupos.some(sg => sg.id === subgrupo.id)
+                gi.sub_itens && gi.sub_itens.some(sg => sg.id === subgrupo.id)
             );
             if (grandeItem) {
                 this.form.eo_grande_item_id = grandeItem.id;
             }
             
-            if (this.subgrupoModal) {
-                this.subgrupoModal.show();
+            if (this.subItemModal) {
+                this.subItemModal.show();
             }
         },
         
@@ -902,7 +902,7 @@ export default {
             }
         },
         
-        async salvarSubgrupo() {
+        async salvarSubItem() {
             this.salvando = true;
             try {
                 let response;
@@ -923,21 +923,21 @@ export default {
                 }
                 
                 if (response.data && response.data.success) {
-                    if (this.subgrupoModal) {
-                        this.subgrupoModal.hide();
+                    if (this.subItemModal) {
+                        this.subItemModal.hide();
                     }
                     await this.carregarDados();
                 
-                    this.mostrarToast(response.data.message || 'Subgrupo salvo com sucesso!', 'success');
+                    this.mostrarToast(response.data.message || 'Sub item salvo com sucesso!', 'success');
                 } else {
-                    this.mostrarToast('Erro ao salvar subgrupo', 'error');
+                    this.mostrarToast('Erro ao salvar sub item', 'error');
                 }
             } catch (error) {
 
                 if (error.response && error.response.data && error.response.data.errors) {
                     this.errors = error.response.data.errors;
                 } else {
-                this.mostrarToast('Erro ao salvar subgrupo', 'error');
+                this.mostrarToast('Erro ao salvar sub item', 'error');
                 }
             } finally {
                 this.salvando = false;
@@ -952,9 +952,9 @@ export default {
             }
         },
         
-        excluirSubgrupo(subgrupo) {
+        excluirSubItem(subgrupo) {
             this.itemParaExcluir = subgrupo;
-            this.tipoItemParaExcluir = 'subgrupo';
+            this.tipoItemParaExcluir = 'sub-item';
             if (this.modalConfirmacao) {
                 this.modalConfirmacao.show();
             }
@@ -971,19 +971,19 @@ export default {
                 
                 if (this.tipoItemParaExcluir === 'grande-item') {
                     response = await axios.delete(`/api/administracao/estrutura-orcamento/grande-item/${this.itemParaExcluir.id}`);
-                } else if (this.tipoItemParaExcluir === 'subgrupo') {
+                } else if (this.tipoItemParaExcluir === 'sub-item') {
                     response = await axios.delete(`/api/administracao/estrutura-orcamento/subgrupo/${this.itemParaExcluir.id}`);
                 }
                 
                 if (response && response.data && response.data.success) {
                     await this.carregarDados();
-                    this.mostrarToast(response.data.message || `${this.tipoItemParaExcluir === 'grande-item' ? 'Grande item' : 'Subgrupo'} excluído com sucesso!`, 'success');
+                    this.mostrarToast(response.data.message || `${this.tipoItemParaExcluir === 'grande-item' ? 'Grande item' : 'Sub item'} excluído com sucesso!`, 'success');
                 } else {
-                    this.mostrarToast(`Erro ao excluir ${this.tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'subgrupo'}`, 'error');
+                    this.mostrarToast(`Erro ao excluir ${this.tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'sub item'}`, 'error');
                 }
                 } catch (error) {
 
-                this.mostrarToast(`Erro ao excluir ${this.tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'subgrupo'}`, 'error');
+                this.mostrarToast(`Erro ao excluir ${this.tipoItemParaExcluir === 'grande-item' ? 'grande item' : 'sub item'}`, 'error');
             } finally {
                 this.excluindo = false;
                 
@@ -1060,7 +1060,7 @@ export default {
             this.arquivoSelecionado = null;
             this.isDragOver = false;
             this.dadosExcel = null;
-            this.resumoImportacao = { grandesItens: 0, subgrupos: 0 };
+            this.resumoImportacao = { grandesItens: 0, subItens: 0 };
             this.previewEstrutura = [];
             this.progressoImportacao = 0;
             this.mensagemProgresso = '';
@@ -1139,7 +1139,7 @@ export default {
                     // Atualizar dados com resposta real da API
                     this.dadosExcel = response.data.data;
                     this.resumoImportacao.grandesItens = response.data.data.grandes_itens_criados || 0;
-                    this.resumoImportacao.subgrupos = response.data.data.subgrupos_criados || 0;
+                    this.resumoImportacao.subItens = response.data.data.subgrupos_criados || 0;
                     
                     // Preparar preview (se a API retornar estrutura)
                     if (response.data.data.estrutura) {

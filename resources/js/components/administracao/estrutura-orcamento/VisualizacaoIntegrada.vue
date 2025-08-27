@@ -81,21 +81,21 @@
                                 <span class="item-numero">{{ grandeItem.ordem }}.</span>
                                 <span class="item-descricao">{{ grandeItem.descricao }}</span>
                                 <span class="item-contador" v-if="mostrarArvoreCompleta">
-                                    ({{ grandeItem.sub_grupos?.length || 0 }} subgrupos)
+                                    ({{ grandeItem.sub_itens?.length || 0 }} sub itens)
                                 </span>
                             </div>
                             
                             <!-- Subgrupos (quando mostrarArvoreCompleta = true) -->
-                            <div v-if="mostrarArvoreCompleta && grandeItem.sub_grupos && grandeItem.sub_grupos.length > 0" 
+                            <div v-if="mostrarArvoreCompleta && grandeItem.sub_itens && grandeItem.sub_itens.length > 0" 
                                  class="subgrupos-container">
-                                <div v-for="subgrupo in grandeItem.sub_grupos" :key="subgrupo.id" class="subgrupo-item">
+                                <div v-for="subgrupo in grandeItem.sub_itens" :key="subgrupo.id" class="subgrupo-item">
                                     <span class="subgrupo-linha">│</span>
                                     <span class="subgrupo-linha">├──</span>
                                     <span class="subgrupo-numero">{{ subgrupo.ordem }}.</span>
                                     <span class="subgrupo-descricao">{{ subgrupo.descricao }}</span>
                                 </div>
                                 <!-- Linha de fechamento do último subgrupo -->
-                                <div class="subgrupo-item" v-if="grandeItem.sub_grupos && grandeItem.sub_grupos.length > 0">
+                                <div class="subgrupo-item" v-if="grandeItem.sub_itens && grandeItem.sub_itens.length > 0">
                                     <span class="subgrupo-linha">│</span>
                                 </div>
                             </div>

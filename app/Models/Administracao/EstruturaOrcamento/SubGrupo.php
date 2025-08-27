@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SubGrupo extends Model
 {
-    protected $table = 'eo_sub_grupos';
+    protected $table = 'eo_sub_itens';
     
     protected $fillable = [
         'eo_grande_item_id',
