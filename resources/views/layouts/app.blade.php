@@ -109,25 +109,6 @@
         </div>
         
         <div class="sidebar-content">
-            <!-- DEBUG TEMPORÁRIO -->
-            @php
-                $user = Auth::user()->load('roles');
-                $roles = $user->roles;
-                $isSuper = $user->isSuperAdmin();
-            @endphp
-            <div style="background: #f0f0f0; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
-                <strong>DEBUG:</strong><br>
-                Usuário: {{ $user->name }}<br>
-                Email: {{ $user->email }}<br>
-                Papéis: {{ $roles->pluck('name')->implode(', ') ?: 'Nenhum papel' }}<br>
-                Count: {{ $roles->count() }}<br>
-                isSuperAdmin(): {{ $isSuper ? 'SIM' : 'NÃO' }}<br>
-                <hr>
-                <strong>Detalhes dos papéis:</strong><br>
-                @foreach($roles as $role)
-                    - {{ $role->name }} ({{ $role->display_name }})<br>
-                @endforeach
-            </div>
 
             <!-- TABELAS OFICIAIS -->
             @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_importacao_derpr') || Auth::user()->hasRole('gerenciar_importacao_sinapi') || Auth::user()->hasRole('consultar_tabela_derpr') || Auth::user()->hasRole('consultar_tabela_sinapi'))
