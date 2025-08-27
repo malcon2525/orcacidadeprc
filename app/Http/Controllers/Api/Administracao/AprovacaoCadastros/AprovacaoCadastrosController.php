@@ -21,8 +21,8 @@ class AprovacaoCadastrosController extends Controller
      */
     public function listar(Request $request): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        // Verificação de acesso - pode aprovar ou visualizar
+        $this->checkAccess(['aprovar_cadastros', 'visualizar_cadastros_usuarios']);
 
         try {
             $query = SolicitacaoCadastro::with([
@@ -90,7 +90,7 @@ class AprovacaoCadastrosController extends Controller
         ]);
         
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['aprovar_cadastros']);
 
         $validator = Validator::make($request->all(), [
             'observacoes_aprovacao' => 'nullable|string|max:1000'
@@ -180,7 +180,7 @@ class AprovacaoCadastrosController extends Controller
     public function rejeitar(Request $request, int $id): JsonResponse
     {
         // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        $this->checkAccess(['aprovar_cadastros']);
 
         $validator = Validator::make($request->all(), [
             'observacoes_aprovacao' => 'required|string|max:1000'
@@ -227,8 +227,8 @@ class AprovacaoCadastrosController extends Controller
      */
     public function filtros(): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['aprovar-cadastros']);
+        // Verificação de acesso - pode aprovar ou visualizar
+        $this->checkAccess(['aprovar_cadastros', 'visualizar_cadastros_usuarios']);
 
         try {
             $entidades = EntidadeOrcamentaria::select('id', 'jurisdicao_nome_fantasia as nome', 'tipo_organizacao')

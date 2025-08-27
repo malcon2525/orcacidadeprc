@@ -3,62 +3,64 @@
 namespace App\Http\Controllers\Web\Administracao\UsuariosPorEntidade;
 
 use App\Http\Controllers\Controller;
+use App\Models\Administracao\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class UsuariosPorEntidadeController extends Controller
 {
     /**
-     * Exibe a página de usuários por entidade
+     * Construtor com middleware de autenticação
      */
-    public function index(): View
+    public function __construct()
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar_usuarios']);
-        
-        return view('administracao.usuarios-por-entidade.index');
+        $this->middleware('auth');
     }
 
     /**
-     * Verificação de acesso unificada
+     * Exibe a interface de usuários por entidade
+     * O Vue.js fará todo o gerenciamento através da API
      */
-    private function checkAccess($permissions, $requireAll = false)
+    public function index(): View
     {
-        /** @var \App\Models\Administracao\User $user */
+        /** @var User $user */
         $user = Auth::user();
         
         // 1. É super admin? → Acesso total
         if ($user->isSuperAdmin()) {
-            return true;
+            return view('administracao.usuarios-por-entidade.index', [
+                'permissoes' => [
+                    'crud' => true,
+                    'consultar' => true,
+                    'vincular' => true
+                ]
+            ]);
         }
         
-        // 2. Verificação flexível de permissões
-        if (is_string($permissions)) {
-            $permissions = [$permissions];
+        // 2. Tem permissão para gerenciar vínculos de usuários?
+        if ($user->hasPermission('gerenciar_vinculos_usuarios')) {
+            return view('administracao.usuarios-por-entidade.index', [
+                'permissoes' => [
+                    'crud' => true,
+                    'consultar' => true,
+                    'vincular' => true
+                ]
+            ]);
         }
         
-        if ($requireAll) {
-            // Todas as permissões são obrigatórias (AND)
-            foreach ($permissions as $permission) {
-                if (!$user->hasPermission($permission)) {
-                    abort(403, "Permissão obrigatória: {$permission}");
-                }
-            }
-        } else {
-            // Pelo menos uma permissão é suficiente (OR)
-            $hasAnyPermission = false;
-            foreach ($permissions as $permission) {
-                if ($user->hasPermission($permission)) {
-                    $hasAnyPermission = true;
-                    break;
-                }
-            }
-            
-            if (!$hasAnyPermission) {
-                abort(403, 'Acesso negado. Permissão insuficiente.');
-            }
+        // 3. Tem permissão apenas para visualizar?
+        if ($user->hasPermission('visualizar_cadastros_usuarios')) {
+            return view('administracao.usuarios-por-entidade.index', [
+                'permissoes' => [
+                    'crud' => false,
+                    'consultar' => true,
+                    'vincular' => false
+                ]
+            ]);
         }
         
-        return true;
+        // 4. Nenhuma das opções → Acesso negado
+        abort(403, 'Acesso negado. Permissão insuficiente para gerenciar usuários por entidade.');
     }
+
 }

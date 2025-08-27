@@ -19,31 +19,32 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function listarEntidades(Request $request): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar_usuarios']);
+        // Verificação de acesso - pode visualizar ou gerenciar
+        $this->checkAccess(['gerenciar_vinculos_usuarios', 'visualizar_cadastros_usuarios']);
 
         try {
             $query = EntidadeOrcamentaria::query()
                 ->select([
                     'entidades_orcamentarias.id',
-                    'entidades_orcamentarias.nome_fantasia',
+                    'entidades_orcamentarias.jurisdicao_razao_social',
+                    'entidades_orcamentarias.jurisdicao_nome_fantasia',
                     'entidades_orcamentarias.tipo_organizacao',
                     'entidades_orcamentarias.nivel_administrativo',
-                    'entidades_orcamentarias.jurisdicao_nome',
+                    'entidades_orcamentarias.jurisdicao_uf',
                     'entidades_orcamentarias.jurisdicao_codigo_ibge',
+                    'entidades_orcamentarias.email',
+                    'entidades_orcamentarias.telefone',
                     'entidades_orcamentarias.ativo'
                 ])
-                ->with(['municipio:id,nome,codigo_ibge'])
+
                 ->withCount(['usuarios as usuarios_ativos_count' => function ($q) {
                     $q->where('user_entidades_orcamentarias.ativo', true);
                 }])
                 ->withCount(['usuarios as usuarios_total_count']);
 
             // Filtros
-            if ($request->filled('municipio_id')) {
-                $query->whereHas('municipio', function ($q) use ($request) {
-                    $q->where('id', $request->municipio_id);
-                });
+            if ($request->filled('jurisdicao_uf')) {
+                $query->where('entidades_orcamentarias.jurisdicao_uf', $request->jurisdicao_uf);
             }
 
             if ($request->filled('nivel_administrativo')) {
@@ -61,13 +62,13 @@ class UsuariosPorEntidadeController extends Controller
             if ($request->filled('busca')) {
                 $busca = trim($request->busca);
                 $query->where(function ($q) use ($busca) {
-                    $q->where('entidades_orcamentarias.nome_fantasia', 'LIKE', "%{$busca}%")
-                      ->orWhere('entidades_orcamentarias.jurisdicao_nome', 'LIKE', "%{$busca}%");
+                    $q->where('entidades_orcamentarias.jurisdicao_razao_social', 'LIKE', "%{$busca}%")
+                      ->orWhere('entidades_orcamentarias.jurisdicao_nome_fantasia', 'LIKE', "%{$busca}%");
                 });
             }
 
             // Ordenação
-            $query->orderBy('entidades_orcamentarias.nome_fantasia');
+            $query->orderBy('entidades_orcamentarias.jurisdicao_razao_social');
 
             // Paginação
             $entidades = $query->paginate($request->get('per_page', 15));
@@ -87,8 +88,8 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function listarUsuariosPorEntidade(Request $request, int $entidadeId): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar_usuarios']);
+        // Verificação de acesso - pode visualizar ou gerenciar
+        $this->checkAccess(['gerenciar_vinculos_usuarios', 'visualizar_cadastros_usuarios']);
 
         try {
             $entidade = EntidadeOrcamentaria::with('municipio')->findOrFail($entidadeId);
@@ -149,8 +150,8 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function listarUsuariosDisponiveis(Request $request, int $entidadeId): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar_usuarios']);
+        // Verificação de acesso - apenas quem pode gerenciar vínculos
+        $this->checkAccess(['gerenciar_vinculos_usuarios']);
 
         try {
             $query = User::query()
@@ -191,8 +192,8 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function vincularUsuario(Request $request, int $entidadeId): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar-usuarios']);
+        // Verificação de acesso - apenas quem pode gerenciar vínculos
+        $this->checkAccess(['gerenciar_vinculos_usuarios']);
 
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id'
@@ -277,8 +278,8 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function desvincularUsuario(int $entidadeId, int $userId): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar_usuarios']);
+        // Verificação de acesso - apenas quem pode gerenciar vínculos
+        $this->checkAccess(['gerenciar_vinculos_usuarios']);
 
         try {
             DB::beginTransaction();
@@ -324,8 +325,8 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function reativarVinculo(int $entidadeId, int $userId): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar_usuarios']);
+        // Verificação de acesso - apenas quem pode gerenciar vínculos
+        $this->checkAccess(['gerenciar_vinculos_usuarios']);
 
         try {
             DB::beginTransaction();
@@ -373,14 +374,10 @@ class UsuariosPorEntidadeController extends Controller
      */
     public function filtros(): JsonResponse
     {
-        // Verificação de acesso
-        $this->checkAccess(['gerenciar-usuarios']);
+        // Verificação de acesso - pode visualizar ou gerenciar
+        $this->checkAccess(['gerenciar_vinculos_usuarios', 'visualizar_cadastros_usuarios']);
 
         try {
-            $municipios = Municipio::select('id', 'nome')
-                ->orderBy('nome')
-                ->get();
-
             $niveisAdministrativos = [
                 ['value' => 'municipal', 'label' => 'Municipal'],
                 ['value' => 'estadual', 'label' => 'Estadual'],
@@ -388,17 +385,23 @@ class UsuariosPorEntidadeController extends Controller
             ];
 
             $tiposOrganizacao = [
-                ['value' => 'municipio', 'label' => 'Município'],
-                ['value' => 'secretaria', 'label' => 'Secretaria'],
-                ['value' => 'órgão', 'label' => 'Órgão'],
-                ['value' => 'autarquia', 'label' => 'Autarquia'],
-                ['value' => 'outros', 'label' => 'Outros']
+                ['value' => 'Prefeitura', 'label' => 'Prefeitura'],
+                ['value' => 'Câmara Municipal', 'label' => 'Câmara Municipal'],
+                ['value' => 'Unidade Federativa', 'label' => 'Unidade Federativa'],
+                ['value' => 'Secretaria', 'label' => 'Secretaria'],
+                ['value' => 'Órgão', 'label' => 'Órgão'],
+                ['value' => 'Autarquia', 'label' => 'Autarquia'],
+                ['value' => 'Outros', 'label' => 'Outros']
+            ];
+
+            $ufs = [
+                ['value' => 'PR', 'label' => 'Paraná']
             ];
 
             return response()->json([
-                'municipios' => $municipios,
                 'niveis_administrativos' => $niveisAdministrativos,
-                'tipos_organizacao' => $tiposOrganizacao
+                'tipos_organizacao' => $tiposOrganizacao,
+                'ufs' => $ufs
             ]);
 
         } catch (\Exception $e) {

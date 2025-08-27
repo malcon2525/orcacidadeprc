@@ -191,14 +191,21 @@
                                         <button class="btn btn-sm btn-info" @click="visualizarSolicitacao(solicitacao)" title="Visualizar">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <!-- Botões de Ação (apenas para pendentes) -->
-                                        <template v-if="solicitacao.status === 'pendente'">
+                                        <!-- Botões de Ação (apenas para pendentes e com permissão) -->
+                                        <template v-if="solicitacao.status === 'pendente' && permissoes.aprovar">
                                             <button class="btn btn-sm btn-success" @click="aprovarSolicitacao(solicitacao)" title="Aprovar">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                             <button class="btn btn-sm btn-danger" @click="rejeitarSolicitacao(solicitacao)" title="Rejeitar">
                                                 <i class="fas fa-times"></i>
                                             </button>
+                                        </template>
+                                        <!-- Indicador para usuários sem permissão de aprovação -->
+                                        <template v-else-if="solicitacao.status === 'pendente' && !permissoes.aprovar">
+                                            <span class="badge badge-status badge-secondary">
+                                                <i class="fas fa-eye"></i>
+                                                Somente Leitura
+                                            </span>
                                         </template>
                                     </div>
                                 </td>
@@ -763,6 +770,16 @@
 <script>
 export default {
     name: 'ListaAprovacaoCadastros',
+    props: {
+        permissoes: {
+            type: Object,
+            default: () => ({
+                crud: false,
+                consultar: false,
+                aprovar: false
+            })
+        }
+    },
     data() {
         return {
             loading: true,

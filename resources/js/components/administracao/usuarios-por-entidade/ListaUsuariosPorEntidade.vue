@@ -4,7 +4,7 @@
             <!-- Cabeçalho Padrão -->
             <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-semibold" style="color: #5EA853; font-size: 1.2rem; padding: 5px 0;">
-                    <i class="fas fa-users me-2"></i>Usuários por Entidade
+                    <i class="fas fa-users-cog me-2"></i>Usuários por Entidade Orçamentária
                 </h6>
                 <div class="d-flex gap-2">
                     <!-- Botão Filtros -->
@@ -111,15 +111,18 @@
                                 <th class="table-header">Tipo</th>
                                 <th class="table-header">Jurisdição</th>
                                 <th class="table-header">Status</th>
-                                <th class="table-header">Usuários Ativos</th>
-                                <th class="table-header">Total Usuários</th>
+                                <th class="table-header" style="width: 120px;">Usuários Ativos</th>
+                                <th class="table-header" style="width: 120px;">Total Usuários</th>
                                 <th class="table-header text-end" style="width: 120px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="entidade in entidades" :key="entidade.id" class="table-row">
                                 <td class="table-cell">
-                                    <div class="fw-medium">{{ entidade.nome_fantasia }}</div>
+                                    <div class="fw-medium">{{ entidade.jurisdicao_razao_social || entidade.jurisdicao_nome_fantasia || '—' }}</div>
+                                    <small v-if="entidade.jurisdicao_nome_fantasia && entidade.jurisdicao_razao_social !== entidade.jurisdicao_nome_fantasia" class="text-muted d-block">
+                                        {{ entidade.jurisdicao_nome_fantasia }}
+                                    </small>
                                 </td>
                                 <td class="table-cell">
                                     <span class="badge" :class="getTipoClass(entidade.tipo_organizacao)">
@@ -224,7 +227,7 @@
                             <div class="header-icon" style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.2rem; color: white;">
                                 <i class="fas fa-users"></i>
                             </div>
-                            <h5 class="modal-title mb-0">Gerenciar Usuários - {{ entidadeSelecionada?.nome_fantasia }}</h5>
+                            <h5 class="modal-title mb-0">Usuários Vinculados - {{ entidadeSelecionada?.jurisdicao_razao_social || entidadeSelecionada?.jurisdicao_nome_fantasia || 'Entidade' }}</h5>
                         </div>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
                     </div>
@@ -232,19 +235,19 @@
                     <!-- Body do Modal -->
                     <div class="modal-body" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
                         <!-- Informações da Entidade -->
-                        <div class="mb-4 p-3 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #5EA853;">
+                        <!-- <div class="mb-4 p-3 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid #5EA853;">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <strong style="color: #18578A;">Entidade:</strong> {{ entidadeSelecionada?.nome_fantasia }}
+                                    <strong style="color: #18578A;">Entidade:</strong> {{ entidadeSelecionada?.jurisdicao_razao_social || entidadeSelecionada?.jurisdicao_nome_fantasia || '—' }}
                                 </div>
                                 <div class="col-md-6">
-                                    <strong style="color: #18578A;">Município:</strong> {{ entidadeSelecionada?.municipio?.nome }}
+                                    <strong style="color: #18578A;">UF/Jurisdição:</strong> {{ entidadeSelecionada?.jurisdicao_uf || entidadeSelecionada?.jurisdicao_codigo_ibge || '—' }}
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Botão Vincular Usuário -->
-                        <div class="mb-4">
+                        <div class="mb-4" v-if="permissoes.vincular">
                             <button class="btn btn-success" @click="abrirModalVincular">
                                 <i class="fas fa-user-plus me-2"></i>Vincular Usuário
                             </button>
@@ -297,14 +300,19 @@
                                         </td>
                                         <td class="table-cell text-end">
                                             <div class="d-flex gap-1 justify-content-end">
-                                                <!-- Botão Desvincular (se vinculado) -->
-                                                <button v-if="usuario.vinculo_ativo" class="btn btn-sm btn-danger" @click="desvincularUsuario(usuario)" title="Desvincular">
+                                                <!-- Botão Desvincular (se vinculado) - apenas para quem pode vincular -->
+                                                <button v-if="usuario.vinculo_ativo && permissoes.vincular" class="btn btn-sm btn-danger" @click="desvincularUsuario(usuario)" title="Desvincular">
                                                     <i class="fas fa-unlink"></i>
                                                 </button>
-                                                <!-- Botão Reativar (se desvinculado) -->
-                                                <button v-else class="btn btn-sm btn-success" @click="reativarVinculo(usuario)" title="Reativar Vínculo">
+                                                <!-- Botão Reativar (se desvinculado) - apenas para quem pode vincular -->
+                                                <button v-else-if="!usuario.vinculo_ativo && permissoes.vincular" class="btn btn-sm btn-success" @click="reativarVinculo(usuario)" title="Reativar Vínculo">
                                                     <i class="fas fa-redo"></i>
                                                 </button>
+                                                <!-- Indicador visual para usuários sem permissão -->
+                                                <span v-else-if="!permissoes.vincular" class="badge badge-status badge-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                    Somente Leitura
+                                                </span>
                                             </div>
                                         </td>
                                     </tr>
@@ -315,8 +323,9 @@
                         <!-- Estado Vazio dos Usuários -->
                         <div v-else class="text-center py-4">
                             <i class="fas fa-user-slash fa-2x text-muted mb-3"></i>
-                            <h6 class="text-muted">Nenhum usuário vinculado</h6>
-                            <p class="text-muted">Esta entidade ainda não possui usuários vinculados.</p>
+                            <h6 class="text-muted">Nenhum usuário vinculado à esta entidade</h6>
+                            <p class="text-muted" v-if="permissoes.vincular">Use o botão "Vincular Usuário" para adicionar usuários.</p>
+                            <p class="text-muted" v-else>Esta entidade não possui usuários vinculados.</p>
                         </div>
                     </div>
                     
@@ -427,6 +436,16 @@
 <script>
 export default {
     name: 'ListaUsuariosPorEntidade',
+    props: {
+        permissoes: {
+            type: Object,
+            default: () => ({
+                crud: false,
+                consultar: false,
+                vincular: false
+            })
+        }
+    },
     data() {
         return {
             loading: true,
@@ -442,7 +461,7 @@ export default {
             },
             filtros: {
                 busca: '',
-                municipio_id: '',
+                jurisdicao_uf: '',
                 nivel_administrativo: '',
                 tipo_organizacao: '',
                 ativo: ''
@@ -857,10 +876,10 @@ export default {
         },
 
         formatarJurisdicao(entidade) {
-            if (entidade.nivel_administrativo === 'municipal' && entidade.municipio) {
-                return entidade.municipio.nome + ' - PR';
+            if (entidade.jurisdicao_uf) {
+                return `${entidade.jurisdicao_uf}`;
             }
-            return entidade.jurisdicao_nome || '—';
+            return entidade.jurisdicao_codigo_ibge || '—';
         },
 
         getTipoClass(tipo) {

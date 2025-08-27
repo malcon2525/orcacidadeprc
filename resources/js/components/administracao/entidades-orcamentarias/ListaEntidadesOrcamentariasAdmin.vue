@@ -18,7 +18,7 @@
                     <button v-if="permissoes.crud" class="btn btn-moderno btn-primary-moderno d-flex align-items-center gap-2 px-3 py-2" @click="importarMunicipios" :disabled="loading">
                         <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
                         <i v-else class="fas fa-file-import"></i>
-                        <span>Importar Municípios</span>
+                        <span>Importar Municípios (PR)</span>
                     </button>
                 </div>
             </div>

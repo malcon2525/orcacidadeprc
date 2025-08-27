@@ -38,7 +38,7 @@ class AprovacaoCadastrosController extends Controller
         }
         
         // 2. Tem a permissão de aprovar cadastros?
-        if ($user->hasPermission('aprovar-cadastros')) {
+        if ($user->hasPermission('aprovar_cadastros')) {
             return view('administracao.aprovacao-cadastros.index', [
                 'permissoes' => [
                     'crud' => false,
@@ -48,7 +48,18 @@ class AprovacaoCadastrosController extends Controller
             ]);
         }
         
-        // 3. Nenhuma das opções → Acesso negado
-        abort(403, 'Acesso negado. Permissão insuficiente para aprovar cadastros.');
+        // 3. Tem a permissão apenas para visualizar?
+        if ($user->hasPermission('visualizar_cadastros_usuarios')) {
+            return view('administracao.aprovacao-cadastros.index', [
+                'permissoes' => [
+                    'crud' => false,
+                    'consultar' => true,
+                    'aprovar' => false
+                ]
+            ]);
+        }
+        
+        // 4. Nenhuma das opções → Acesso negado
+        abort(403, 'Acesso negado. Permissão insuficiente para acessar aprovação de cadastros.');
     }
 }

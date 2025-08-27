@@ -168,7 +168,7 @@
             @endif
 
             <!-- ADMINISTRAÇÃO -->
-            @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura_orcamento') || Auth::user()->hasRole('visualizar_estrutura_orcamento'))
+            @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('gerenciar_usuarios_entidades') || Auth::user()->hasRole('visualizar_usuarios_entidades') || Auth::user()->hasRole('gerenciar_usuarios') || Auth::user()->hasRole('visualizar_usuarios') || Auth::user()->hasRole('gerenciar_municipios') || Auth::user()->hasRole('visualizar_municipios') || Auth::user()->hasRole('gerenciar_entidade_orcamentaria') || Auth::user()->hasRole('visualizar_entidade_orcamentaria') || Auth::user()->hasRole('gerenciar_ad') || Auth::user()->hasRole('gerenciar_estrutura_orcamento') || Auth::user()->hasRole('visualizar_estrutura_orcamento'))
             <div class="menu-group">
                 <div class="menu-header myBox">
                     <div class="menu-icon">
@@ -211,14 +211,14 @@
                     </a>
                     @endif
 
-                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('aprovar-cadastros'))
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('aprovar_cadastros') || Auth::user()->hasPermission('visualizar_cadastros_usuarios'))
                     <a href="{{ route('admin.aprovacao-cadastros.index') }}" class="menu-link">
                         <i class="fas fa-user-check"></i>
                         <span>Aprovação de Cadastros</span>
                     </a>
                     @endif
 
-                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('aprovar-cadastros'))
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('gerenciar_vinculos_usuarios') || Auth::user()->hasPermission('visualizar_cadastros_usuarios'))
                     <a href="{{ route('admin.usuarios-por-entidade.index') }}" class="menu-link">
                         <i class="fas fa-users-cog"></i>
                         <span>Usuários por Entidade</span>

@@ -1,18 +1,10 @@
 @extends('layouts.app')
 
-@section('content')
-<div id="app-usuarios-por-entidade">
-    <lista-usuarios-por-entidade></lista-usuarios-por-entidade>
-</div>
-@endsection
+@section('title', 'Usuários por Entidade')
 
-@section('scripts')
-<script>
-    const { createApp } = Vue;
-    createApp({
-        components: {
-            'lista-usuarios-por-entidade': window.ListaUsuariosPorEntidade
-        }
-    }).mount('#app-usuarios-por-entidade');
-</script>
+@section('content')
+<!-- Componente Vue.js será montado aqui -->
+<div id="app">
+    <lista-usuarios-por-entidade :permissoes="{{ json_encode($permissoes ?? []) }}"></lista-usuarios-por-entidade>
+</div>
 @endsection
