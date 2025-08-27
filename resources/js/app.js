@@ -51,6 +51,10 @@ import FormularioSolicitacaoCadastro from './components/publico/FormularioSolici
 // Componente Perfil
 import ListaMeuPerfil from './components/perfil/meu-perfil/ListaMeuPerfil.vue';
 
+// Composições Próprias Components
+import ListaComposicaoPropria from './components/orcamento/composicao-propria/ListaComposicaoPropria.vue';
+import ComposicaoPropriaForm from './components/orcamento/composicao-propria/ComposicaoPropriaForm.vue';
+
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
 app.component('header-component', HeaderComponent);
@@ -88,6 +92,10 @@ app.component('formulario-solicitacao-cadastro', FormularioSolicitacaoCadastro);
 
 // Componente Perfil
 app.component('lista-meu-perfil', ListaMeuPerfil);
+
+// Composições Próprias Components
+app.component('lista-composicao-propria', ListaComposicaoPropria);
+app.component('composicao-propria-form', ComposicaoPropriaForm);
 
 /**
  * The following block of code may be used to automatically register your

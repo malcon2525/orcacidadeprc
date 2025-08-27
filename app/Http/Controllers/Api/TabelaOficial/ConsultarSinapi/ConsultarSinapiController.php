@@ -309,8 +309,9 @@ class ConsultarSinapiController extends Controller
         
         try {
             $termo = $request->input('termo');
-            $desoneracao = strtolower($request->input('desoneracao', 'com'));
-            $perPage = 10;
+            $desoneracao = strtolower($request->input('desoneracao', 'sem'));
+            $dataBase = $request->input('data_base');
+            $perPage = 15;
             
             $query = DB::table('sinapi_composicoes_view')
                 ->select([
@@ -324,6 +325,23 @@ class ConsultarSinapiController extends Controller
                     'desoneracao'
                 ])
                 ->whereRaw('TRIM(LOWER(desoneracao)) = ?', [trim(strtolower($desoneracao))]);
+            
+            // Se data_base não for especificada, usar a mais recente para esta desoneração
+            if ($dataBase) {
+                $query->where('data_base', $dataBase);
+            } else {
+                // Subquery para obter a data_base mais recente para esta desoneração
+                $latestDate = DB::table('sinapi_composicoes_view')
+                    ->select('data_base')
+                    ->whereRaw('TRIM(LOWER(desoneracao)) = ?', [trim(strtolower($desoneracao))])
+                    ->orderBy('data_base', 'desc')
+                    ->limit(1)
+                    ->value('data_base');
+                    
+                if ($latestDate) {
+                    $query->where('data_base', $latestDate);
+                }
+            }
                 
             if ($termo) {
                 $query->where(function($q) use ($termo) {

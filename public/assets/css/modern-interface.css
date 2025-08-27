@@ -1090,6 +1090,24 @@ code {
     z-index: 10001 !important;
 }
 
+/* ===== MODAL ZOOM - SEMPRE NO TOPO ===== */
+/* Modal zoom para composições próprias */
+.modal-zoom {
+    z-index: 10050 !important; /* Acima de todos os outros modais */
+}
+
+.modal-zoom .modal-backdrop {
+    z-index: 10049 !important; /* Backdrop do zoom */
+}
+
+.modal-zoom .modal-dialog {
+    z-index: 10051 !important; /* Dialog do zoom */
+}
+
+.modal-zoom .modal-content {
+    z-index: 10052 !important; /* Content do zoom */
+}
+
 /* ===== CORREÇÃO DE TRUNCAMENTO DOS MODAIS ===== */
 /* Garantir que modais não sejam cortados */
 .modal {

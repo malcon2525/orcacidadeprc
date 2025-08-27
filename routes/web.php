@@ -147,6 +147,16 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('usuarios-por-entidade')->name('usuarios-por-entidade.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Web\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'index'])->name('index');
         });
+        
+
+    });
+    
+    // ===== MÓDULO: ORÇAMENTO =====
+    // Rotas Web - Interface
+    Route::prefix('orcamento')->name('orcamento.')->group(function () {
+        Route::prefix('composicoes-proprias')->name('composicoes-proprias.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Web\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'index'])->name('index');
+        });
     });
     
     // ===== ROTAS TABELAS OFICIAIS =====
@@ -242,6 +252,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/buscar_tabelas', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'buscarTabelas'])->name('buscar_tabelas');
         Route::get('/buscar_dados', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'buscarDados'])->name('buscar_dados');
         Route::get('/exportar_excel', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'exportarExcel'])->name('exportar_excel');
+        Route::get('/zoom_servicos', [\App\Http\Controllers\Api\TabelaOficial\ConsultarDerpr\ConsultarDerprController::class, 'zoomServicos'])->name('zoom_servicos');
     });
 
 
@@ -376,6 +387,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{entidadeId}/reativar/{userId}', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'reativarVinculo'])->name('reativar');
             Route::get('/filtros', [\App\Http\Controllers\Api\Administracao\UsuariosPorEntidade\UsuariosPorEntidadeController::class, 'filtros'])->name('filtros');
         });
+        
+
     });
 
 
@@ -384,7 +397,20 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+    // ===== ROTAS API ORÇAMENTO - OPERAÇÕES COM BANCO DE DADOS =====
     
-    
+    // Prefixo para todas as APIs de orçamento
+    Route::prefix('api/orcamento')->name('api.orcamento.')->group(function () {
+        
+        // Composições Próprias
+        Route::prefix('composicao-propria')->name('composicao-propria.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'listar'])->name('listar');
+            Route::post('/', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Api\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'destroy'])->name('destroy');
+        });
+        
+    });
 
 });

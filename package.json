@@ -18,6 +18,7 @@
     },
     "dependencies": {
         "bootstrap-icons": "^1.11.3",
+        "lodash": "^4.17.21",
         "lodash.debounce": "^4.0.8",
         "xlsx": "^0.18.5"
     }

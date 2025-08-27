@@ -104,14 +104,41 @@ class ConsultarDerprController extends Controller
     public function zoomServicos(Request $request)
     {
         try {
+            $search = $request->input('search');
+            $desoneracao = strtolower($request->input('desoneracao', 'sem'));
+            $dataBase = $request->input('data_base');
+            $perPage = 15;
+            
             $query = DB::table('derpr_composicoes')
-                ->select('codigo', 'descricao', 'unidade', 'custo_unitario')
-                ->where('data_base', '2024-04-30') // Data base fixa para zoom
-                ->where('desoneracao', 'sem'); // Desoneração fixa para zoom
+                ->select([
+                    'codigo', 
+                    'descricao', 
+                    'unidade', 
+                    'custo_unitario',
+                    'data_base',
+                    'desoneracao'
+                ])
+                ->where('desoneracao', $desoneracao);
+            
+            // Se data_base não for especificada, usar a mais recente para esta desoneração
+            if ($dataBase) {
+                $query->where('data_base', $dataBase);
+            } else {
+                // Subquery para obter a data_base mais recente para esta desoneração
+                $latestDate = DB::table('derpr_composicoes')
+                    ->select('data_base')
+                    ->where('desoneracao', $desoneracao)
+                    ->orderBy('data_base', 'desc')
+                    ->limit(1)
+                    ->value('data_base');
+                    
+                if ($latestDate) {
+                    $query->where('data_base', $latestDate);
+                }
+            }
 
             // Aplica filtros se fornecidos
-            if ($request->has('search') && $request->search) {
-                $search = $request->search;
+            if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('codigo', 'like', "%{$search}%")
                       ->orWhere('descricao', 'like', "%{$search}%");
@@ -119,8 +146,7 @@ class ConsultarDerprController extends Controller
             }
 
             // Paginação
-            $perPage = $request->get('per_page', 15);
-            $resultados = $query->paginate($perPage);
+            $resultados = $query->orderBy('codigo')->paginate($perPage);
 
             return response()->json($resultados);
 

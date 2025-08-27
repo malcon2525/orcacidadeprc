@@ -192,6 +192,8 @@
                     </a>
                     @endif
 
+
+
                     @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('aprovar_cadastros') || Auth::user()->hasPermission('visualizar_cadastros_usuarios'))
                     <a href="{{ route('admin.aprovacao-cadastros.index') }}" class="menu-link">
                         <i class="fas fa-user-check"></i>
@@ -203,6 +205,23 @@
                     <a href="{{ route('admin.usuarios-por-entidade.index') }}" class="menu-link">
                         <i class="fas fa-users-cog"></i>
                         <span>Usuários por Entidade</span>
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            <!-- ORÇAMENTO -->
+            @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('gerenciar_composicoes_proprias') || Auth::user()->hasPermission('visualizar_composicoes_proprias'))
+            <div class="menu-group">
+                <div class="menu-header">
+                    <span>ORÇAMENTO</span>
+                </div>
+                <div class="menu-items">
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('gerenciar_composicoes_proprias') || Auth::user()->hasPermission('visualizar_composicoes_proprias'))
+                    <a href="{{ route('orcamento.composicoes-proprias.index') }}" class="menu-link">
+                        <i class="fas fa-cogs"></i>
+                        <span>Composições Próprias</span>
                     </a>
                     @endif
                 </div>
