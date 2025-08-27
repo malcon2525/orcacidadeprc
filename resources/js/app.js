@@ -48,6 +48,9 @@ import ConsultarDerpr from './components/tabela_oficial/consultar_derpr/Index.vu
 // Componente Público
 import FormularioSolicitacaoCadastro from './components/publico/FormularioSolicitacaoCadastro.vue';
 
+// Componente Perfil
+import ListaMeuPerfil from './components/perfil/meu-perfil/ListaMeuPerfil.vue';
+
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
 app.component('header-component', HeaderComponent);
@@ -82,6 +85,9 @@ app.component('consultar-derpr-index', ConsultarDerpr);
 
 // Componente Público
 app.component('formulario-solicitacao-cadastro', FormularioSolicitacaoCadastro);
+
+// Componente Perfil
+app.component('lista-meu-perfil', ListaMeuPerfil);
 
 /**
  * The following block of code may be used to automatically register your

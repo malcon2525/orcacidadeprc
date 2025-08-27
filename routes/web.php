@@ -85,6 +85,27 @@ Route::middleware(['auth'])->group(function () {
         return view('home');
     })->name('home');
     
+    // ===== MÓDULO: PERFIL =====
+    // Rotas Web - Interface
+    Route::prefix('perfil')->name('perfil.')->group(function () {
+        Route::prefix('meu-perfil')->name('meu-perfil.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Web\Perfil\MeuPerfil\MeuPerfilController::class, 'index'])
+                ->name('index');
+        });
+    });
+    
+    // Rotas API - Dados
+    Route::prefix('api/perfil')->name('api.perfil.')->group(function () {
+        Route::prefix('meu-perfil')->name('meu-perfil.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Api\Perfil\MeuPerfil\MeuPerfilController::class, 'dados'])
+                ->name('dados');
+            Route::put('/dados-pessoais', [App\Http\Controllers\Api\Perfil\MeuPerfil\MeuPerfilController::class, 'atualizarDados'])
+                ->name('atualizar-dados');
+            Route::put('/senha', [App\Http\Controllers\Api\Perfil\MeuPerfil\MeuPerfilController::class, 'alterarSenha'])
+                ->name('alterar-senha');
+        });
+    });
+    
     // ===== ROTAS ADMINISTRATIVAS - INTERFACE =====
     
     // Prefixo para todas as rotas administrativas

@@ -241,7 +241,7 @@
                 </div>
                 
                 <div class="menu-items">
-                    <a href="#" class="menu-link">
+                    <a href="{{ route('perfil.meu-perfil.index') }}" class="menu-link">
                         <i class="fas fa-user"></i>
                         <span>Meu Perfil</span>
                     </a>
