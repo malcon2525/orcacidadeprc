@@ -4,20 +4,43 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
+// Importando os seeders das pastas organizadas
+use Database\Seeders\Iniciais\Autenticacao\SetupUsuariosPermissoesSeeder;
+use Database\Seeders\Iniciais\TabelasOficiais\DerprSeeder;
+use Database\Seeders\Iniciais\TabelasOficiais\SinapiSeeder;
+use Database\Seeders\Iniciais\TabelasOficiais\ConsultarDerprSeeder;
+use Database\Seeders\Iniciais\TabelasOficiais\ConsultarSinapiSeeder;
+use Database\Seeders\Iniciais\Administracao\EstruturaOrcamentoSeeder;
+use Database\Seeders\Iniciais\Administracao\MunicipiosSeeder;
+use Database\Seeders\Iniciais\Administracao\EntidadesOrcamentariasSeeder;
+use Database\Seeders\Iniciais\Administracao\UsuariosEntidadesSeeder;
+
 class OrcaCidadeCompleteSeeder extends Seeder
 {
     /**
-     * Execute todos os seeders do sistema OrçaCidade na ordem correta
+     * ===== SEEDER DAS CONFIGURAÇÕES INICIAIS DO SISTEMA =====
      * 
-     * Esta é a sequência completa testada e validada para setup do sistema:
+     * Este seeder executa APENAS as configurações fundamentais e prerequisitos
+     * do sistema OrçaCidade. Ele deve ser executado ANTES de qualquer módulo
+     * específico do sistema.
+     * 
+     * ESTRUTURA ORGANIZADA:
+     * - Iniciais/Autenticacao/      → Usuários, papéis, permissões
+     * - Iniciais/TabelasOficiais/   → DERPR, SINAPI e consultas
+     * - Iniciais/Administracao/     → Estrutura, municípios, entidades
+     * 
+     * MÓDULOS ESPECÍFICOS (separados):
+     * - Orcamento/                  → Seeders do módulo de orçamento
+     * 
+     * ORDEM DE EXECUÇÃO DOS INICIAIS:
      * 1. Base de autenticação e permissões
      * 2. Tabelas oficiais (DER-PR e SINAPI)
-     * 3. Estrutura orçamentária
+     * 3. Estrutura orçamentária básica
      * 4. Administração (municípios, entidades, usuários)
      */
     public function run(): void
     {
-        $this->command->info('🚀 INICIANDO SETUP COMPLETO DO SISTEMA ORÇACIDADE');
+        $this->command->info('🚀 INICIANDO SETUP DAS CONFIGURAÇÕES INICIAIS - ORÇACIDADE');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->command->info('');
         
@@ -110,7 +133,7 @@ class OrcaCidadeCompleteSeeder extends Seeder
         $totalDuration = $startTime->diffForHumans(now(), true);
         
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        $this->command->info('🎉 SETUP COMPLETO DO ORÇACIDADE FINALIZADO COM SUCESSO!');
+        $this->command->info('🎉 SETUP DAS CONFIGURAÇÕES INICIAIS FINALIZADO COM SUCESSO!');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->command->info("⏱️  Tempo total: {$totalDuration}");
         $this->command->info("📊 Seeders executados: {$totalSeeders}/{$totalSeeders}");
@@ -153,13 +176,14 @@ class OrcaCidadeCompleteSeeder extends Seeder
         $this->command->line('');
         
         $this->command->info('🎯 PRÓXIMOS PASSOS:');
-        $this->command->line('   1. Criar seeder para Composições Próprias');
-        $this->command->line('   2. Executar testes de funcionalidade');
-        $this->command->line('   3. Configurar usuários de teste');
-        $this->command->line('   4. Validar fluxos de trabalho');
+        $this->command->line('   1. Executar seeders do módulo ORÇAMENTO');
+        $this->command->line('   2. Configurar usuários de teste');
+        $this->command->line('   3. Testar funcionalidades básicas');
+        $this->command->line('   4. Validar fluxos fundamentais');
         $this->command->line('');
         
-        $this->command->info('🚀 O sistema OrçaCidade está pronto para uso!');
+        $this->command->info('✅ Base do sistema OrçaCidade configurada!');
+        $this->command->info('🔄 Pronto para módulos específicos!');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 }
