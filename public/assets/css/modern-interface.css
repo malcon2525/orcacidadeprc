@@ -1054,6 +1054,34 @@ code {
     }
 }
 
+/* ===== CORREÇÃO PARA MODAL DE GERENCIAR PAPÉIS ===== */
+.papeis-list-container {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+/* Estilização da barra de rolagem */
+.papeis-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.papeis-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.papeis-list-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.papeis-list-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
 /* ===== CORREÇÃO Z-INDEX PARA MODAIS ===== */
 /* Forçar todos os modais Bootstrap a ficarem acima de tudo */
 .modal {

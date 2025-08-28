@@ -1029,7 +1029,7 @@
                                                 <i class="fas fa-key text-muted mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhuma permissão encontrada</p>
                                             </div>
-                                            <div v-else>
+                                            <div v-else class="papeis-list-container">
                                                 <div v-for="permissao in permissoesAtuaisFiltradas" :key="permissao.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div>
                                                         <div class="fw-medium">{{ permissao.display_name }}</div>
@@ -1079,7 +1079,7 @@
                                                 <i class="fas fa-check-circle text-success mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhuma permissão disponível</p>
                                             </div>
-                                            <div v-else>
+                                            <div v-else class="papeis-list-container">
                                                 <div v-for="permissao in permissoesDisponiveisFiltradas" :key="permissao.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div>
                                                         <div class="fw-medium">{{ permissao.display_name }}</div>
@@ -1494,7 +1494,7 @@
                                                 <i class="fas fa-users text-muted mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum usuário encontrado</p>
                                             </div>
-                                            <div v-else>
+                                            <div v-else class="papeis-list-container">
                                                 <div v-for="usuario in usuariosAtuaisFiltrados" :key="usuario.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-admin me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
@@ -1546,7 +1546,7 @@
                                                 <i class="fas fa-check-circle text-success mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum usuário disponível</p>
                                             </div>
-                                            <div v-else>
+                                            <div v-else class="papeis-list-container">
                                                 <div v-for="usuario in usuariosDisponiveisFiltrados" :key="usuario.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-admin me-2">{{ usuario.name.charAt(0).toUpperCase() }}</div>
@@ -1755,7 +1755,7 @@
                                                 <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum papel encontrado</p>
                                             </div>
-                                            <div v-else>
+                                            <div v-else class="papeis-list-container">
                                                 <div v-for="papel in papeisAtuaisPermissao" :key="papel.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div>
                                                         <div class="fw-medium">{{ papel.display_name }}</div>
@@ -1784,7 +1784,7 @@
                                                 <i class="fas fa-check-circle text-success mb-2 icon-medium"></i>
                                                 <p class="text-muted mb-0">Nenhum papel disponível</p>
                                             </div>
-                                            <div v-else>
+                                            <div v-else class="papeis-list-container">
                                                 <div v-for="papel in papeisDisponiveisPermissao" :key="papel.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                     <div>
                                                         <div class="fw-medium">{{ papel.display_name }}</div>
@@ -1906,7 +1906,7 @@
                                             <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
                                             <p class="text-muted mb-0">Nenhum papel encontrado</p>
                                         </div>
-                                        <div v-else>
+                                        <div v-else class="papeis-list-container">
                                             <div v-for="papel in papeisAtuaisFiltrados" :key="papel.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                 <div>
                                                     <div class="fw-medium">{{ papel.display_name }}</div>
@@ -1955,7 +1955,7 @@
                                             <i class="fas fa-user-tag text-muted mb-2 icon-medium"></i>
                                             <p class="text-muted mb-0">Nenhum papel disponível</p>
                                         </div>
-                                        <div v-else>
+                                        <div v-else class="papeis-list-container">
                                             <div v-for="papel in papeisDisponiveisFiltrados" :key="papel.id" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                                                 <div>
                                                     <div class="fw-medium">{{ papel.display_name }}</div>
