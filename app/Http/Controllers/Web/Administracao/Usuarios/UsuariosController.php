@@ -89,10 +89,11 @@ class UsuariosController extends Controller
             return view('administracao.usuarios.index');
         }
         
-        // 2. Tem permissão específica?
-        if ($user->hasPermission('gerenciar_usuarios')) {
+        // 2. Tem permissão específica? (qualquer uma das permissões de usuário)
+        if ($user->hasPermission('usuario_crud') || $user->hasPermission('usuario_consultar')) {
             $this->logger->sucesso('ACESSO_GERENCIAR_USUARIOS', [
-                'tipo_acesso' => 'permissao_especifica'
+                'tipo_acesso' => 'permissao_especifica',
+                'permissoes_verificadas' => ['usuario_crud', 'usuario_consultar']
             ]);
             return view('administracao.usuarios.index');
         }

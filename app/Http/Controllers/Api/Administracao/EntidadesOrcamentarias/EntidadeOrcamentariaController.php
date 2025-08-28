@@ -317,7 +317,7 @@ class EntidadeOrcamentariaController extends Controller
     public function importarMunicipios()
     {
         try {
-            $this->checkAccess(['gerenciar_entidades_orcamentarias']);
+            $this->checkAccess(['entidade_orcamentaria_importar']);
 
             DB::beginTransaction();
 
