@@ -1,41 +1,10 @@
 <template>
     <div class="composicao-propria-container">
-        <!-- Filtros -->
-        <div class="filtros-container mb-4">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="form-floating">
-                        <input type="text" 
-                               class="form-control" 
-                               id="filtroDescricao" 
-                               v-model="filtros.descricao"
-                               placeholder="Descrição"
-                               @input="debounceBuscarComposicoes">
-                        <label for="filtroDescricao">Descrição</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-floating">
-                        <input type="text" 
-                               class="form-control" 
-                               id="filtroCodigo" 
-                               v-model="filtros.codigo"
-                               placeholder="Código"
-                               @input="debounceBuscarComposicoes">
-                        <label for="filtroCodigo">Código</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <button class="btn btn-primary w-100 h-58" @click="limparFiltros">
-                        <i class="fas fa-times me-2"></i>Limpar
-                    </button>
-                </div>
-                <div class="col-md-2" v-if="permissoes.crud">
-                    <button class="btn btn-success w-100 h-58" @click="abrirModalNovaComposicao">
-                        <i class="fas fa-plus me-2"></i>Nova
-                    </button>
-                </div>
-            </div>
+        <!-- Botão Nova Composição -->
+        <div class="d-flex justify-content-end mb-4">
+            <button v-if="permissoes.crud" class="btn btn-success" @click="abrirModalNovaComposicao">
+                <i class="fas fa-plus me-2"></i>Nova Composição
+            </button>
         </div>
 
         <!-- Tabela de Composições -->
@@ -70,9 +39,9 @@
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
-                                <button class="btn btn-sm btn-info" @click="visualizarComposicao(composicao)" title="Visualizar">
+                                <!-- <button class="btn btn-sm btn-info" @click="visualizarComposicao(composicao)" title="Visualizar">
                                     <i class="fas fa-eye"></i>
-                                </button>
+                                </button> -->
                                 <button v-if="permissoes.crud" class="btn btn-sm btn-warning" @click="editarComposicao(composicao)" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -127,6 +96,7 @@
         <!-- Modal de Composição -->
         <composicao-propria-form 
             v-if="modalComposicao"
+            ref="composicaoForm"
             :composicao="composicaoSelecionada"
             :permissoes="permissoes"
             @fechar="fecharModalComposicao"
@@ -208,10 +178,7 @@ export default {
         return {
             composicoes: [],
             carregando: false,
-            filtros: {
-                descricao: '',
-                codigo: ''
-            },
+
             paginaAtual: 1,
             itensPorPagina: 10,
             totalRegistros: 0,
@@ -221,8 +188,7 @@ export default {
             composicaoParaExcluir: null,
             excluindo: false,
             toasts: [],
-            toastId: 0,
-            searchTimeout: null
+            toastId: 0
         };
     },
     computed: {
@@ -275,31 +241,6 @@ export default {
             }
         },
 
-        async buscarComposicoes() {
-            this.paginaAtual = 1;
-            await this.carregarComposicoes();
-        },
-
-        debounceBuscarComposicoes() {
-            // Limpar o timeout anterior se existir
-            if (this.searchTimeout) {
-                clearTimeout(this.searchTimeout);
-            }
-            
-            // Criar novo timeout com debounce de 300ms
-            this.searchTimeout = setTimeout(() => {
-                this.buscarComposicoes();
-            }, 300);
-        },
-
-        limparFiltros() {
-            this.filtros = {
-                descricao: '',
-                codigo: ''
-            };
-            this.buscarComposicoes();
-        },
-
         mudarPagina(pagina) {
             if (pagina >= 1 && pagina <= this.totalPaginas) {
                 this.paginaAtual = pagina;
@@ -329,6 +270,8 @@ export default {
 
         async salvarComposicao(composicao) {
             try {
+                //console.log('Dados sendo enviados:', JSON.stringify(composicao, null, 2)); // Debug detalhado
+                
                 const response = await fetch('/api/orcamento/composicao-propria', {
                     method: 'POST',
                     headers: {
@@ -340,6 +283,15 @@ export default {
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Erro de validação:', errorData);
+                    
+                    if (response.status === 422 && errorData.errors) {
+                        // Erro de validação - repassar para o componente filho
+                        this.$refs.composicaoForm?.mostrarErrosValidacao(errorData.errors);
+                        return;
+                    }
+                    
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
@@ -472,13 +424,6 @@ export default {
 <style scoped>
 .composicao-propria-container {
     min-height: 400px;
-}
-
-.filtros-container {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #dee2e6;
 }
 
 .composicoes-table th {

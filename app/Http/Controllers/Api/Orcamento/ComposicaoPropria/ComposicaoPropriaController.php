@@ -143,12 +143,12 @@ class ComposicaoPropriaController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id',
-                'codigo' => 'nullable|string|max:20',
+                'codigo' => 'required|string|max:20',
                 'descricao' => 'required|string|max:255',
                 'unidade' => 'required|string|max:10',
                 'valor_total_mat_equip' => 'required|numeric|min:0',
                 'valor_total_mao_obra' => 'required|numeric|min:0',
-                'valor_total_geral' => 'required|numeric|min:0',
+                'valor_total_geral' => 'required|numeric|min:0.01',
                 'itens' => 'required|array|min:1',
                 'itens.*.referencia' => 'required|in:SINAPI,DERPR,PERSONALIZADA',
                 'itens.*.codigo_item' => 'required|string|max:10',
@@ -161,6 +161,15 @@ class ComposicaoPropriaController extends Controller
                 'itens.*.valor_mat_equip_ajustado' => 'required|numeric|min:0',
                 'itens.*.valor_mao_obra_ajustado' => 'required|numeric|min:0',
                 'itens.*.valor_total_ajustado' => 'required|numeric|min:0',
+            ], [
+                'entidade_orcamentaria_id.required' => 'A entidade orçamentária é obrigatória.',
+                'entidade_orcamentaria_id.exists' => 'A entidade orçamentária selecionada não existe.',
+                'codigo.required' => 'O código é obrigatório.',
+                'descricao.required' => 'A descrição é obrigatória.',
+                'unidade.required' => 'A unidade é obrigatória.',
+                'valor_total_geral.min' => 'O valor total deve ser maior que zero.',
+                'itens.required' => 'Pelo menos um item deve ser adicionado à composição.',
+                'itens.min' => 'Pelo menos um item deve ser adicionado à composição.',
             ]);
 
             if ($validator->fails()) {
@@ -174,6 +183,7 @@ class ComposicaoPropriaController extends Controller
             DB::beginTransaction();
 
             $composicao = ComposicaoPropria::create([
+                'entidade_orcamentaria_id' => $request->entidade_orcamentaria_id,
                 'codigo' => $request->codigo,
                 'descricao' => $request->descricao,
                 'unidade' => $request->unidade,
@@ -218,12 +228,12 @@ class ComposicaoPropriaController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'entidade_orcamentaria_id' => 'required|exists:entidades_orcamentarias,id',
-                'codigo' => 'nullable|string|max:20',
+                'codigo' => 'required|string|max:20',
                 'descricao' => 'required|string|max:255',
                 'unidade' => 'required|string|max:10',
                 'valor_total_mat_equip' => 'required|numeric|min:0',
                 'valor_total_mao_obra' => 'required|numeric|min:0',
-                'valor_total_geral' => 'required|numeric|min:0',
+                'valor_total_geral' => 'required|numeric|min:0.01',
                 'itens' => 'required|array|min:1',
                 'itens.*.referencia' => 'required|in:SINAPI,DERPR,PERSONALIZADA',
                 'itens.*.codigo_item' => 'required|string|max:10',
@@ -236,6 +246,15 @@ class ComposicaoPropriaController extends Controller
                 'itens.*.valor_mat_equip_ajustado' => 'required|numeric|min:0',
                 'itens.*.valor_mao_obra_ajustado' => 'required|numeric|min:0',
                 'itens.*.valor_total_ajustado' => 'required|numeric|min:0',
+            ], [
+                'entidade_orcamentaria_id.required' => 'A entidade orçamentária é obrigatória.',
+                'entidade_orcamentaria_id.exists' => 'A entidade orçamentária selecionada não existe.',
+                'codigo.required' => 'O código é obrigatório.',
+                'descricao.required' => 'A descrição é obrigatória.',
+                'unidade.required' => 'A unidade é obrigatória.',
+                'valor_total_geral.min' => 'O valor total deve ser maior que zero.',
+                'itens.required' => 'Pelo menos um item deve ser adicionado à composição.',
+                'itens.min' => 'Pelo menos um item deve ser adicionado à composição.',
             ]);
 
             if ($validator->fails()) {
@@ -249,6 +268,7 @@ class ComposicaoPropriaController extends Controller
             DB::beginTransaction();
 
             $composicao->update([
+                'entidade_orcamentaria_id' => $request->entidade_orcamentaria_id,
                 'codigo' => $request->codigo,
                 'descricao' => $request->descricao,
                 'unidade' => $request->unidade,

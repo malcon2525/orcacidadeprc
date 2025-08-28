@@ -46,8 +46,9 @@
                                            :class="{ 'is-invalid': errors.codigo }"
                                            id="codigo" 
                                            v-model="form.codigo"
-                                           placeholder="Código da composição">
-                                    <label for="codigo">Código</label>
+                                           placeholder="Código da composição"
+                                           required>
+                                    <label for="codigo">Código *</label>
                                 </div>
                                 <div class="invalid-feedback" v-if="errors.codigo">
                                     {{ errors.codigo[0] }}
@@ -501,6 +502,44 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de Erros de Validação - Padrão do Projeto -->
+        <div v-if="modalErros" class="modal fade show d-block modal-erros-overlay" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered" style="z-index: 1000000 !important; position: relative !important;">
+                <div class="modal-content modal-validacao" style="z-index: 1000001 !important; position: relative !important;">
+                    <!-- Header com Gradiente Padrão -->
+                    <div class="modal-header custom-modal-header">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon" aria-hidden="true">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h5 class="modal-title mb-0">Erros de Validação</h5>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" @click="fecharModalErros" aria-label="Fechar"></button>
+                    </div>
+                    
+                    <!-- Corpo do Modal -->
+                    <div class="modal-body text-center">
+                        <p class="confirm-text mb-3">Os seguintes erros precisam ser corrigidos antes de salvar:</p>
+                        
+                        <!-- Lista de Erros -->
+                        <div class="lista-erros-validacao">
+                            <div v-for="(erro, index) in listaErros" :key="index" class="erro-item-validacao">
+                                <i class="fas fa-times-circle erro-bullet-validacao"></i>
+                                <span class="erro-texto-validacao">{{ erro }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rodapé -->
+                    <div class="modal-footer justify-content-center border-0">
+                        <button type="button" class="btn btn-success" @click="fecharModalErros">
+                            <i class="fas fa-check me-2"></i>Entendi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -536,6 +575,8 @@ export default {
             salvando: false,
             buscaItens: '',
             modalZoom: false,
+            modalErros: false,
+            listaErros: [],
             servicoZoomSelecionado: null,
             servicosZoom: [],
             carregandoZoom: false,
@@ -606,6 +647,7 @@ export default {
             } else {
                 // Modo criação
                 this.form = {
+                    entidade_orcamentaria_id: '',
                     codigo: '',
                     descricao: '',
                     unidade: '',
@@ -802,14 +844,45 @@ export default {
         async salvarFormulario() {
             if (!this.permissoes.crud) return;
 
-            // Validação básica
+            // Limpar erros anteriores
+            this.errors = {};
+
+            // Validações obrigatórias
+            const erros = {};
+
+            if (!this.form.entidade_orcamentaria_id) {
+                erros.entidade_orcamentaria_id = ['A entidade orçamentária é obrigatória.'];
+            }
+
+            if (!this.form.codigo || this.form.codigo.trim() === '') {
+                erros.codigo = ['O código é obrigatório.'];
+            }
+
+            if (!this.form.descricao || this.form.descricao.trim() === '') {
+                erros.descricao = ['A descrição é obrigatória.'];
+            }
+
+            if (!this.form.unidade || this.form.unidade.trim() === '') {
+                erros.unidade = ['A unidade é obrigatória.'];
+            }
+
             if (this.form.itens.length === 0) {
-                alert('Adicione pelo menos um item à composição');
+                erros.itens = ['Pelo menos um item deve ser adicionado à composição.'];
+            }
+
+            if (this.form.valor_total_geral <= 0) {
+                erros.valor_total_geral = ['O valor total deve ser maior que zero.'];
+            }
+
+            // Se houver erros, exibir modal detalhado
+            if (Object.keys(erros).length > 0) {
+                this.errors = erros;
+                this.listaErros = Object.values(erros).flat();
+                this.modalErros = true;
                 return;
             }
 
             this.salvando = true;
-            this.errors = {};
 
             try {
                 if (this.composicao) {
@@ -828,6 +901,30 @@ export default {
 
         fecharModal() {
             this.$emit('fechar');
+        },
+
+        fecharModalErros() {
+            this.modalErros = false;
+            this.listaErros = [];
+        },
+
+        mostrarErrosValidacao(errors) {
+            // Método para ser chamado pelo componente pai quando há erros do backend
+            this.errors = errors;
+            this.listaErros = Object.values(errors).flat();
+            this.modalErros = true;
+        },
+
+        mostrarToast(message, type = 'info') {
+            // Implementação simples - pode ser melhorada com biblioteca de toast
+            const types = {
+                'success': '✅',
+                'error': '❌', 
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            };
+            
+            alert(`${types[type] || types.info} ${message}`);
         },
 
         formatarValor(valor) {
@@ -1455,5 +1552,65 @@ export default {
     .total-content {
         text-align: center;
     }
+}
+
+/* ===== MODAL DE VALIDAÇÃO - PADRÃO DO PROJETO ===== */
+/* Força a exibição do modal de erros */
+.modal-erros-overlay {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0,0,0,0.8) !important;
+}
+
+/* Modal de Validação - Segue padrão dos modais do projeto */
+.modal-validacao {
+    border-radius: 0.75rem !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+    z-index: 1000002 !important;
+    position: relative !important;
+}
+
+/* Lista de Erros de Validação */
+.lista-erros-validacao {
+    background: #FFF5F5 !important;
+    border: 1px solid #FAD4D4 !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    text-align: left !important;
+}
+
+.erro-item-validacao {
+    display: flex !important;
+    align-items: flex-start !important;
+    margin-bottom: 0.75rem !important;
+    gap: 0.75rem !important;
+}
+
+.erro-item-validacao:last-child {
+    margin-bottom: 0 !important;
+}
+
+.erro-bullet-validacao {
+    color: #D64545 !important;
+    font-size: 1rem !important;
+    flex-shrink: 0 !important;
+    margin-top: 0.1rem !important;
+}
+
+.erro-texto-validacao {
+    color: #5f6b7a !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    flex: 1 !important;
 }
 </style>
