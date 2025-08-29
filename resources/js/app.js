@@ -55,6 +55,9 @@ import ListaMeuPerfil from './components/perfil/meu-perfil/ListaMeuPerfil.vue';
 import ListaComposicaoPropria from './components/orcamento/composicao-propria/ListaComposicaoPropria.vue';
 import ComposicaoPropriaForm from './components/orcamento/composicao-propria/ComposicaoPropriaForm.vue';
 
+// Configuração Orçamento Components
+import ConfiguracaoContextoOrcamento from './components/orcamento/configuracao_orcamento/ConfiguracaoContextoOrcamento.vue';
+
 app.component('example-component', ExampleComponent);
 app.component('home-component', HomeComponent);
 app.component('header-component', HeaderComponent);
@@ -96,6 +99,9 @@ app.component('lista-meu-perfil', ListaMeuPerfil);
 // Composições Próprias Components
 app.component('lista-composicao-propria', ListaComposicaoPropria);
 app.component('composicao-propria-form', ComposicaoPropriaForm);
+
+// Configuração Orçamento Components
+app.component('configuracao-contexto-orcamento', ConfiguracaoContextoOrcamento);
 
 /**
  * The following block of code may be used to automatically register your

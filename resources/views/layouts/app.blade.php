@@ -212,14 +212,21 @@
             @endif
 
             <!-- ORÇAMENTO -->
-            @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('gerenciar_composicoes_proprias') || Auth::user()->hasPermission('visualizar_composicoes_proprias'))
+            @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('criar_orcamentos') || Auth::user()->hasPermission('gerenciar_composicoes_proprias') || Auth::user()->hasPermission('visualizar_composicoes_proprias'))
             <div class="menu-group">
                 <div class="menu-header">
                     <span>ORÇAMENTO</span>
                 </div>
                 <div class="menu-items">
+                    @if(Auth::user()->hasRole('super') || Auth::user()->hasRole('criar_orcamentos'))
+                    <a href="{{ route('orcamento.configuracao-orcamento.index') }}" class="menu-link {{ request()->routeIs('orcamento.configuracao-orcamento.*') ? 'active' : '' }}">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuração Orçamento</span>
+                    </a>
+                    @endif
+                    
                     @if(Auth::user()->hasRole('super') || Auth::user()->hasPermission('gerenciar_composicoes_proprias') || Auth::user()->hasPermission('visualizar_composicoes_proprias'))
-                    <a href="{{ route('orcamento.composicoes-proprias.index') }}" class="menu-link">
+                    <a href="{{ route('orcamento.composicoes-proprias.index') }}" class="menu-link {{ request()->routeIs('orcamento.composicoes-proprias.*') ? 'active' : '' }}">
                         <i class="fas fa-cogs"></i>
                         <span>Composições Próprias</span>
                     </a>

@@ -154,6 +154,10 @@ Route::middleware(['auth'])->group(function () {
     // ===== MÓDULO: ORÇAMENTO =====
     // Rotas Web - Interface
     Route::prefix('orcamento')->name('orcamento.')->group(function () {
+        Route::prefix('configuracao-orcamento')->name('configuracao-orcamento.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Web\Orcamento\ConfiguracaoOrcamento\ConfiguracaoOrcamentoController::class, 'index'])->name('index');
+        });
+        
         Route::prefix('composicoes-proprias')->name('composicoes-proprias.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Web\Orcamento\ComposicaoPropria\ComposicaoPropriaController::class, 'index'])->name('index');
         });
@@ -401,6 +405,14 @@ Route::middleware(['auth'])->group(function () {
     
     // Prefixo para todas as APIs de orçamento
     Route::prefix('api/orcamento')->name('api.orcamento.')->group(function () {
+        
+        // Configuração Orçamento
+        Route::prefix('configuracao-orcamento')->name('configuracao-orcamento.')->group(function () {
+            Route::get('/dados', [\App\Http\Controllers\Api\Orcamento\ConfiguracaoOrcamento\ConfiguracaoOrcamentoController::class, 'dados'])->name('dados');
+            Route::post('/salvar', [\App\Http\Controllers\Api\Orcamento\ConfiguracaoOrcamento\ConfiguracaoOrcamentoController::class, 'salvar'])->name('salvar');
+            Route::get('/contexto-atual', [\App\Http\Controllers\Api\Orcamento\ConfiguracaoOrcamento\ConfiguracaoOrcamentoController::class, 'contextoAtual'])->name('contexto-atual');
+            Route::delete('/limpar', [\App\Http\Controllers\Api\Orcamento\ConfiguracaoOrcamento\ConfiguracaoOrcamentoController::class, 'limpar'])->name('limpar');
+        });
         
         // Composições Próprias
         Route::prefix('composicao-propria')->name('composicao-propria.')->group(function () {
