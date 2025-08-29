@@ -18,65 +18,142 @@ class ComposicaoPropriaController extends Controller
     /**
      * Verifica se o usuário tem acesso à funcionalidade
      */
-    private function checkAccess($permissions, $requireAll = false)
+    private function checkAccess()
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         
-        // 1. É super admin? → Acesso total
+        if (!$user) {
+            abort(401, 'Usuário não autenticado.');
+        }
+        
+        // 1. Super admin tem acesso total
         if ($user->isSuperAdmin()) {
             return true;
         }
         
-        // 2. Verificação flexível de permissões
-        if (is_string($permissions)) {
-            $permissions = [$permissions];
+        // 2. Verificar papel criar_orcamentos
+        if (!$user->hasRole('criar_orcamentos')) {
+            abort(403, 'Acesso negado. É necessário ter o papel "criar_orcamentos".');
         }
         
-        if ($requireAll) {
-            // Todas as permissões são obrigatórias (AND)
-            foreach ($permissions as $permission) {
-                if (!$user->hasPermission($permission)) {
-                    abort(403, "Permissão obrigatória: {$permission}");
-                }
-            }
-        } else {
-            // Pelo menos uma permissão é suficiente (OR)
-            $hasAnyPermission = false;
-            foreach ($permissions as $permission) {
-                if ($user->hasPermission($permission)) {
-                    $hasAnyPermission = true;
-                    break;
-                }
-            }
-            
-            if (!$hasAnyPermission) {
-                abort(403, 'Acesso negado. Permissão insuficiente.');
-            }
+        // 3. Verificar permissão composicao_propria_crud
+        if (!$user->hasPermission('composicao_propria_crud')) {
+            abort(403, 'Acesso negado. É necessário ter a permissão "composicao_propria_crud".');
+        }
+        
+        // 4. Verificar vínculo com entidade orçamentária
+        $temVinculos = DB::table('user_entidades_orcamentarias')
+            ->where('user_id', $user->id)
+            ->where('ativo', true)
+            ->exists();
+        
+        if (!$temVinculos) {
+            abort(403, 'Acesso negado. Usuário não possui vínculos ativos com entidades orçamentárias.');
+        }
+        
+        // 5. Verificar contexto orçamentário
+        if (!\App\Helpers\OrcamentoContextHelper::temContextoDefinido()) {
+            abort(403, 'Acesso negado. É necessário configurar o contexto orçamentário antes de realizar operações.');
         }
         
         return true;
     }
 
     /**
-     * Lista as entidades orçamentárias ativas para o select
+     * Captura as datas do contexto orçamentário do usuário
+     */
+    private function capturarDatasContexto(): array
+    {
+        $user = Auth::user();
+        $contexto = \App\Models\Orcamento\UserOrcamentoContext::getContextoUsuario($user->id);
+        
+        if (!$contexto) {
+            throw new \Exception('Contexto orçamentário não encontrado para o usuário.');
+        }
+        
+        return [
+            'data_base_sinapi' => $contexto->data_base_sinapi->format('Y-m-d'),
+            'data_base_derpr' => $contexto->data_base_derpr->format('Y-m-d')
+        ];
+    }
+
+    /**
+     * Adiciona as datas do contexto e desoneração nos itens baseado na referência
+     */
+    private function adicionarDatasContextoItens(array $itens): array
+    {
+        $datasContexto = $this->capturarDatasContexto();
+        
+        foreach ($itens as &$item) {
+            // Adiciona as datas e desoneração baseado na referência do item
+            if ($item['referencia'] === 'SINAPI') {
+                $item['data_base_sinapi'] = $datasContexto['data_base_sinapi'];
+                $item['data_base_derpr'] = null; // SINAPI não usa DERPR
+                // Usa a desoneração que foi selecionada no zoom (vem do frontend)
+                // Se não foi informada, usa 'sem' como padrão
+                if (!isset($item['desoneracao'])) {
+                    $item['desoneracao'] = 'sem';
+                }
+            } elseif ($item['referencia'] === 'DERPR') {
+                $item['data_base_sinapi'] = null; // DERPR não usa SINAPI
+                $item['data_base_derpr'] = $datasContexto['data_base_derpr'];
+                // Usa a desoneração que foi selecionada no zoom (vem do frontend)
+                // Se não foi informada, usa 'sem' como padrão
+                if (!isset($item['desoneracao'])) {
+                    $item['desoneracao'] = 'sem';
+                }
+            } else {
+                // PERSONALIZADA não usa nem SINAPI nem DERPR nem desoneração
+                $item['data_base_sinapi'] = null;
+                $item['data_base_derpr'] = null;
+                $item['desoneracao'] = null;
+            }
+        }
+        
+        return $itens;
+    }
+
+    /**
+     * Retorna a entidade orçamentária do contexto atual
      */
     public function listarEntidadesOrcamentarias()
     {
-        $this->checkAccess(['gerenciar_composicoes_proprias', 'visualizar_composicoes_proprias']);
+        $this->checkAccess();
         
         try {
-            $entidades = EntidadeOrcamentaria::where('ativo', true)
-                ->select('id', 'jurisdicao_razao_social', 'jurisdicao_nome_fantasia', 'tipo_organizacao')
-                ->orderBy('jurisdicao_razao_social')
-                ->get();
+            $user = Auth::user();
+            $contexto = \App\Models\Orcamento\UserOrcamentoContext::getContextoUsuario($user->id);
+            
+            if (!$contexto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Contexto orçamentário não encontrado.'
+                ], 400);
+            }
+
+            // Retorna apenas a entidade do contexto
+            $entidade = $contexto->entidadeOrcamentaria;
+            
+            $entidadeFormatada = [
+                'id' => $entidade->id,
+                'jurisdicao_razao_social' => $entidade->jurisdicao_razao_social,
+                'jurisdicao_nome_fantasia' => $entidade->jurisdicao_nome_fantasia,
+                'tipo_organizacao' => $entidade->tipo_organizacao,
+                'is_from_context' => true // Flag para indicar que vem do contexto
+            ];
 
             return response()->json([
                 'success' => true,
-                'data' => $entidades
+                'data' => [$entidadeFormatada], // Array com um único item
+                'context_info' => [
+                    'entidade_id' => $contexto->entidade_orcamentaria_id,
+                    'data_base_sinapi' => $contexto->data_base_sinapi->format('Y-m-d'),
+                    'data_base_derpr' => $contexto->data_base_derpr->format('Y-m-d')
+                ]
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao listar entidades orçamentárias: ' . $e->getMessage());
+            Log::error('Erro ao buscar entidade do contexto: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -90,7 +167,7 @@ class ComposicaoPropriaController extends Controller
      */
     public function listar(Request $request)
     {
-        $this->checkAccess(['gerenciar_composicoes_proprias', 'visualizar_composicoes_proprias']);
+        $this->checkAccess();
         
         try {
             $query = ComposicaoPropria::query();
@@ -138,7 +215,7 @@ class ComposicaoPropriaController extends Controller
      */
     public function store(Request $request)
     {
-        $this->checkAccess(['gerenciar_composicoes_proprias'], true);
+        $this->checkAccess();
 
         try {
             $validator = Validator::make($request->all(), [
@@ -192,7 +269,10 @@ class ComposicaoPropriaController extends Controller
                 'valor_total_geral' => $request->valor_total_geral,
             ]);
 
-            foreach ($request->itens as $item) {
+            // Adiciona as datas do contexto nos itens antes de salvar
+            $itensComDatas = $this->adicionarDatasContextoItens($request->itens);
+            
+            foreach ($itensComDatas as $item) {
                 $composicao->itens()->create($item);
             }
 
@@ -221,7 +301,7 @@ class ComposicaoPropriaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->checkAccess(['gerenciar_composicoes_proprias'], true);
+        $this->checkAccess();
 
         try {
             $composicao = ComposicaoPropria::findOrFail($id);
@@ -279,7 +359,11 @@ class ComposicaoPropriaController extends Controller
 
             // Remove itens antigos e adiciona os novos
             $composicao->itens()->delete();
-            foreach ($request->itens as $item) {
+            
+            // Adiciona as datas do contexto nos itens antes de salvar
+            $itensComDatas = $this->adicionarDatasContextoItens($request->itens);
+            
+            foreach ($itensComDatas as $item) {
                 $composicao->itens()->create($item);
             }
 
@@ -308,7 +392,7 @@ class ComposicaoPropriaController extends Controller
      */
     public function destroy($id)
     {
-        $this->checkAccess(['gerenciar_composicoes_proprias'], true);
+        $this->checkAccess();
 
         try {
             $composicao = ComposicaoPropria::findOrFail($id);
@@ -335,7 +419,7 @@ class ComposicaoPropriaController extends Controller
      */
     public function edit($id)
     {
-        $this->checkAccess(['gerenciar_composicoes_proprias', 'visualizar_composicoes_proprias']);
+        $this->checkAccess();
 
         try {
             $composicao = ComposicaoPropria::with('itens')->findOrFail($id);

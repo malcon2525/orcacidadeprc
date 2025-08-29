@@ -46,7 +46,12 @@ class ConsultarSinapiController extends Controller
             return true;
         }
         
-        // 3. Acesso negado
+        // 3. Tem papel criar_orcamentos? → Acesso permitido (para composições próprias)
+        if ($user->hasRole('criar_orcamentos')) {
+            return true;
+        }
+        
+        // 4. Acesso negado
         abort(403, 'Acesso negado. Papel insuficiente.');
     }
 
@@ -326,20 +331,28 @@ class ConsultarSinapiController extends Controller
                 ])
                 ->whereRaw('TRIM(LOWER(desoneracao)) = ?', [trim(strtolower($desoneracao))]);
             
-            // Se data_base não for especificada, usar a mais recente para esta desoneração
+            // Se data_base não for especificada, usar a data do contexto orçamentário
             if ($dataBase) {
                 $query->where('data_base', $dataBase);
             } else {
-                // Subquery para obter a data_base mais recente para esta desoneração
-                $latestDate = DB::table('sinapi_composicoes_view')
-                    ->select('data_base')
-                    ->whereRaw('TRIM(LOWER(desoneracao)) = ?', [trim(strtolower($desoneracao))])
-                    ->orderBy('data_base', 'desc')
-                    ->limit(1)
-                    ->value('data_base');
-                    
-                if ($latestDate) {
-                    $query->where('data_base', $latestDate);
+                // Buscar data_base do contexto orçamentário do usuário
+                $user = Auth::user();
+                $contexto = \App\Models\Orcamento\UserOrcamentoContext::getContextoUsuario($user->id);
+                
+                if ($contexto && $contexto->data_base_sinapi) {
+                    $query->where('data_base', $contexto->data_base_sinapi->format('Y-m-d'));
+                } else {
+                    // Fallback: usar a mais recente se não há contexto
+                    $latestDate = DB::table('sinapi_composicoes_view')
+                        ->select('data_base')
+                        ->whereRaw('TRIM(LOWER(desoneracao)) = ?', [trim(strtolower($desoneracao))])
+                        ->orderBy('data_base', 'desc')
+                        ->limit(1)
+                        ->value('data_base');
+                        
+                    if ($latestDate) {
+                        $query->where('data_base', $latestDate);
+                    }
                 }
             }
                 
@@ -351,7 +364,39 @@ class ConsultarSinapiController extends Controller
             }
             
             $servicos = $query->orderBy('codigo')->paginate($perPage);
-            return response()->json($servicos);
+            
+            // Capturar qual data_base está sendo usada para o frontend
+            $dataBaseUsada = null;
+            if ($dataBase) {
+                $dataBaseUsada = $dataBase;
+            } else {
+                // Buscar data_base do contexto orçamentário do usuário
+                $user = Auth::user();
+                $contexto = \App\Models\Orcamento\UserOrcamentoContext::getContextoUsuario($user->id);
+                
+                if ($contexto && $contexto->data_base_sinapi) {
+                    $dataBaseUsada = $contexto->data_base_sinapi->format('Y-m-d');
+                } else {
+                    // Fallback: buscar a mais recente
+                    $dataBaseUsada = DB::table('sinapi_composicoes_view')
+                        ->select('data_base')
+                        ->whereRaw('TRIM(LOWER(desoneracao)) = ?', [trim(strtolower($desoneracao))])
+                        ->orderBy('data_base', 'desc')
+                        ->limit(1)
+                        ->value('data_base');
+                }
+            }
+            
+            // Adicionar informações extras no response
+            $response = $servicos->toArray();
+            $response['meta'] = array_merge($response['meta'] ?? [], [
+                'data_base_utilizada' => $dataBaseUsada,
+                'data_base_formatada' => $dataBaseUsada ? \Carbon\Carbon::parse($dataBaseUsada)->format('m/Y') : null,
+                'desoneracao' => $desoneracao,
+                'fonte' => 'SINAPI'
+            ]);
+            
+            return response()->json($response);
             
         } catch (\Exception $e) {
             Log::error('Erro ao buscar serviços SINAPI para zoom:', [

@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('codigo_item', 10)->comment('Código do item na fonte de referência');
             $table->text('descricao')->comment('Descrição detalhada do item');
             $table->string('unidade', 5)->comment('Unidade de medida do item');
+            $table->date('data_base_sinapi')->nullable()->comment('Data base SINAPI utilizada (quando referencia = SINAPI)');
+            $table->date('data_base_derpr')->nullable()->comment('Data base DERPR utilizada (quando referencia = DERPR)');
+            $table->enum('desoneracao', ['com', 'sem'])->nullable()->comment('Tipo de desoneração utilizada na consulta (quando referencia = SINAPI/DERPR)');
             $table->decimal('valor_mat_equip', 12, 2)->comment('Valor de materiais e equipamentos');
             $table->decimal('valor_mao_obra', 12, 2)->comment('Valor de mão de obra');
             $table->decimal('valor_total', 12, 2)->comment('Valor total do item');
@@ -31,6 +34,9 @@ return new class extends Migration
             $table->index('composicao_propria_id');
             $table->index('referencia');
             $table->index('codigo_item');
+            $table->index('data_base_sinapi');
+            $table->index('data_base_derpr');
+            $table->index('desoneracao');
         });
     }
 

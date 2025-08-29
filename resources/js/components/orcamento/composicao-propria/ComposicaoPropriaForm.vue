@@ -18,28 +18,22 @@
                 <div class="modal-body">
                     <form @submit.prevent="salvarFormulario">
                         <!-- Dados da Composição -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-2">
+                        <!-- Linha 1: Entidade Orçamentária + Código + Unidade -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
                                 <div class="form-floating">
-                                    <select class="form-select" 
-                                            :class="{ 'is-invalid': errors.entidade_orcamentaria_id }"
-                                            id="entidade_orcamentaria_id" 
-                                            v-model="form.entidade_orcamentaria_id"
-                                            required>
-                                        <option value="">Selecione a Entidade Orçamentária</option>
-                                        <option v-for="entidade in entidadesOrcamentarias" 
-                                                :key="entidade.id" 
-                                                :value="entidade.id">
-                                            {{ entidade.jurisdicao_razao_social }}
-                                        </option>
-                                    </select>
-                                    <label for="entidade_orcamentaria_id">Entidade Orçamentária *</label>
+                                    <input type="text" 
+                                           class="form-control bg-light"
+                                           id="entidade_orcamentaria_display"
+                                           :value="getEntidadeOrcamentariaDisplay()"
+                                           readonly
+                                           placeholder="Entidade do contexto">
+                                    <label for="entidade_orcamentaria_display">Entidade Orçamentária</label>
                                 </div>
-                                <div class="invalid-feedback" v-if="errors.entidade_orcamentaria_id">
-                                    {{ errors.entidade_orcamentaria_id[0] }}
-                                </div>
+                                <!-- Campo hidden para enviar o ID -->
+                                <input type="hidden" v-model="form.entidade_orcamentaria_id">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-4">
                                 <div class="form-floating">
                                     <input type="text" 
                                            class="form-control" 
@@ -54,24 +48,7 @@
                                     {{ errors.codigo[0] }}
                                 </div>
                             </div>
-                            
-                            <div class="col-md-7">
-                                <div class="form-floating">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           :class="{ 'is-invalid': errors.descricao }"
-                                           id="descricao" 
-                                           v-model="form.descricao"
-                                           placeholder="Descrição da composição"
-                                           required>
-                                    <label for="descricao">Descrição *</label>
-                                </div>
-                                <div class="invalid-feedback" v-if="errors.descricao">
-                                    {{ errors.descricao[0] }}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-1">
+                            <div class="col-md-2">
                                 <div class="form-floating">
                                     <input type="text" 
                                            class="form-control" 
@@ -84,6 +61,25 @@
                                 </div>
                                 <div class="invalid-feedback" v-if="errors.unidade">
                                     {{ errors.unidade[0] }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Linha 2: Descrição (largura total) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           :class="{ 'is-invalid': errors.descricao }"
+                                           id="descricao" 
+                                           v-model="form.descricao"
+                                           placeholder="Descrição da composição"
+                                           required>
+                                    <label for="descricao">Descrição *</label>
+                                </div>
+                                <div class="invalid-feedback" v-if="errors.descricao">
+                                    {{ errors.descricao[0] }}
                                 </div>
                             </div>
                         </div>
@@ -168,9 +164,9 @@
 
                                     <!-- Corpo do Card -->
                                     <div class="item-body">
-                                        <!-- Linha 1: Identificação -->
+                                        <!-- Linha 1: Código + Data Base + Unidade -->
                                         <div class="row g-2 mb-2">
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label class="field-label">Código</label>
                                                 <div v-if="permissoes.crud" class="input-group">
                                                     <input type="text" 
@@ -188,17 +184,23 @@
                                                 </div>
                                                 <div v-else class="field-static">{{ item.codigo_item || '-' }}</div>
                                             </div>
-                                            <div class="col-md-7">
-                                                <label class="field-label">Descrição</label>
-                                                <input v-if="permissoes.crud" 
-                                                       type="text" 
-                                                       class="form-control" 
-                                                       v-model="item.descricao"
-                                                       placeholder="Descrição detalhada do item"
-                                                       required>
-                                                <div v-else class="field-static">{{ item.descricao || '-' }}</div>
+                                            <div v-if="item.referencia && item.referencia !== 'PERSONALIZADA'" class="col-md-4">
+                                                <label class="field-label">Data Base</label>
+                                                <input type="text" 
+                                                       class="form-control bg-light" 
+                                                       :value="getDataBaseItem(item)"
+                                                       readonly
+                                                       placeholder="Será preenchida automaticamente">
                                             </div>
-                                            <div class="col-md-2">
+                                            <div v-if="item.referencia && item.referencia !== 'PERSONALIZADA'" class="col-md-2">
+                                                <label class="field-label">Desoneração</label>
+                                                <input type="text" 
+                                                       class="form-control bg-light" 
+                                                       :value="getDesoneracaoItem(item)"
+                                                       readonly
+                                                       placeholder="Automático">
+                                            </div>
+                                            <div :class="item.referencia === 'PERSONALIZADA' ? 'col-md-8' : 'col-md-2'">
                                                 <label class="field-label">Unidade</label>
                                                 <input v-if="permissoes.crud" 
                                                        type="text" 
@@ -210,7 +212,21 @@
                                             </div>
                                         </div>
 
-                                        <!-- Linha 2: Valores -->
+                                        <!-- Linha 2: Descrição (largura total) -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-12">
+                                                <label class="field-label">Descrição</label>
+                                                <input v-if="permissoes.crud" 
+                                                       type="text" 
+                                                       class="form-control" 
+                                                       v-model="item.descricao"
+                                                       placeholder="Descrição detalhada do item"
+                                                       required>
+                                                <div v-else class="field-static">{{ item.descricao || '-' }}</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Linha 3: Valores -->
                                         <div class="row g-2">
                                             <div class="col-md-2">
                                                 <label class="field-label">Coeficiente</label>
@@ -356,6 +372,7 @@
                     <div class="modal-header custom-modal-header">
                         <h5 class="modal-title mb-0">
                             <i class="fas fa-search me-2"></i>Buscar Serviço - {{ servicoZoomSelecionado?.referencia || '' }}
+                            <span v-if="metaZoom && metaZoom.data_base_formatada" class="badge bg-info ms-2">{{ metaZoom.data_base_formatada }}</span>
                         </h5>
                         <button type="button" class="btn-close btn-close-white" @click="fecharZoom"></button>
                     </div>
@@ -571,6 +588,7 @@ export default {
                 itens: []
             },
             entidadesOrcamentarias: [],
+            contextoInfo: null, // Informações do contexto orçamentário
             errors: {},
             salvando: false,
             buscaItens: '',
@@ -579,6 +597,7 @@ export default {
             listaErros: [],
             servicoZoomSelecionado: null,
             servicosZoom: [],
+            metaZoom: null,
             carregandoZoom: false,
             filtrosZoom: {
                 busca: '',
@@ -631,6 +650,13 @@ export default {
                 
                 if (data.success) {
                     this.entidadesOrcamentarias = data.data;
+                    // Captura as informações do contexto orçamentário
+                    this.contextoInfo = data.context_info || null;
+                    
+                    // Define automaticamente a entidade do contexto (apenas se não estiver definida)
+                    if (this.entidadesOrcamentarias.length > 0 && !this.form.entidade_orcamentaria_id) {
+                        this.form.entidade_orcamentaria_id = this.entidadesOrcamentarias[0].id;
+                    }
                 } else {
                     console.error('Erro ao buscar entidades:', data.message);
                 }
@@ -723,7 +749,10 @@ export default {
         },
 
         abrirZoomServico(index) {
-            this.servicoZoomSelecionado = this.form.itens[index];
+            this.servicoZoomSelecionado = {
+                ...this.form.itens[index],
+                indice: index
+            };
             this.modalZoom = true;
             this.buscarServicos();
         },
@@ -732,6 +761,7 @@ export default {
             this.modalZoom = false;
             this.servicoZoomSelecionado = null;
             this.servicosZoom = [];
+            this.metaZoom = null;
         },
 
         async buscarServicos() {
@@ -779,14 +809,18 @@ export default {
                 if (data.data && Array.isArray(data.data)) {
                     this.servicosZoom = data.data;
                     this.totalPaginasZoom = data.last_page;
+                    // Capturar metadados se disponíveis
+                    this.metaZoom = data.meta || null;
                 } else if (Array.isArray(data)) {
                     // Resposta direta sem wrapper
                     this.servicosZoom = data;
                     this.totalPaginasZoom = 1;
+                    this.metaZoom = null;
                 } else {
                     console.error('Formato de resposta não reconhecido:', data);
                     this.servicosZoom = [];
                     this.totalPaginasZoom = 1;
+                    this.metaZoom = null;
                 }
             } catch (error) {
                 console.error('Erro ao buscar serviços:', error);
@@ -945,6 +979,127 @@ export default {
 
         formatarCoeficiente(coeficiente) {
             return parseFloat(coeficiente || 0).toFixed(5).replace('.', ',');
+        },
+
+        /**
+         * Formata data base para exibição no formato mm/yyyy
+         */
+        formatarDataBase(data) {
+            if (!data) return '';
+            
+            // Se já está no formato esperado (YYYY-MM-DD)
+            if (typeof data === 'string' && data.includes('-')) {
+                const [ano, mes] = data.split('-');
+                const meses = {
+                    '01': 'JAN', '02': 'FEV', '03': 'MAR', '04': 'ABR',
+                    '05': 'MAI', '06': 'JUN', '07': 'JUL', '08': 'AGO',
+                    '09': 'SET', '10': 'OUT', '11': 'NOV', '12': 'DEZ'
+                };
+                return `${meses[mes]} / ${ano}`;
+            }
+            
+            return data;
+        },
+
+        /**
+         * Formata data para exibição completa
+         */
+        formatarDataParaExibicao(data) {
+            if (!data) return '';
+            
+            if (typeof data === 'string' && data.includes('-')) {
+                const [ano, mes, dia] = data.split('-');
+                return `${dia || '01'}/${mes}/${ano}`;
+            }
+            
+            return data;
+        },
+
+        /**
+         * Retorna o nome da entidade orçamentária para exibição
+         */
+        getEntidadeOrcamentariaDisplay() {
+            if (this.entidadesOrcamentarias && this.entidadesOrcamentarias.length > 0) {
+                return this.entidadesOrcamentarias[0].jurisdicao_razao_social;
+            }
+            return 'Carregando...';
+        },
+
+        /**
+         * Retorna a desoneração aplicada no item
+         */
+        getDesoneracaoItem(item) {
+            if (!item.referencia || item.referencia === 'PERSONALIZADA') {
+                return '';
+            }
+            
+            // 1. Verifica se o item já tem desoneração salva
+            if (item.desoneracao) {
+                return item.desoneracao === 'com' ? 'Com Desoneração' : 'Sem Desoneração';
+            }
+            
+            // 2. Se não tem desoneração no item, mostra o padrão (que será aplicado)
+            return 'Sem Desoneração (será aplicada)';
+        },
+
+        /**
+         * Retorna a data base apropriada para o item baseada na referência
+         */
+        getDataBaseItem(item) {
+            if (!item.referencia || item.referencia === 'PERSONALIZADA') {
+                return '';
+            }
+            
+            // 1. Verifica se o item já tem data base salva
+            if (item.referencia === 'SINAPI' && item.data_base_sinapi) {
+                return this.formatarDataBase(item.data_base_sinapi);
+            }
+            
+            if (item.referencia === 'DERPR' && item.data_base_derpr) {
+                return this.formatarDataBase(item.data_base_derpr);
+            }
+            
+            // 2. Se não tem data no item, usa a data do contexto (para itens novos)
+            if (this.contextoInfo) {
+                if (item.referencia === 'SINAPI' && this.contextoInfo.data_base_sinapi) {
+                    return this.formatarDataBase(this.contextoInfo.data_base_sinapi) + ' (será aplicada)';
+                }
+                
+                if (item.referencia === 'DERPR' && this.contextoInfo.data_base_derpr) {
+                    return this.formatarDataBase(this.contextoInfo.data_base_derpr) + ' (será aplicada)';
+                }
+            }
+            
+            return 'Não definida';
+        },
+
+        /**
+         * Seleciona um serviço do zoom e aplica ao item
+         */
+        selecionarServico(servico) {
+            if (this.servicoZoomSelecionado && this.servicoZoomSelecionado.indice !== undefined) {
+                const indice = this.servicoZoomSelecionado.indice;
+                
+                // Aplica os dados do serviço ao item
+                this.form.itens[indice].codigo_item = servico.codigo;
+                this.form.itens[indice].descricao = servico.descricao;
+                this.form.itens[indice].unidade = servico.unidade;
+                this.form.itens[indice].valor_mat_equip = servico.valor_mat_equip || 0;
+                this.form.itens[indice].valor_mao_obra = servico.valor_mao_obra || 0;
+                this.form.itens[indice].valor_total = servico.valor_total || 0;
+                
+                // Captura a desoneração utilizada na busca
+                this.form.itens[indice].desoneracao = this.filtrosZoom.desoneracao || 'sem';
+                
+                // Recalcula valores ajustados
+                this.calcularValoresAjustados(indice);
+                
+                // Fecha o modal
+                this.modalZoom = false;
+                this.servicoZoomSelecionado = null;
+                this.servicosZoom = [];
+                this.metaZoom = null;
+            }
         }
     }
 };

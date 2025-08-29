@@ -24,6 +24,9 @@ class ComposicaoPropriaItem extends Model
         'codigo_item',
         'descricao',
         'unidade',
+        'data_base_sinapi',
+        'data_base_derpr',
+        'desoneracao',
         'valor_mat_equip',
         'valor_mao_obra',
         'valor_total',
@@ -37,6 +40,8 @@ class ComposicaoPropriaItem extends Model
      * Casts para campos específicos
      */
     protected $casts = [
+        'data_base_sinapi' => 'date',
+        'data_base_derpr' => 'date',
         'valor_mat_equip' => 'decimal:2',
         'valor_mao_obra' => 'decimal:2',
         'valor_total' => 'decimal:2',
@@ -100,5 +105,90 @@ class ComposicaoPropriaItem extends Model
     public function isPersonalizado(): bool
     {
         return $this->referencia === 'PERSONALIZADA';
+    }
+
+    /**
+     * Retorna a data base apropriada baseada na referência
+     */
+    public function getDataBaseAplicavel(): ?string
+    {
+        if ($this->referencia === 'SINAPI' && $this->data_base_sinapi) {
+            return $this->data_base_sinapi->format('Y-m-d');
+        }
+        
+        if ($this->referencia === 'DERPR' && $this->data_base_derpr) {
+            return $this->data_base_derpr->format('Y-m-d');
+        }
+        
+        return null;
+    }
+
+    /**
+     * Retorna a data base formatada para exibição
+     */
+    public function getDataBaseFormatada(): ?string
+    {
+        if ($this->referencia === 'SINAPI' && $this->data_base_sinapi) {
+            return $this->data_base_sinapi->format('m/Y');
+        }
+        
+        if ($this->referencia === 'DERPR' && $this->data_base_derpr) {
+            return $this->data_base_derpr->format('m/Y');
+        }
+        
+        return null;
+    }
+
+    /**
+     * Scope para buscar por data base SINAPI
+     */
+    public function scopePorDataBaseSinapi($query, $data)
+    {
+        if ($data) {
+            return $query->where('data_base_sinapi', $data);
+        }
+        return $query;
+    }
+
+    /**
+     * Scope para buscar por data base DERPR
+     */
+    public function scopePorDataBaseDerpr($query, $data)
+    {
+        if ($data) {
+            return $query->where('data_base_derpr', $data);
+        }
+        return $query;
+    }
+
+    /**
+     * Scope para buscar por tipo de desoneração
+     */
+    public function scopePorDesoneracao($query, $desoneracao)
+    {
+        if ($desoneracao) {
+            return $query->where('desoneracao', $desoneracao);
+        }
+        return $query;
+    }
+
+    /**
+     * Retorna a descrição da desoneração para exibição
+     */
+    public function getDesoneracaoFormatada(): ?string
+    {
+        if (!$this->desoneracao) {
+            return null;
+        }
+        
+        return $this->desoneracao === 'com' ? 'Com Desoneração' : 'Sem Desoneração';
+    }
+
+    /**
+     * Verifica se o item usa desoneração
+     */
+    public function usaDesoneracao(): bool
+    {
+        return in_array($this->referencia, ['SINAPI', 'DERPR']) && $this->desoneracao !== null;
     }
 }
