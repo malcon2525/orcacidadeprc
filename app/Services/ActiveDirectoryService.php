@@ -217,15 +217,19 @@ class ActiveDirectoryService
 
                     ldap_set_option($testConnection, LDAP_OPT_PROTOCOL_VERSION, 3);
                     ldap_set_option($testConnection, LDAP_OPT_REFERRALS, 0);
+                    ldap_set_option($testConnection, LDAP_OPT_NETWORK_TIMEOUT, 10); // Timeout de 10 segundos
 
                     // Tentar bind com as credenciais do usuário
-                    $bind = ldap_bind($testConnection, $userDn, $password);
-                    
-                    ldap_close($testConnection);
+                    $bind = @ldap_bind($testConnection, $userDn, $password);
                     
                     if ($bind) {
+                        ldap_close($testConnection);
                         $this->logger->sucessoAutenticacaoAD($username, $userDn);
                         return true;
+                    } else {
+                        $error = ldap_error($testConnection);
+                        ldap_close($testConnection);
+                        throw new \Exception("Falha na autenticação LDAP: {$error}");
                     }
                     
                 } catch (\Exception $e) {
@@ -256,7 +260,9 @@ class ActiveDirectoryService
         $domainParts = [];
         
         foreach ($parts as $part) {
-            if (strpos($part, 'dc=') === 0) {
+            $part = trim($part); // Remove espaços
+            // Usar case-insensitive para DC=
+            if (stripos($part, 'DC=') === 0) {
                 $domainParts[] = substr($part, 3);
             }
         }

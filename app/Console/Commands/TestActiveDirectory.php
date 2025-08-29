@@ -42,7 +42,8 @@ class TestActiveDirectory extends Command
             
             // Testar conexão
             $this->info('🔌 Testando conexão...');
-            $adService = new ActiveDirectoryService();
+            $adLogService = new \App\Services\Logging\ActiveDirectoryLogService();
+            $adService = new ActiveDirectoryService($adLogService);
             $result = $adService->testConnection();
             
             if ($result['success']) {

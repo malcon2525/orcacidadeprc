@@ -18,7 +18,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|string',
             'password' => 'required',
         ]);
 
@@ -27,7 +27,17 @@ class AuthController extends Controller
             'timestamp' => now()
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        // Determinar o email completo para busca do usuário
+        $emailOriginal = $request->email;
+        $emailCompleto = $this->determinarEmailCompleto($emailOriginal);
+
+        Log::info('=== PROCESSAMENTO EMAIL LOGIN ===', [
+            'email_original' => $emailOriginal,
+            'email_completo' => $emailCompleto,
+            'tem_arroba' => str_contains($emailOriginal, '@')
+        ]);
+
+        $user = User::where('email', $emailCompleto)->first();
 
         if (!$user) {
             Log::warning('Usuário não encontrado', ['email' => $request->email]);
@@ -57,12 +67,12 @@ class AuthController extends Controller
         if ($user->login_type === 'ad') {
             Log::info('=== AUTENTICAÇÃO AD INICIADA ===', [
                 'user_id' => $user->id,
-                'email' => $request->email,
+                'email' => $emailCompleto,
                 'login_type' => $user->login_type
             ]);
             
             // Autenticar no Active Directory
-            $passwordValid = $this->authenticateWithAD($request->email, $request->password);
+            $passwordValid = $this->authenticateWithAD($emailCompleto, $request->password);
             
             Log::info('=== RESULTADO AUTENTICAÇÃO AD ===', [
                 'user_id' => $user->id,
@@ -196,7 +206,8 @@ class AuthController extends Controller
             }
 
             Log::info('AD está habilitado, criando serviço...', ['email' => $email]);
-            $adService = new \App\Services\ActiveDirectoryService();
+            $adLogService = new \App\Services\Logging\ActiveDirectoryLogService();
+            $adService = new \App\Services\ActiveDirectoryService($adLogService);
             
             // Conectar ao AD
             Log::info('Tentando conectar ao AD...', ['email' => $email]);
@@ -243,5 +254,34 @@ class AuthController extends Controller
             ]);
             return false;
         }
+    }
+
+    /**
+     * Determina o email completo para autenticação
+     * Para usuários AD: se não tiver @, adiciona @paranacidade.org.br
+     * Para usuários locais: mantém como está
+     */
+    private function determinarEmailCompleto($emailOriginal)
+    {
+        // Se já tem @, usa como está
+        if (str_contains($emailOriginal, '@')) {
+            return $emailOriginal;
+        }
+
+        // Se não tem @, tenta primeiro como AD (adiciona domínio)
+        $emailComDominio = $emailOriginal . '@paranacidade.org.br';
+        
+        // Verifica se existe usuário AD com esse email
+        $userAD = User::where('email', $emailComDominio)
+                     ->where('login_type', 'ad')
+                     ->first();
+        
+        if ($userAD) {
+            return $emailComDominio;
+        }
+        
+        // Se não encontrou usuário AD, retorna como está 
+        // (pode ser usuário local com formato não padrão)
+        return $emailOriginal;
     }
 }

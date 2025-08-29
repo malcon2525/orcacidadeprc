@@ -82,13 +82,13 @@
                                     </div>
                                     <input 
                                         id="email" 
-                                        type="email" 
+                                        type="text" 
                                         class="form-input @error('email') is-invalid @enderror" 
                                         name="email" 
-                                        placeholder="Digite seu e-mail"
+                                        placeholder="Digite seu usuário ou e-mail"
                                         value="{{ old('email') }}"
                                         required 
-                                        autocomplete="email" 
+                                        autocomplete="username" 
                                         autofocus 
                                     >
                                 </div>

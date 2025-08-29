@@ -28,7 +28,10 @@ class MeuPerfilController extends Controller
                 'email' => $user->email,
                 'is_active' => $user->is_active,
                 'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at
+                'updated_at' => $user->updated_at,
+                'is_ad_user' => $user->isADUser(),
+                'login_type' => $user->login_type,
+                'ad_domain' => $user->ad_domain
             ];
 
             // 2. Vínculos organizacionais ativos
@@ -175,7 +178,16 @@ class MeuPerfilController extends Controller
         try {
             $user = Auth::user();
 
-            // 1. Validação
+            // 1. Verificar se usuário pode alterar dados pessoais
+            if ($user->isADUser()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuários do Active Directory não podem alterar dados pessoais. Os dados são gerenciados centralmente pelo AD.',
+                    'tipo_erro' => 'ad_user_restriction'
+                ], 403);
+            }
+
+            // 2. Validação
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => [
@@ -193,7 +205,7 @@ class MeuPerfilController extends Controller
                 'email.unique' => 'Este email já está sendo usado por outro usuário.'
             ]);
 
-            // 2. Atualização
+            // 3. Atualização
             DB::beginTransaction();
 
             DB::table('users')
@@ -247,7 +259,16 @@ class MeuPerfilController extends Controller
         try {
             $user = Auth::user();
 
-            // 1. Validação
+            // 1. Verificar se usuário pode alterar senha
+            if ($user->isADUser()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuários do Active Directory não podem alterar a senha. A senha é gerenciada centralmente pelo AD.',
+                    'tipo_erro' => 'ad_user_restriction'
+                ], 403);
+            }
+
+            // 2. Validação
             $validated = $request->validate([
                 'senha_atual' => 'required|string',
                 'nova_senha' => 'required|string|min:8|confirmed',
@@ -260,7 +281,7 @@ class MeuPerfilController extends Controller
                 'nova_senha_confirmation.required' => 'A confirmação da nova senha é obrigatória.'
             ]);
 
-            // 2. Verificar senha atual
+            // 3. Verificar senha atual
             if (!Hash::check($validated['senha_atual'], $user->password)) {
                 return response()->json([
                     'success' => false,
@@ -271,7 +292,7 @@ class MeuPerfilController extends Controller
                 ], 422);
             }
 
-            // 3. Verificar se a nova senha é diferente da atual
+            // 4. Verificar se a nova senha é diferente da atual
             if (Hash::check($validated['nova_senha'], $user->password)) {
                 return response()->json([
                     'success' => false,
@@ -282,7 +303,7 @@ class MeuPerfilController extends Controller
                 ], 422);
             }
 
-            // 4. Atualização
+            // 5. Atualização
             DB::beginTransaction();
 
             DB::table('users')

@@ -72,6 +72,13 @@
                                     <i class="fas fa-user-edit me-2"></i>Informações Pessoais
                                 </h6>
                                 
+                                <!-- Alerta para usuários do AD -->
+                                <div v-if="isAdUser" class="alert alert-info mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Usuário do Active Directory:</strong> 
+                                    Seus dados pessoais são gerenciados centralmente pelo AD e não podem ser alterados nesta tela.
+                                </div>
+                                
                                 <form @submit.prevent="salvarDadosPessoais">
                                     <div class="row mb-3">
                                         <div class="col-md-6">
@@ -83,7 +90,7 @@
                                                     id="nome" 
                                                     v-model="formDados.name"
                                                     placeholder="Nome Completo"
-                                                    :disabled="salvandoDados"
+                                                    :disabled="salvandoDados || isAdUser"
                                                     required>
                                                 <label for="nome">Nome Completo *</label>
                                             </div>
@@ -101,7 +108,7 @@
                                                     id="email" 
                                                     v-model="formDados.email"
                                                     placeholder="Email"
-                                                    :disabled="salvandoDados"
+                                                    :disabled="salvandoDados || isAdUser"
                                                     required>
                                                 <label for="email">Email *</label>
                                             </div>
@@ -115,7 +122,7 @@
                                         <button 
                                             type="submit" 
                                             class="btn btn-success"
-                                            :disabled="salvandoDados || !dadosAlterados">
+                                            :disabled="salvandoDados || !dadosAlterados || isAdUser">
                                             <span v-if="salvandoDados" class="spinner-border spinner-border-sm me-2"></span>
                                             <i v-else class="fas fa-save me-2"></i>
                                             {{ salvandoDados ? 'Salvando...' : 'Salvar Alterações' }}
@@ -357,6 +364,14 @@
                                     <i class="fas fa-key me-2"></i>Alterar Senha
                                 </h6>
                                 
+                                <!-- Alerta para usuários do AD -->
+                                <div v-if="isAdUser" class="alert alert-warning mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Usuário do Active Directory:</strong> 
+                                    Sua senha é gerenciada centralmente pelo AD e não pode ser alterada nesta tela. 
+                                    Entre em contato com o administrador de TI para alterar sua senha.
+                                </div>
+                                
                                 <form @submit.prevent="alterarSenha">
                                     <div class="row mb-3">
                                         <div class="col-12 mb-3">
@@ -368,7 +383,7 @@
                                                     id="senhaAtual" 
                                                     v-model="formSenha.senha_atual"
                                                     placeholder="Senha Atual"
-                                                    :disabled="alterandoSenha"
+                                                    :disabled="alterandoSenha || isAdUser"
                                                     required>
                                                 <label for="senhaAtual">Senha Atual *</label>
                                             </div>
@@ -420,7 +435,7 @@
                                         <button 
                                             type="submit" 
                                             class="btn btn-warning"
-                                            :disabled="alterandoSenha || !senhaFormPreenchido">
+                                            :disabled="alterandoSenha || !senhaFormPreenchido || isAdUser">
                                             <span v-if="alterandoSenha" class="spinner-border spinner-border-sm me-2"></span>
                                             <i v-else class="fas fa-key me-2"></i>
                                             {{ alterandoSenha ? 'Alterando...' : 'Alterar Senha' }}
@@ -430,7 +445,7 @@
                                             type="button" 
                                             class="btn btn-outline-secondary"
                                             @click="cancelarEdicaoSenha"
-                                            :disabled="alterandoSenha">
+                                            :disabled="alterandoSenha || isAdUser">
                                             <i class="fas fa-times me-2"></i>Cancelar
                                         </button>
                                     </div>
@@ -549,6 +564,10 @@ export default {
             return this.formSenha.senha_atual && 
                    this.formSenha.nova_senha && 
                    this.formSenha.nova_senha_confirmation;
+        },
+        
+        isAdUser() {
+            return this.dados?.dados_pessoais?.is_ad_user || false;
         }
     },
     mounted() {
